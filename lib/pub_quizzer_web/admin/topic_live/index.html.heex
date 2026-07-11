@@ -1,0 +1,87 @@
+<Layouts.app flash={@flash} current_scope={@current_scope} max_width="max-w-4xl">
+  <.header>
+    Themen
+    <:subtitle>Verwalte Quiz-Themen für die Runden.</:subtitle>
+    <:actions>
+      <.button phx-click="start_new">Neues Thema</.button>
+    </:actions>
+  </.header>
+
+  <%= if @editing_topic_id do %>
+    <div class="card bg-base-200 shadow-sm mb-6">
+      <div class="card-body">
+        <h3 class="card-title text-lg">
+          {if @editing_topic_id == :new, do: "Neues Thema", else: "Thema bearbeiten"}
+        </h3>
+        <.form for={@form} id="topic-form" phx-change="validate" phx-submit="save">
+          <.input field={@form[:name]} type="text" label="Name" placeholder="z.B. Geografie" />
+          <.input
+            field={@form[:description]}
+            type="text"
+            label="Beschreibung"
+            placeholder="Optional"
+          />
+          <div class="card-actions justify-between mt-4">
+            <div class="flex gap-2">
+              <%= if @editing_topic_id != :new do %>
+                <.link
+                  phx-click="ask_delete"
+                  phx-value-id={@editing_topic_id}
+                  class="btn btn-outline btn-sm border text-error hover:text-error-content hover:bg-error"
+                >
+                  Löschen
+                </.link>
+              <% end %>
+              <.link phx-click="cancel_edit" class="btn btn-outline btn-sm border">
+                Abbrechen
+              </.link>
+            </div>
+            <button type="submit" class="btn btn-primary">Speichern</button>
+          </div>
+        </.form>
+      </div>
+    </div>
+  <% end %>
+
+  <%= if @topics == [] do %>
+    <div class="text-center py-12 text-base-content/50">
+      Noch keine Themen erstellt.
+    </div>
+  <% else %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <%= for topic <- @topics do %>
+        <div id={"topics-#{topic.id}"} class="card bg-base-200 shadow-sm">
+          <div class="card-body gap-2">
+            <h3 class="card-title text-lg">{topic.name}</h3>
+            <p class="text-sm text-base-content/80">{topic.description}</p>
+            <p class="text-sm text-base-content/70">{length(topic.questions)} Fragen</p>
+            <div class="card-actions justify-end mt-2">
+              <.link
+                navigate={~p"/admin/topics/#{topic}/questions"}
+                class="btn btn-outline btn-sm border"
+              >
+                Fragen
+              </.link>
+              <.link
+                phx-click="start_edit"
+                phx-value-id={topic.id}
+                class="btn btn-outline btn-sm border"
+              >
+                Bearbeiten
+              </.link>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <.confirm_modal
+    show={@confirm_action == :delete_topic}
+    title="Thema löschen?"
+    message="Thema und alle Fragen löschen?"
+    confirm_label="Löschen"
+    confirm_event="confirm_delete"
+    cancel_event="cancel_confirm"
+  />
+</Layouts.app>

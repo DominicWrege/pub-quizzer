@@ -1,0 +1,31 @@
+<Layouts.app flash={@flash} max_width="max-w-full" main_class="px-4 sm:px-6 lg:px-8">
+  <div class="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+    <div class="text-center max-w-sm">
+      <.icon name="hero-key" class="size-[4rem] mx-auto text-primary" />
+      <h1 class="text-3xl font-bold mt-4">Quiz beitreten</h1>
+      <p class="py-4 text-base-content/70">
+        Gib den 4-stelligen Code ein, der im Pub angezeigt wird.
+      </p>
+
+      <form action="/quiz/join" method="post" id="join-form">
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+        <.input
+          name="code"
+          id="quiz-code"
+          type="text"
+          placeholder="z.B. 4827"
+          maxlength="4"
+          pattern="[0-9]{4}"
+          inputmode="numeric"
+          value=""
+          required
+        />
+        <button type="submit" class="btn btn-primary btn-block mt-4">Beitreten</button>
+      </form>
+
+      <div class="mt-8">
+        <.link navigate={~p"/"} class="link link-hover text-sm text-base-content/50">Startseite</.link>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

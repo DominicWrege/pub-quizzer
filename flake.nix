@@ -14,9 +14,12 @@
       {
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
-            elixir
-            erlang
+            beamPackages.elixir
+            beamPackages.erlang
             sqlite
+            inotify-tools
+            watchman
+            nodejs
           ];
         };
       });

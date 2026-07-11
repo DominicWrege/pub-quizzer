@@ -1,0 +1,122 @@
+<Layouts.app flash={@flash} current_scope={@current_scope} max_width="max-w-4xl">
+  <.header>
+    Quizes
+    <:subtitle>Von dir erstellte Quizes.</:subtitle>
+    <:actions>
+      <.button navigate={~p"/admin/events/new"}>Neues Quiz</.button>
+    </:actions>
+  </.header>
+
+  <div class="mb-6">
+    <input
+      type="text"
+      placeholder="Nach Code oder Name suchen..."
+      value={@search_query}
+      phx-keyup="search"
+      phx-change="search"
+      phx-value-query={@search_query}
+      class="input input-bordered w-full max-w-sm"
+    />
+  </div>
+
+  <%= if @filtered_events == [] do %>
+    <div class="text-center py-12 text-base-content/70">
+      <%= if @search_query != "" do %>
+        Keine Quizes gefunden
+      <% else %>
+        Noch keine Quizes erstellt.
+      <% end %>
+    </div>
+  <% else %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <%= for event <- @filtered_events do %>
+        <div id={"event-#{event.id}"} class="card bg-base-200 shadow-sm">
+          <div class="card-body gap-3">
+            <%= if event.name && event.name != "" do %>
+              <div class="flex items-center justify-between">
+                <h3 class="card-title text-base">{event.name}</h3>
+                <span class="badge">{event.team_count} Teams</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-base-content/60 font-mono">{event.code}</span>
+                <span class={[
+                  "text-xs font-semibold",
+                  event.status in ["topic_selection", "question", "round_reveal"] &&
+                    "text-primary",
+                  event.status == "finished" && "text-success",
+                  event.status == "lobby" && "text-base-content/40"
+                ]}>
+                  {status_label(event.status)}
+                </span>
+              </div>
+            <% else %>
+              <div class="flex items-center justify-between">
+                <span class="font-mono font-bold text-lg tracking-widest">{event.code}</span>
+                <span class="badge">{event.team_count} Teams</span>
+              </div>
+              <span class={[
+                "text-xs font-semibold",
+                event.status in ["topic_selection", "question", "round_reveal"] && "text-primary",
+                event.status == "finished" && "text-success",
+                event.status == "lobby" && "text-base-content/40"
+              ]}>
+                {status_label(event.status)}
+              </span>
+            <% end %>
+
+            <span class="text-3xl font-bold font-mono">{Calendar.strftime(
+              event.inserted_at,
+              "%d.%m.%y"
+            )}</span>
+
+            <div class="card-actions justify-end mt-2">
+              <%= cond do %>
+                <% event.status in ["topic_selection", "question", "round_reveal"] -> %>
+                  <.link navigate={~p"/quiz/#{event.code}/host"} class="btn btn-primary btn-sm">Moderator</.link>
+                <% event.status == "lobby" -> %>
+                  <.link
+                    navigate={~p"/admin/events/#{event}"}
+                    class="btn btn-outline btn-sm border"
+                  >Verwalten</.link>
+                <% true -> %>
+                  <.link
+                    navigate={~p"/admin/events/#{event}"}
+                    class="btn btn-outline btn-sm border"
+                  >Details</.link>
+              <% end %>
+              <button
+                phx-click="ask_delete"
+                phx-value-id={event.id}
+                class="btn btn-outline btn-sm border text-error hover:text-error-content hover:bg-error"
+              >
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= if @delete_event_id do %>
+    <% event = Enum.find(@events, &(&1.id == @delete_event_id)) %>
+    <div class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="text-lg font-bold">Veranstaltung löschen?</h3>
+        <p class="py-4">
+          <%= if event do %>
+            Veranstaltung <strong>{event.code}</strong>
+            und alle zugehörigen Daten (Teams, Runden, Antworten)
+            werden unwiderruflich gelöscht.
+          <% else %>
+            Diese Veranstaltung und alle zugehörigen Daten werden unwiderruflich gelöscht.
+          <% end %>
+        </p>
+        <div class="modal-action">
+          <button phx-click="cancel_delete" class="btn btn-outline">Abbrechen</button>
+          <button phx-click="confirm_delete" class="btn btn-error">Löschen</button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</Layouts.app>

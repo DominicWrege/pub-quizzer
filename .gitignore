@@ -29,3 +29,6 @@ pub_quizzer_scaffold-*.tar
 *.db
 *.db-*
 
+
+node_modules
+.direnv

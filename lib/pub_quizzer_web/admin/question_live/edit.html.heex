@@ -1,0 +1,119 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <.header>
+    <:back>
+      <.link
+        navigate={~p"/admin/topics/#{@topic}/questions"}
+        class="btn btn-outline btn-sm border"
+      >
+        ← Zurück
+      </.link>
+    </:back>
+    Frage bearbeiten
+    <:subtitle>{@topic.name}</:subtitle>
+  </.header>
+
+  <.form
+    for={@form}
+    id="question-form"
+    phx-change="validate"
+    phx-submit="save"
+  >
+    <.input
+      field={@form[:prompt]}
+      type="text"
+      label="Frage"
+      placeholder="z.B. Was ist die Hauptstadt von Frankreich?"
+    />
+
+    <fieldset class="fieldset">
+      <legend class="label mb-2">Optionen (wähle die richtige Antwort)</legend>
+
+      <div class="space-y-2">
+        <%= for {option, idx} <- Enum.with_index(@form[:options].value || ["", "", "", ""]) do %>
+          <div class="flex items-start gap-2">
+            <input
+              type="radio"
+              name="question[correct_index]"
+              value={idx}
+              id={"correct-#{idx}"}
+              checked={(@form[:correct_index].value || 0) == idx}
+              class="radio radio-sm mt-3"
+            />
+            <textarea
+              name="question[options][]"
+              id={"option-#{idx}"}
+              class="textarea textarea-bordered w-full"
+              placeholder={"Option #{idx + 1}"}
+              rows="2"
+              required
+            >{option}</textarea>
+          </div>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <fieldset class="fieldset mt-4">
+      <legend class="label mb-2">Bild (optional)</legend>
+      <%= if @form[:image].value do %>
+        <div class="mb-3">
+          <img src={@form[:image].value} alt="Aktuelles Bild" class="max-h-48 rounded-lg border" />
+          <p class="text-sm text-base-content/60 mt-1">Aktuelles Bild</p>
+        </div>
+      <% end %>
+      <div id="image-upload-zone" phx-hook="ImagePreview">
+        <.live_file_input upload={@uploads.image} class="file-input file-input-bordered w-full" />
+      </div>
+      <p class="label-text mt-1">Neues Bild hochladen (ersetzt das alte)</p>
+      <%= for entry <- @uploads.image.entries do %>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="text-sm">{entry.client_name}</span>
+          <button
+            type="button"
+            phx-click="cancel_upload"
+            phx-value-ref={entry.ref}
+            class="btn btn-outline btn-sm border"
+          >
+            Entfernen
+          </button>
+        </div>
+      <% end %>
+    </fieldset>
+
+    <button type="submit" class="btn btn-primary mt-4">Frage speichern</button>
+  </.form>
+
+  <%!-- Question preview --%>
+  <div class="divider mt-8">Vorschau</div>
+  <p class="text-sm text-base-content/60 mb-4">
+    So sieht die Frage für die Teams im Quiz aus:
+  </p>
+
+  <div class="card bg-base-200 mb-4">
+    <div class="card-body">
+      <h4 class="card-title text-xl">{@form[:prompt].value || "Frage"}</h4>
+      <%= if img = @form[:image].value do %>
+        <img src={img} alt="Fragebild" class="rounded-lg max-h-64 mx-auto mb-2" />
+      <% end %>
+      <%= if @image_preview_url do %>
+        <img src={@image_preview_url} alt="Neues Bild" class="rounded-lg max-h-64 mx-auto mb-2" />
+      <% end %>
+      <div class="flex flex-col gap-3 mt-2">
+        <%= for {option, idx} <- Enum.with_index(@form[:options].value || ["", "", "", ""]) do %>
+          <div class={[
+            "btn h-auto py-5 px-5 justify-start text-left text-lg shadow-md border-2 whitespace-normal",
+            (@form[:correct_index].value || 0) == idx && "btn-primary",
+            (@form[:correct_index].value || 0) != idx && "btn-outline"
+          ]}>
+            <span class="font-mono font-bold mr-3 shrink-0">
+              {String.capitalize(Enum.at(["a", "b", "c", "d", "e", "f"], idx, ""))}.
+            </span>
+            <span class="font-semibold">{option}</span>
+            <%= if (@form[:correct_index].value || 0) == idx do %>
+              <span class="hero-check-circle size-6 shrink-0 ml-auto"></span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

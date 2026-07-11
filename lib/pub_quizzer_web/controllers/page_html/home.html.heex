@@ -1,0 +1,31 @@
+<Layouts.app flash={@flash} max_width="max-w-full" main_class="px-4 sm:px-6 lg:px-8">
+  <div class="flex items-start sm:items-center justify-center min-h-[calc(100vh-4rem)] pt-32 sm:pt-0">
+    <div class="text-center max-w-sm">
+      <.icon name="hero-trophy" class="size-[5rem] mx-auto text-warning" />
+      <h1 class="text-4xl font-bold mt-4">Pub Quizzer</h1>
+      <p class="py-4 text-base-content/70">
+        Gib den Code ein, der im Pub angezeigt wird.
+      </p>
+
+      <form action="/quiz/join" method="post" class="join gap-2 mt-6">
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+        <div class="join">
+          <input
+            type="text"
+            name="code"
+            id="home-quiz-code"
+            class="input input-bordered input-lg font-mono text-center tracking-widest join-item"
+            placeholder="0000"
+            maxlength="4"
+            pattern="[0-9]{4}"
+            inputmode="numeric"
+            required
+          />
+          <button type="submit" class="btn btn-primary btn-lg join-item">
+            Beitreten
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layouts.app>

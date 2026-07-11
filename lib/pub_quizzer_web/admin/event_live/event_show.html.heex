@@ -1,0 +1,134 @@
+<Layouts.app flash={@flash} current_scope={@current_scope} max_width="max-w-3xl">
+  <.header>
+    <%= if @event.name && @event.name != "" do %>
+      {@event.name}
+    <% else %>
+      Event
+    <% end %>
+    <span class="badge badge-sm">{status_label(@event.status)}</span>
+    <:actions>
+      <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator-Konsole</.link>
+      <button
+        phx-click="ask_delete_event"
+        class="btn btn-outline btn-sm border text-error hover:text-error-content hover:bg-error"
+      >
+        <.icon name="hero-trash" class="size-4" /> Löschen
+      </button>
+    </:actions>
+  </.header>
+
+  <.confirm_modal
+    show={@confirm_action == :delete}
+    title="Event löschen?"
+    message="Event und alle Daten unwiderruflich löschen?"
+    confirm_label="Löschen"
+    confirm_event="do_delete_event"
+    cancel_event="cancel_action"
+  />
+
+  <.confirm_modal
+    show={@confirm_action == :start}
+    title="Quiz starten?"
+    message="Das Quiz wird gestartet und die Themenauswahl beginnt. Fortfahren?"
+    confirm_label="Starten"
+    confirm_event="do_start"
+    cancel_event="cancel_action"
+  />
+
+  <%= if @event.status == "lobby" do %>
+    <div class="flex flex-col items-center gap-6 mb-6">
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-8">
+        <div class="flex flex-col items-center gap-2">
+          <div class="text-6xl font-mono font-bold tracking-widest bg-base-200 rounded-box px-8 py-4">
+            {@event.code}
+          </div>
+          <div class="text-sm text-base-content/70 text-center">
+            Zeige diesen Code im Pub, damit Teams beitreten können.
+          </div>
+        </div>
+        <div class="flex flex-col items-center gap-2">
+          <div class="bg-white p-3 rounded-box shadow-md">
+            {raw(@qr_svg)}
+          </div>
+          <div class="text-sm text-base-content/70 text-center">
+            QR-Code scannen zum Beitreten
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-2 mb-6">
+      <button phx-click="add_slot" class="btn btn-outline btn-sm border">
+        <.icon name="hero-plus" class="size-4" /> Team hinzufügen
+      </button>
+      <button phx-click="remove_slot" class="btn btn-outline btn-sm border">
+        <.icon name="hero-minus" class="size-4" /> Team entfernen
+      </button>
+      <button
+        id="copy-join-link"
+        phx-hook="CopyLink"
+        data-url={@join_url}
+        class="btn btn-outline btn-sm border"
+      >
+        <.icon name="hero-clipboard" class="size-3" /> Link kopieren
+      </button>
+      <span class="flex-1"></span>
+      <button
+        phx-click="ask_start"
+        class="btn btn-primary btn-lg text-xl px-10"
+      >
+        ▶ Quiz starten
+      </button>
+    </div>
+
+    <div class="card bg-base-200 shadow-sm">
+      <div class="card-body">
+        <h3 class="card-title text-lg mb-3">{@event.team_count} Teams</h3>
+
+        <div class="text-lg">
+          <.table id="event-teams" rows={@event.teams} row_id={fn team -> "team-#{team.id}" end}>
+            <:col :let={team} label="#">
+              <span class="opacity-60">{team.slot_index + 1}</span>
+            </:col>
+            <:col :let={team} label="Team-Name">
+              <input
+                type="text"
+                value={team.name}
+                class="input input-bordered input-sm w-full"
+                phx-blur="rename_team"
+                phx-value-team_id={team.id}
+                data-team-id={team.id}
+              />
+            </:col>
+            <:col :let={team} label="Status">
+              <%= if team.claimed_at do %>
+                <%= if team.id in @connected_team_ids do %>
+                  <span class="badge badge-lg badge-success">Beigetreten</span>
+                <% else %>
+                  <span class="badge badge-lg badge-warning">Getrennt</span>
+                <% end %>
+              <% else %>
+                <span class="badge badge-lg badge-neutral">Wartend</span>
+              <% end %>
+            </:col>
+            <:action :let={team}>
+              <button
+                phx-click="remove_team"
+                phx-value-team_id={team.id}
+                class="btn btn-sm btn-outline border text-error hover:text-error-content hover:bg-error"
+                title="Team entfernen"
+              >
+                <.icon name="hero-x-mark" class="size-4" />
+              </button>
+            </:action>
+          </.table>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="alert alert-info text-base py-4">
+      <.icon name="hero-information-circle" class="size-6" />
+      <span>Dieses Event wurde bereits gestartet. Gehe zur Moderator-Konsole, um das Quiz zu leiten.</span>
+    </div>
+  <% end %>
+</Layouts.app>
