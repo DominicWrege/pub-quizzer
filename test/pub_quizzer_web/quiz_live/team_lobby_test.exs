@@ -59,7 +59,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
 
       assert html =~ team.name
-      assert html =~ "Warte auf den Start des Quiz"
+      assert html =~ "Warte auf den Quiz-Start"
       assert html =~ event.code
     end
   end

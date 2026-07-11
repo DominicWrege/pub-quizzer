@@ -1,7 +1,12 @@
-<Layouts.app flash={@flash} current_scope={@current_scope} max_width="max-w-4xl">
+<Layouts.app
+  flash={@flash}
+  current_scope={@current_scope}
+  current_path={@current_path}
+  max_width="max-w-4xl"
+>
   <.header>
     <:back>
-      <.link navigate={~p"/admin/topics"} class="btn btn-outline btn-sm border">
+      <.link navigate={~p"/admin/topics"} class="btn btn-sm">
         ← Zurück zu Themen
       </.link>
     </:back>
@@ -68,7 +73,7 @@
             <% end %>
           </div>
           <div class="card-actions justify-end mt-4 gap-2">
-            <button type="button" phx-click="cancel_edit" class="btn btn-outline btn-sm border">Abbrechen</button>
+            <button type="button" phx-click="cancel_edit" class="btn btn-sm">Abbrechen</button>
             <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
           </div>
         </.form>
@@ -85,14 +90,14 @@
       <button
         phx-click="start_edit"
         phx-value-id={q.id}
-        class="btn btn-outline btn-sm border"
+        class="btn btn-sm"
       >
         Bearbeiten
       </button>
       <button
         phx-click="ask_delete"
         phx-value-id={q.id}
-        class="btn btn-outline btn-sm border text-error hover:text-error-content hover:bg-error"
+        class="btn btn-sm text-error"
       >
         Löschen
       </button>

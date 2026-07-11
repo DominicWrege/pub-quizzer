@@ -22,11 +22,11 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   end
 
   @impl true
-  def handle_params(params, _url, socket) do
-    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
+  def handle_params(params, url, socket) do
+    {:noreply, apply_action(socket, socket.assigns.live_action, params, url)}
   end
 
-  defp apply_action(socket, :index, _params) do
+  defp apply_action(socket, :index, _params, _url) do
     events = Quiz.list_events()
 
     socket
@@ -34,17 +34,19 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     |> assign(:events, events)
     |> assign(:search_query, "")
     |> assign(:filtered_events, events)
+    |> assign_active_finished(events)
   end
 
-  defp apply_action(socket, :new, _params) do
+  defp apply_action(socket, :new, _params, _url) do
     socket
     |> assign(:page_title, "Neues Quiz")
-    |> assign(:form, to_form(%{"team_count" => "6"}))
+    |> assign(:form, to_form(%{"team_count" => "5"}))
   end
 
-  defp apply_action(socket, :show, %{"id" => id}) do
+  defp apply_action(socket, :show, %{"id" => id}, url) do
     event = Quiz.get_event_with_teams!(id)
-    join_url = PubQuizzerWeb.Endpoint.url() <> ~p"/quiz/join/#{event.code}"
+    base = URI.parse(url) |> then(&"#{&1.scheme}://#{&1.host}:#{&1.port}")
+    join_url = base <> ~p"/quiz/join/#{event.code}"
     qr_svg = EQRCode.encode(join_url) |> EQRCode.svg(color: "#1e40af", background: "#ffffff")
 
     claimed_ids =
@@ -57,12 +59,15 @@ defmodule PubQuizzerWeb.Admin.EventLive do
       Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
     end
 
+    all_connected = MapSet.size(claimed_ids) > 0 and MapSet.subset?(claimed_ids, claimed_ids)
+
     socket
     |> assign(:page_title, "Event #{event.code}")
     |> assign(:event, event)
     |> assign(:join_url, join_url)
     |> assign(:qr_svg, qr_svg)
     |> assign(:connected_team_ids, claimed_ids)
+    |> assign(:all_teams_connected, all_connected)
   end
 
   @impl true
@@ -80,7 +85,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
         end)
       end
 
-    {:noreply, assign(socket, search_query: query, filtered_events: filtered)}
+    {:noreply, socket |> assign(:filtered_events, filtered) |> assign_active_finished(filtered)}
   end
 
   def handle_event("save", %{"team_count" => team_count} = params, socket) do
@@ -149,7 +154,11 @@ defmodule PubQuizzerWeb.Admin.EventLive do
       |> Enum.map(& &1.id)
       |> MapSet.new()
 
-    {:noreply, socket |> assign(:event, event) |> assign(:connected_team_ids, claimed_ids)}
+    {:noreply,
+     socket
+     |> assign(:event, event)
+     |> assign(:connected_team_ids, claimed_ids)
+     |> assign(:all_teams_connected, false)}
   end
 
   # Show page confirmations
@@ -237,15 +246,108 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     {:noreply,
      socket
      |> assign(:event, event)
-     |> assign(:connected_team_ids, connected_ids)}
+     |> assign(:connected_team_ids, connected_ids)
+     |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))}
   end
 
   def handle_info({:team_connected, team_id}, socket) do
-    {:noreply, update(socket, :connected_team_ids, &MapSet.put(&1, team_id))}
+    connected_ids = MapSet.put(socket.assigns.connected_team_ids, team_id)
+    claimed_ids = claimed_team_ids(socket.assigns.event.teams)
+
+    {:noreply,
+     socket
+     |> assign(:connected_team_ids, connected_ids)
+     |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))}
   end
 
   def handle_info({:team_disconnected, team_id}, socket) do
-    {:noreply, update(socket, :connected_team_ids, &MapSet.delete(&1, team_id))}
+    connected_ids = MapSet.delete(socket.assigns.connected_team_ids, team_id)
+    claimed_ids = claimed_team_ids(socket.assigns.event.teams)
+
+    {:noreply,
+     socket
+     |> assign(:connected_team_ids, connected_ids)
+     |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))}
+  end
+
+  defp claimed_team_ids(teams) do
+    teams
+    |> Enum.filter(& &1.claimed_at)
+    |> Enum.map(& &1.id)
+    |> MapSet.new()
+  end
+
+  defp all_claimed_connected?(claimed_ids, connected_ids) do
+    MapSet.size(claimed_ids) > 0 and MapSet.subset?(claimed_ids, connected_ids)
+  end
+
+  defp assign_active_finished(socket, events) do
+    {active, finished} = Enum.split_with(events, &(&1.status != "finished"))
+    assign(socket, active_events: active, finished_events: finished)
+  end
+
+  attr :event, :any, required: true
+
+  def event_card(assigns) do
+    ~H"""
+    <div id={"event-#{@event.id}"} class="card bg-base-200 shadow-sm">
+      <div class="card-body gap-3">
+        <%= if @event.name && @event.name != "" do %>
+          <div class="flex items-center justify-between">
+            <h3 class="card-title text-base">{@event.name}</h3>
+            <span class="badge">{@event.team_count} Teams</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-base-content/60 font-mono">{@event.code}</span>
+            <span class={[
+              "text-xs font-semibold",
+              @event.status in ["topic_selection", "question", "round_reveal"] && "text-primary",
+              @event.status == "finished" && "text-success",
+              @event.status == "lobby" && "text-base-content/40"
+            ]}>
+              {status_label(@event.status)}
+            </span>
+          </div>
+        <% else %>
+          <div class="flex items-center justify-between">
+            <span class="font-mono font-bold text-lg tracking-widest">{@event.code}</span>
+            <span class="badge">{@event.team_count} Teams</span>
+          </div>
+          <span class={[
+            "text-xs font-semibold",
+            @event.status in ["topic_selection", "question", "round_reveal"] && "text-primary",
+            @event.status == "finished" && "text-success",
+            @event.status == "lobby" && "text-base-content/40"
+          ]}>
+            {status_label(@event.status)}
+          </span>
+        <% end %>
+
+        <span class="text-3xl font-bold font-mono">{Calendar.strftime(
+          @event.inserted_at,
+          "%d.%m.%y"
+        )}</span>
+
+        <div class="card-actions justify-end mt-2">
+          <%= cond do %>
+            <% @event.status in ["topic_selection", "question", "round_reveal"] -> %>
+              <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator</.link>
+            <% @event.status == "lobby" -> %>
+              <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm">Verwalten</.link>
+            <% true -> %>
+              <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm">Details</.link>
+          <% end %>
+          <button
+            phx-click="ask_delete"
+            phx-value-id={@event.id}
+            class="btn btn-sm text-error"
+          >
+            Löschen
+          </button>
+        </div>
+      </div>
+    </div>
+    """
   end
 
   def status_label("lobby"), do: "Bereit"

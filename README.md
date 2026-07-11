@@ -1,4 +1,4 @@
-# Pub Quizzer
+# Kneipenquiz
 
 Echtzeit-Pub-Quiz für Teams. Phoenix LiveView + SQLite.
 

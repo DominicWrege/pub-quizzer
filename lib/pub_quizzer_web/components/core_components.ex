@@ -578,8 +578,8 @@ defmodule PubQuizzerWeb.CoreComponents do
           <h3 class="text-lg font-bold">{@title}</h3>
           <p class="py-4">{@message}</p>
           <div class="modal-action">
-            <button phx-click={@cancel_event} class="btn btn-ghost">Abbrechen</button>
-            <button phx-click={@confirm_event} class={["btn", @confirm_class]}>{@confirm_label}</button>
+            <button phx-click={@cancel_event} class="btn btn-sm btn-ghost">Abbrechen</button>
+            <button phx-click={@confirm_event} class={["btn btn-sm", @confirm_class]}>{@confirm_label}</button>
           </div>
         </div>
       </div>

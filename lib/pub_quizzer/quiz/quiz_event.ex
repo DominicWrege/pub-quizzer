@@ -8,7 +8,7 @@ defmodule PubQuizzer.Quiz.QuizEvent do
     field :code, :string
     field :name, :string
     field :status, :string, default: "lobby"
-    field :team_count, :integer, default: 6
+    field :team_count, :integer, default: 5
     field :current_round, :integer, default: 0
     field :current_question_index, :integer, default: 0
     field :started_at, :utc_datetime

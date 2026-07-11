@@ -88,7 +88,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
 
     case Engine.reveal_next_answer(event_id) do
       {:ok, _state} ->
-        {:noreply, socket}
+        {:noreply, push_event(socket, "scroll_to_bottom", %{})}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Fehler: #{reason}")}

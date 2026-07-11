@@ -130,7 +130,7 @@ defmodule PubQuizzer.Quiz do
   end
 
   def create_event(attrs) do
-    team_count = Map.get(attrs, "team_count") || Map.get(attrs, :team_count) || 6
+    team_count = Map.get(attrs, "team_count") || Map.get(attrs, :team_count) || 5
     name = Map.get(attrs, "name") || Map.get(attrs, :name)
     code = generate_unique_code()
 

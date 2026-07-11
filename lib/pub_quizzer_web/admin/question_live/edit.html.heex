@@ -1,9 +1,9 @@
-<Layouts.app flash={@flash} current_scope={@current_scope}>
+<Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
   <.header>
     <:back>
       <.link
         navigate={~p"/admin/topics/#{@topic}/questions"}
-        class="btn btn-outline btn-sm border"
+        class="btn btn-sm"
       >
         ← Zurück
       </.link>
@@ -71,7 +71,7 @@
             type="button"
             phx-click="cancel_upload"
             phx-value-ref={entry.ref}
-            class="btn btn-outline btn-sm border"
+            class="btn btn-sm"
           >
             Entfernen
           </button>

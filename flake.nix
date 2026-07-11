@@ -1,5 +1,5 @@
 {
-  description = "Pub Quizzer - realtime pub quiz app for teams";
+  description = "Kneipenquiz - realtime pub quiz app for teams";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";

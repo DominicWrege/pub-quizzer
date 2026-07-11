@@ -1,22 +1,22 @@
 <Layouts.app
   flash={@flash}
-  max_width="max-w-md"
+  max_width="max-w-sm"
   hide_nav_actions
-  main_class="px-4 py-4 sm:pt-4 sm:pb-6 sm:px-6 lg:px-8"
+  main_class="px-3 pt-1 pb-3 sm:pt-3 sm:pb-4 sm:px-4 lg:px-6"
 >
   <%!-- Team name header always visible --%>
-  <div class="text-center mb-6">
-    <h1 class="text-2xl font-bold">{@team.name}</h1>
+  <div class="text-center mb-3">
+    <h1 class="text-lg font-bold">{@team.name}</h1>
   </div>
 
   <%!-- Lobby: waiting for start --%>
   <%= if @engine_state.status == :lobby do %>
-    <div class="text-center max-w-sm mx-auto">
-      <div class="alert shadow-lg text-lg border border-base-300">
-        <.icon name="hero-clock" class="size-5 lg:size-4" />
-        <span class="font-semibold">Warte auf den Start des Quiz...</span>
+    <div class="text-center max-w-xs mx-auto">
+      <div class="alert shadow-md text-base border border-base-300 px-4 py-3">
+        <.icon name="hero-clock" class="size-4" />
+        <span class="font-semibold">Warte auf den Quiz-Start</span>
       </div>
-      <p class="text-base text-base-content/50 mt-4">
+      <p class="text-sm text-base-content/50 mt-3">
         Quiz-Code: <span class="font-mono font-bold">{@event.code}</span>
       </p>
     </div>
@@ -24,10 +24,10 @@
 
   <%!-- Topic selection: team votes or waits --%>
   <%= if @engine_state.status == :topic_selection do %>
-    <div class="text-center mb-6 mt-32">
+    <div class="text-center mb-4 mt-8">
       <%= if @engine_state.current_chooser_team_id == @team.id do %>
-        <div class="alert alert-success mb-4">
-          <.icon name="hero-trophy" class="size-5" />
+        <div class="alert alert-success mb-3 text-sm px-3 py-2">
+          <.icon name="hero-trophy" class="size-4" />
           <span><strong>Dein Team hat Runde {@engine_state.round_number} gewonnen!</strong>
           Sag dem Moderator dein gewünschtes Thema.</span>
         </div>
@@ -36,8 +36,8 @@
           Enum.find(@engine_state.teams, fn t ->
             t.id == @engine_state.current_chooser_team_id
           end) %>
-        <div class="alert alert-info">
-          <.icon name="hero-sparkles" class="size-5" />
+        <div class="alert alert-info text-sm px-3 py-2">
+          <.icon name="hero-sparkles" class="size-4" />
           <span>
             <%= if chooser do %>
               <strong>{chooser.name}</strong>
@@ -57,19 +57,19 @@
     <% our_answer =
       Map.get(Map.get(@engine_state.answers, @engine_state.question_index, %{}), @team.id) %>
 
-    <div class="mb-6">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold">
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold">
           Frage {(@engine_state.question_index || 0) + 1} / {length(
             @engine_state.current_questions
           )}
         </h3>
-        <span class="badge badge-ghost">
+        <span class="badge badge-ghost badge-sm text-xs">
           {MapSet.size(answered)} / {length(@engine_state.teams)} geantwortet
         </span>
       </div>
 
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-2">
         <%= for {_option, shuffled_idx} <- Enum.with_index(@shuffled_options) do %>
           <% is_selected =
             @selected_index == shuffled_idx or
@@ -79,50 +79,47 @@
             phx-click="select_answer"
             phx-value-index={shuffled_idx}
             class={[
-              "btn h-auto w-full py-8 justify-center text-center shadow-md border",
+              "btn h-auto w-full py-4 justify-center text-center shadow-sm border text-xl font-bold",
               is_selected && "btn-primary",
               !is_selected &&
                 "bg-transparent border-base-content/20 hover:border-base-content/50"
             ]}
           >
-            <span class="font-mono font-bold text-5xl">
+            <span class="font-mono font-bold text-3xl">
               {String.capitalize(Enum.at(["a", "b", "c", "d", "e", "f"], shuffled_idx, ""))}
             </span>
-            <%= if is_selected do %>
-              <.icon name="hero-check-circle" class="size-8 shrink-0 ml-4" />
-            <% end %>
           </button>
         <% end %>
       </div>
     </div>
 
     <%= if our_answer != nil do %>
-      <div class="alert alert-success shadow-md text-base mt-4">
-        <.icon name="hero-check-circle" class="size-7" />
-        <span class="font-bold">Antwort abgegeben! Du kannst sie ändern, bis der Moderator weitermacht.</span>
+      <div class="alert alert-success shadow-sm text-sm mt-3 px-3 py-2">
+        <.icon name="hero-check-circle" class="size-5" />
+        <span class="font-semibold">Antwort abgegeben!</span>
       </div>
     <% end %>
   <% end %>
 
   <%!-- Round reveal: show scores --%>
   <%= if @engine_state.status == :round_reveal do %>
-    <div class="mb-4">
+    <div class="mb-3">
       <%= if @engine_state.current_winner_team_id == @team.id do %>
-        <div class="alert alert-success">
-          <.icon name="hero-trophy" class="size-5" />
+        <div class="alert alert-success text-sm px-3 py-2">
+          <.icon name="hero-trophy" class="size-4" />
           <span><strong>Dein Team hat Runde {(@engine_state.round_number || 0) + 1} gewonnen!</strong></span>
         </div>
       <% else %>
         <% winner =
           Enum.find(@engine_state.teams, fn t -> t.id == @engine_state.current_winner_team_id end) %>
         <%= if winner do %>
-          <div class="alert alert-info">
-            <.icon name="hero-trophy" class="size-5" />
+          <div class="alert alert-info text-sm px-3 py-2">
+            <.icon name="hero-trophy" class="size-4" />
             <span>{winner.name} hat Runde {(@engine_state.round_number || 0) + 1} gewonnen</span>
           </div>
         <% else %>
-          <div class="alert alert-info">
-            <.icon name="hero-hand-raised" class="size-5" />
+          <div class="alert alert-info text-sm px-3 py-2">
+            <.icon name="hero-hand-raised" class="size-4" />
             <span>Remis! Kein eindeutiger Gewinner.</span>
           </div>
         <% end %>
@@ -130,15 +127,15 @@
     </div>
 
     <%= if @engine_state.standings_revealed do %>
-      <div class="text-center mb-6">
-        <span class="text-2xl font-bold">Platzierung</span>
+      <div class="text-center mb-4">
+        <span class="text-lg font-bold">Platzierung</span>
       </div>
-      <div class="space-y-3">
+      <div class="space-y-2">
         <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
           <div
             id={"team-standing-#{id}"}
             class={[
-              "flex items-center gap-4 rounded-xl px-5 py-4 shadow",
+              "flex items-center gap-3 rounded-lg px-4 py-3 shadow-sm",
               rank == 0 && "bg-warning/20 border border-warning",
               rank == 1 && "bg-base-300",
               rank == 2 && "bg-amber-800/20",
@@ -146,7 +143,7 @@
             ]}
           >
             <span class={[
-              "flex items-center justify-center w-12 h-12 rounded-full text-2xl font-bold shrink-0",
+              "flex items-center justify-center w-8 h-8 rounded-full text-base font-bold shrink-0",
               rank == 0 && "bg-warning text-warning-content",
               rank == 1 && "bg-base-content/20 text-base-content",
               rank == 2 && "bg-amber-800 text-amber-100",
@@ -155,17 +152,17 @@
               {rank + 1}
             </span>
             <span class={[
-              "flex-1 text-xl font-semibold",
+              "flex-1 text-sm font-semibold",
               rank == 0 && "text-warning",
               @team.id == id && "font-bold"
             ]}>
               {name}
               <%= if @team.id == id do %>
-                <span class="text-sm font-normal">(du)</span>
+                <span class="text-xs font-normal">(du)</span>
               <% end %>
             </span>
             <span class={[
-              "badge text-lg py-2 px-4 font-bold",
+              "badge text-sm py-1 px-3 font-bold",
               rank == 0 && "badge-warning",
               rank == 1 && "badge-primary",
               rank == 2 && "badge-primary",
@@ -179,28 +176,28 @@
 
   <%!-- Finished phase --%>
   <%= if @engine_state.status == :finished do %>
-    <div class="text-center mb-6">
-      <.icon name="hero-trophy" class="size-[4rem] mx-auto text-warning" />
-      <h2 class="text-2xl font-bold mt-4">Quiz beendet!</h2>
+    <div class="text-center mb-4">
+      <.icon name="hero-trophy" class="size-12 mx-auto text-warning" />
+      <h2 class="text-lg font-bold mt-2">Quiz beendet!</h2>
     </div>
 
     <%= if @standings != [] do %>
       <% [first | _rest] = @standings %>
       <% {_, winner_name, winner_score} = first %>
-      <div class="alert alert-success mb-4">
-        <.icon name="hero-star" class="size-5" />
+      <div class="alert alert-success mb-3 text-sm px-3 py-2">
+        <.icon name="hero-star" class="size-4" />
         <span><strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!</span>
       </div>
 
-      <div class="text-center mb-6">
-        <span class="text-2xl font-bold">Endplatzierung</span>
+      <div class="text-center mb-4">
+        <span class="text-lg font-bold">Endplatzierung</span>
       </div>
-      <div class="space-y-3">
+      <div class="space-y-2">
         <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
           <div
             id={"team-final-#{id}"}
             class={[
-              "flex items-center gap-4 rounded-xl px-5 py-4 shadow",
+              "flex items-center gap-3 rounded-lg px-4 py-3 shadow-sm",
               rank == 0 && "bg-warning/20 border border-warning",
               rank == 1 && "bg-base-300",
               rank == 2 && "bg-amber-800/20",
@@ -208,7 +205,7 @@
             ]}
           >
             <span class={[
-              "flex items-center justify-center w-12 h-12 rounded-full text-2xl font-bold shrink-0",
+              "flex items-center justify-center w-8 h-8 rounded-full text-base font-bold shrink-0",
               rank == 0 && "bg-warning text-warning-content",
               rank == 1 && "bg-base-content/20 text-base-content",
               rank == 2 && "bg-amber-800 text-amber-100",
@@ -217,17 +214,17 @@
               {rank + 1}
             </span>
             <span class={[
-              "flex-1 text-xl font-semibold",
+              "flex-1 text-sm font-semibold",
               rank == 0 && "text-warning",
               @team.id == id && "font-bold"
             ]}>
               {name}
               <%= if @team.id == id do %>
-                <span class="text-sm font-normal">(du)</span>
+                <span class="text-xs font-normal">(du)</span>
               <% end %>
             </span>
             <span class={[
-              "badge text-lg py-2 px-4 font-bold",
+              "badge text-sm py-1 px-3 font-bold",
               rank == 0 && "badge-warning",
               rank == 1 && "badge-primary",
               rank == 2 && "badge-primary",
@@ -237,8 +234,8 @@
         <% end %>
       </div>
     <% else %>
-      <div class="alert alert-warning">
-        <.icon name="hero-exclamation-triangle" class="size-5" />
+      <div class="alert alert-warning text-sm px-3 py-2">
+        <.icon name="hero-exclamation-triangle" class="size-4" />
         <span>Keine Teams vorhanden.</span>
       </div>
     <% end %>

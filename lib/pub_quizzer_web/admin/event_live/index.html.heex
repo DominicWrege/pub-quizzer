@@ -1,7 +1,12 @@
-<Layouts.app flash={@flash} current_scope={@current_scope} max_width="max-w-4xl">
+<Layouts.app
+  flash={@flash}
+  current_scope={@current_scope}
+  current_path={@current_path}
+  max_width="max-w-4xl"
+>
   <.header>
-    Quizes
-    <:subtitle>Von dir erstellte Quizes.</:subtitle>
+    Quiz
+    <:subtitle>Von dir erstellte Quiz.</:subtitle>
     <:actions>
       <.button navigate={~p"/admin/events/new"}>Neues Quiz</.button>
     </:actions>
@@ -19,83 +24,34 @@
     />
   </div>
 
-  <%= if @filtered_events == [] do %>
-    <div class="text-center py-12 text-base-content/70">
-      <%= if @search_query != "" do %>
-        Keine Quizes gefunden
-      <% else %>
-        Noch keine Quizes erstellt.
-      <% end %>
-    </div>
-  <% else %>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <%= for event <- @filtered_events do %>
-        <div id={"event-#{event.id}"} class="card bg-base-200 shadow-sm">
-          <div class="card-body gap-3">
-            <%= if event.name && event.name != "" do %>
-              <div class="flex items-center justify-between">
-                <h3 class="card-title text-base">{event.name}</h3>
-                <span class="badge">{event.team_count} Teams</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-base-content/60 font-mono">{event.code}</span>
-                <span class={[
-                  "text-xs font-semibold",
-                  event.status in ["topic_selection", "question", "round_reveal"] &&
-                    "text-primary",
-                  event.status == "finished" && "text-success",
-                  event.status == "lobby" && "text-base-content/40"
-                ]}>
-                  {status_label(event.status)}
-                </span>
-              </div>
-            <% else %>
-              <div class="flex items-center justify-between">
-                <span class="font-mono font-bold text-lg tracking-widest">{event.code}</span>
-                <span class="badge">{event.team_count} Teams</span>
-              </div>
-              <span class={[
-                "text-xs font-semibold",
-                event.status in ["topic_selection", "question", "round_reveal"] && "text-primary",
-                event.status == "finished" && "text-success",
-                event.status == "lobby" && "text-base-content/40"
-              ]}>
-                {status_label(event.status)}
-              </span>
+  <%= cond do %>
+    <% @filtered_events == [] -> %>
+      <div class="text-center py-12 text-base-content/70">
+        <%= if @search_query != "" do %>
+          Keine Quiz gefunden
+        <% else %>
+          Noch keine Quiz erstellt.
+        <% end %>
+      </div>
+    <% true -> %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <%= for event <- @active_events do %>
+          <.event_card event={event} />
+        <% end %>
+      </div>
+
+      <%= if @finished_events != [] do %>
+        <details class="mt-8 group">
+          <summary class="cursor-pointer text-sm text-base-content/50 hover:text-base-content/80 transition-colors select-none">
+            Beendete Quiz ({length(@finished_events)})
+          </summary>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
+            <%= for event <- @finished_events do %>
+              <.event_card event={event} />
             <% end %>
-
-            <span class="text-3xl font-bold font-mono">{Calendar.strftime(
-              event.inserted_at,
-              "%d.%m.%y"
-            )}</span>
-
-            <div class="card-actions justify-end mt-2">
-              <%= cond do %>
-                <% event.status in ["topic_selection", "question", "round_reveal"] -> %>
-                  <.link navigate={~p"/quiz/#{event.code}/host"} class="btn btn-primary btn-sm">Moderator</.link>
-                <% event.status == "lobby" -> %>
-                  <.link
-                    navigate={~p"/admin/events/#{event}"}
-                    class="btn btn-outline btn-sm border"
-                  >Verwalten</.link>
-                <% true -> %>
-                  <.link
-                    navigate={~p"/admin/events/#{event}"}
-                    class="btn btn-outline btn-sm border"
-                  >Details</.link>
-              <% end %>
-              <button
-                phx-click="ask_delete"
-                phx-value-id={event.id}
-                class="btn btn-outline btn-sm border text-error hover:text-error-content hover:bg-error"
-              >
-                Löschen
-              </button>
-            </div>
           </div>
-        </div>
+        </details>
       <% end %>
-    </div>
   <% end %>
 
   <%= if @delete_event_id do %>
@@ -113,8 +69,8 @@
           <% end %>
         </p>
         <div class="modal-action">
-          <button phx-click="cancel_delete" class="btn btn-outline">Abbrechen</button>
-          <button phx-click="confirm_delete" class="btn btn-error">Löschen</button>
+          <button phx-click="cancel_delete" class="btn btn-sm">Abbrechen</button>
+          <button phx-click="confirm_delete" class="btn btn-sm btn-error">Löschen</button>
         </div>
       </div>
     </div>

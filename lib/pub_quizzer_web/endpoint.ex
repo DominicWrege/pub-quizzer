@@ -1,6 +1,29 @@
 defmodule PubQuizzerWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :pub_quizzer
 
+  @impl true
+  def init(config) do
+    if config[:http] && Keyword.get(config[:http], :ip) == {0, 0, 0, 0} do
+      port = Keyword.get(config[:http], :port, 4000)
+
+      local_ips =
+        :inet.getif()
+        |> elem(1)
+        |> Enum.reject(fn
+          {{1, 0, 0, 0}, _, _} -> true
+          _ -> false
+        end)
+        |> Enum.map(fn {{a, b, c, d}, _, _} -> "  http://#{a}.#{b}.#{c}.#{d}:#{port}" end)
+
+      IO.puts("")
+      IO.puts("🌐 Netzwerk-Zugriff:")
+      Enum.each(local_ips, &IO.puts(&1))
+      IO.puts("")
+    end
+
+    {:ok, config}
+  end
+
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.

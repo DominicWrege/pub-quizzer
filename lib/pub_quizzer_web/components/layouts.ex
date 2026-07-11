@@ -31,6 +31,10 @@ defmodule PubQuizzerWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://phoenix.hexdocs.pm/scopes.html)"
 
+  attr :current_path, :string,
+    default: "",
+    doc: "the current request path (for active nav highlighting)"
+
   attr :max_width, :string, default: "max-w-2xl", doc: "max width class for the content area"
 
   attr :main_class, :string,
@@ -50,7 +54,7 @@ defmodule PubQuizzerWeb.Layouts do
         <div class="flex items-center justify-between">
           <a href="/" class="flex items-center gap-2">
             <img src={~p"/images/logo.svg"} width="28" />
-            <span class="text-sm font-semibold">Pub Quizzer</span>
+            <span class="text-sm font-semibold">Kneipenquiz</span>
           </a>
           <div class="flex-none flex items-center gap-2">
             <.link navigate={~p"/join"} class="btn btn-ghost btn-sm">Quiz beitreten</.link>
@@ -58,8 +62,24 @@ defmodule PubQuizzerWeb.Layouts do
           </div>
         </div>
         <div class="flex items-center gap-1 mt-1">
-          <.link navigate={~p"/admin/events"} class="btn btn-ghost btn-sm">Quizes</.link>
-          <.link navigate={~p"/admin/topics"} class="btn btn-ghost btn-sm">Themen verwalten</.link>
+          <.link
+            navigate={~p"/admin/events"}
+            class={[
+              "btn btn-ghost btn-sm",
+              if(String.starts_with?(@current_path, "/admin/events"),
+                do: "underline underline-offset-4 decoration-2"
+              )
+            ]}
+          >Quiz</.link>
+          <.link
+            navigate={~p"/admin/topics"}
+            class={[
+              "btn btn-ghost btn-sm",
+              if(String.starts_with?(@current_path, "/admin/topics"),
+                do: "underline underline-offset-4 decoration-2"
+              )
+            ]}
+          >Themen verwalten</.link>
         </div>
       </header>
       <div class="flex">
@@ -74,14 +94,14 @@ defmodule PubQuizzerWeb.Layouts do
         <div class="flex-1">
           <a href="/" class="flex-1 flex w-fit items-center gap-2">
             <img src={~p"/images/logo.svg"} width="36" />
-            <span class="text-sm font-semibold">Pub Quizzer</span>
+            <span class="text-sm font-semibold">Kneipenquiz</span>
           </a>
         </div>
         <%= unless @hide_nav_actions do %>
           <div class="flex-none hidden sm:flex">
             <ul class="flex px-1 space-x-4 items-center">
               <li>
-                <.link navigate={~p"/join"} class="btn btn-outline btn-sm">Quiz beitreten</.link>
+                <.link navigate={~p"/join"} class="btn btn-sm">Quiz beitreten</.link>
               </li>
               <li>
                 <.link navigate={~p"/admin/login"} class="btn btn-primary btn-sm">
@@ -92,7 +112,7 @@ defmodule PubQuizzerWeb.Layouts do
           </div>
           <div class="flex-none sm:hidden">
             <div class="dropdown dropdown-end">
-              <button tabindex="0" class="btn btn-outline btn-sm text-lg leading-none">
+              <button tabindex="0" class="btn btn-sm text-lg leading-none">
                 &#9776;
               </button>
               <ul

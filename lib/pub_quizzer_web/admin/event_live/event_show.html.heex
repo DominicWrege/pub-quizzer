@@ -1,4 +1,9 @@
-<Layouts.app flash={@flash} current_scope={@current_scope} max_width="max-w-3xl">
+<Layouts.app
+  flash={@flash}
+  current_scope={@current_scope}
+  current_path={@current_path}
+  max_width="max-w-3xl"
+>
   <.header>
     <%= if @event.name && @event.name != "" do %>
       {@event.name}
@@ -10,7 +15,7 @@
       <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator-Konsole</.link>
       <button
         phx-click="ask_delete_event"
-        class="btn btn-outline btn-sm border text-error hover:text-error-content hover:bg-error"
+        class="btn btn-sm text-error"
       >
         <.icon name="hero-trash" class="size-4" /> Löschen
       </button>
@@ -43,7 +48,7 @@
             {@event.code}
           </div>
           <div class="text-sm text-base-content/70 text-center">
-            Zeige diesen Code im Pub, damit Teams beitreten können.
+            Code an Teams weitergeben
           </div>
         </div>
         <div class="flex flex-col items-center gap-2">
@@ -58,24 +63,20 @@
     </div>
 
     <div class="flex gap-2 mb-6">
-      <button phx-click="add_slot" class="btn btn-outline btn-sm border">
+      <button phx-click="add_slot" class="btn btn-sm">
         <.icon name="hero-plus" class="size-4" /> Team hinzufügen
       </button>
-      <button phx-click="remove_slot" class="btn btn-outline btn-sm border">
+      <button phx-click="remove_slot" class="btn btn-sm">
         <.icon name="hero-minus" class="size-4" /> Team entfernen
       </button>
-      <button
-        id="copy-join-link"
-        phx-hook="CopyLink"
-        data-url={@join_url}
-        class="btn btn-outline btn-sm border"
-      >
+      <button id="copy-join-link" phx-hook="CopyLink" data-url={@join_url} class="btn btn-sm">
         <.icon name="hero-clipboard" class="size-3" /> Link kopieren
       </button>
       <span class="flex-1"></span>
       <button
         phx-click="ask_start"
         class="btn btn-primary btn-lg text-xl px-10"
+        disabled={!@all_teams_connected}
       >
         ▶ Quiz starten
       </button>
@@ -115,7 +116,7 @@
               <button
                 phx-click="remove_team"
                 phx-value-team_id={team.id}
-                class="btn btn-sm btn-outline border text-error hover:text-error-content hover:bg-error"
+                class="btn btn-sm text-error"
                 title="Team entfernen"
               >
                 <.icon name="hero-x-mark" class="size-4" />

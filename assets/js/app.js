@@ -44,10 +44,21 @@ let CopyLink = {
   }
 }
 
+let ScrollToBottom = {
+  mounted() {
+    if (localStorage.getItem("pm") === "true") {
+      document.body.classList.add("presentation-mode")
+    }
+    this.handleEvent("scroll_to_bottom", () => {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })
+    })
+  }
+}
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken },
-  hooks: { AutoDismiss, ImagePreview, CopyLink }
+  hooks: { AutoDismiss, ImagePreview, CopyLink, ScrollToBottom }
 })
 
 liveSocket.connect()

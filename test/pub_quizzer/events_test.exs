@@ -24,7 +24,7 @@ defmodule PubQuizzer.EventsTest do
     end
 
     test "team names are unique within the event" do
-      {:ok, event} = Quiz.create_event(%{team_count: 6})
+      {:ok, event} = Quiz.create_event(%{team_count: 5})
       names = Enum.map(event.teams, & &1.name)
       assert length(names) == length(Enum.uniq(names))
     end

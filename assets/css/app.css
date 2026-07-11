@@ -63,3 +63,19 @@ textarea,
 select {
   background-color: #f3f3f3;
 }
+
+.presentation-exit {
+  display: none;
+}
+
+body.presentation-mode .presentation-exit {
+  display: block;
+}
+
+body.presentation-mode .host-header {
+  display: none;
+}
+
+body.presentation-mode header.bg-base-200 {
+  display: none;
+}

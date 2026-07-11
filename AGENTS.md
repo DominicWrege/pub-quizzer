@@ -421,4 +421,65 @@ And **never** do this:
 - **Never** use `<.form let={f} ...>` in the template, instead **always use `<.form for={@form} ...>`**, then drive all form references from the form assign as in `@form[:field]`. The UI should **always** be driven by a `to_form/2` assigned in the LiveView module that is derived from a changeset
 <!-- phoenix:liveview-end -->
 
+<!-- phoenix:tailwind-start -->
+## Tailwind v4 guidelines
+
+- This project uses Tailwind v4 with CSS-based configuration. **Never** create or modify a `tailwind.config.js` — all customization is done in `assets/css/app.css`
+- Use `@import "tailwindcss"` at the top of your CSS entry point — the old `@tailwind base/components/utilities` directives no longer exist in v4
+- Register plugins with `@plugin "plugin-name"` in CSS (e.g., `@plugin "daisyui"`)
+- Define custom theme tokens with `@theme`:
+
+      @theme {
+        --color-brand: oklch(0.52 0.16 55);
+        --font-display: "Inter", sans-serif;
+        --spacing-page: 1.5rem;
+      }
+
+  Theme values are automatically available as utility classes (`bg-brand`, `font-display`, `p-page`)
+
+- Tailwind v4 uses **OKLCH** colors by default — always prefer `oklch()` over `hsl()` or `rgb()` unless you need exact color matching from a design spec
+- Use `@variant` / `@custom-variant` for custom state variants:
+
+      @custom-variant dark (&:where(.dark, .dark *));
+      @variant pointer-coarse (@media (pointer: coarse));
+
+- Use `@reference` to import Tailwind in other CSS files without generating utility classes (e.g., in component CSS files):
+
+      @import "tailwindcss/reference";
+
+- Arbitrary values use bracket syntax as in v3: `class="w-[200px]"`
+- `@apply` still works but prefer component classes or inline utilities where practical
+- When using conditional classes in HEEx, prefer the list syntax documented in the Phoenix HTML guidelines above
+<!-- phoenix:tailwind-end -->
+
+<!-- js:modern-start -->
+## Modern JavaScript guidelines
+
+- **Never** use `var` — always `const` (immutable binding) or `let` (mutable binding)
+- Prefer arrow functions for callbacks, event handlers, and short lambdas — use `function` declarations only for top-level named functions or constructors
+- Use **template literals** over string concatenation:
+
+      // good
+      const url = `/api/questions/${id}`
+      // bad
+      const url = "/api/questions/" + id
+
+- Use **destructuring** for objects and arrays:
+
+      const {name, email} = user
+      const [first, ...rest] = items
+
+- Use **optional chaining** and **nullish coalescing**:
+
+      const city = user?.address?.city ?? "Unknown"
+
+- Prefer `async/await` over `.then()` chains for asynchronous code
+- Use `import`/`export` syntax (already the project standard)
+- For DOM queries, prefer `querySelector`/`querySelectorAll` over older methods like `getElementById`
+- Use `fetch` for HTTP requests — avoid XMLHttpRequest
+- For array operations, prefer declarative methods (`map`, `filter`, `reduce`, `find`, `some`, `every`) over manual `for`/`forEach` loops
+- Phoenix LiveView hooks: use the colocated hook pattern (`.HookName` in HEEx) documented in the LiveView JavaScript interop section above; reserve external `phx-hook` hooks for complex cases that don't fit inline scripts
+- When interacting with LiveView from a hook, use `this.pushEvent`, `this.pushEventTo`, and `this.handleEvent` — never manipulate the DOM directly in ways that conflict with LiveView's morphdom diffing
+<!-- js:modern-end -->
+
 <!-- usage-rules-end -->

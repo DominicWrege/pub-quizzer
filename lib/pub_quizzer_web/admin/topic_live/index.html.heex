@@ -1,4 +1,9 @@
-<Layouts.app flash={@flash} current_scope={@current_scope} max_width="max-w-4xl">
+<Layouts.app
+  flash={@flash}
+  current_scope={@current_scope}
+  current_path={@current_path}
+  max_width="max-w-4xl"
+>
   <.header>
     Themen
     <:subtitle>Verwalte Quiz-Themen für die Runden.</:subtitle>
@@ -27,12 +32,12 @@
                 <.link
                   phx-click="ask_delete"
                   phx-value-id={@editing_topic_id}
-                  class="btn btn-outline btn-sm border text-error hover:text-error-content hover:bg-error"
+                  class="btn btn-sm text-error"
                 >
                   Löschen
                 </.link>
               <% end %>
-              <.link phx-click="cancel_edit" class="btn btn-outline btn-sm border">
+              <.link phx-click="cancel_edit" class="btn btn-sm">
                 Abbrechen
               </.link>
             </div>
@@ -58,14 +63,14 @@
             <div class="card-actions justify-end mt-2">
               <.link
                 navigate={~p"/admin/topics/#{topic}/questions"}
-                class="btn btn-outline btn-sm border"
+                class="btn btn-sm"
               >
                 Fragen
               </.link>
               <.link
                 phx-click="start_edit"
                 phx-value-id={topic.id}
-                class="btn btn-outline btn-sm border"
+                class="btn btn-sm"
               >
                 Bearbeiten
               </.link>
