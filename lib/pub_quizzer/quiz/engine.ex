@@ -71,6 +71,15 @@ defmodule PubQuizzer.Quiz.Engine do
   end
 
   @doc """
+  Register a newly joined team with the engine.
+  """
+  def register_team(event_id, team_id, name, slot_index) do
+    GenServer.call(via_tuple(event_id), {:register_team, team_id, name, slot_index})
+  catch
+    :exit, _ -> {:error, :not_found}
+  end
+
+  @doc """
   Start the quiz (lobby → topic_selection).
   """
   def start_quiz(event_id) do
@@ -173,6 +182,15 @@ defmodule PubQuizzer.Quiz.Engine do
   def handle_call(:get_state, _from, state) do
     {:ok, state} = ensure_loaded(state)
     {:reply, {:ok, state.engine_state}, state}
+  end
+
+  def handle_call({:register_team, team_id, name, slot_index}, _from, state) do
+    {:ok, state} = ensure_loaded(state)
+
+    {:ok, new_es} = EngineState.register_team(state.engine_state, team_id, name, slot_index)
+    broadcast(new_es)
+
+    {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
   end
 
   def handle_call(:start_quiz, _from, state) do

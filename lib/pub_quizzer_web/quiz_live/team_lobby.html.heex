@@ -159,7 +159,10 @@
               rank == 0 && "text-warning",
               @team.id == id && "font-bold"
             ]}>
-              {name}<%= if @team.id == id do %> <span class="text-sm font-normal">(du)</span><% end %>
+              {name}
+              <%= if @team.id == id do %>
+                <span class="text-sm font-normal">(du)</span>
+              <% end %>
             </span>
             <span class={[
               "badge text-lg py-2 px-4 font-bold",
@@ -218,7 +221,10 @@
               rank == 0 && "text-warning",
               @team.id == id && "font-bold"
             ]}>
-              {name}<%= if @team.id == id do %> <span class="text-sm font-normal">(du)</span><% end %>
+              {name}
+              <%= if @team.id == id do %>
+                <span class="text-sm font-normal">(du)</span>
+              <% end %>
             </span>
             <span class={[
               "badge text-lg py-2 px-4 font-bold",

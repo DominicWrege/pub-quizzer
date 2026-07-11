@@ -133,7 +133,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   def handle_event("remove_team", %{"team_id" => team_id}, socket) do
     event_id = socket.assigns.event.id
 
-    team = Repo.get!(Team, String.to_integer(team_id)) |> Repo.delete!()
+    _team = Repo.get!(Team, String.to_integer(team_id)) |> Repo.delete!()
 
     Phoenix.PubSub.broadcast(
       PubQuizzer.PubSub,

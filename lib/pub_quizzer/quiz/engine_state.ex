@@ -271,6 +271,24 @@ defmodule PubQuizzer.Quiz.EngineState do
     |> Enum.sort_by(fn {_, _, score} -> score end, :desc)
   end
 
+  @doc """
+  Register a newly joined team in the engine state.
+  """
+  def register_team(%__MODULE__{} = state, team_id, name, slot_index) do
+    if Enum.any?(state.teams, &(&1.id == team_id)) do
+      {:ok, state}
+    else
+      team = %{id: team_id, name: name, slot_index: slot_index}
+
+      {:ok,
+       %{
+         state
+         | teams: state.teams ++ [team],
+           standings: Map.put(state.standings, team_id, 0)
+       }}
+    end
+  end
+
   # --- Private helpers ---
 
   defp valid_team?(state, team_id) do
