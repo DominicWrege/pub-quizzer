@@ -23,6 +23,12 @@ config :pub_quizzer, PubQuizzerWeb.Endpoint,
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:pub_quizzer, ~w(--sourcemap=inline --watch)]},
     tailwindcss: {Tailwind, :install_and_run, [:pub_quizzer, ~w(--watch)]}
+  ],
+  live_reload: [
+    patterns: [
+      ~r{priv/static/(?!uploads/).+},
+      ~r{lib/pub_quizzer_web/(controllers|live|components|admin)/.*.(ex|heex)$}
+    ]
   ]
 
 # ## SSL Support
