@@ -16,7 +16,7 @@
           onclick="var b=document.body,c=b.classList.toggle('presentation-mode');localStorage.setItem('pm',c)"
           class="btn btn-sm btn-primary"
         >
-          Präsentationsmodus
+          Präsentationsmodus <kbd class="kbd kbd-xs">P</kbd>
         </button>
         <button
           phx-click="ask_finish_quiz"
@@ -91,11 +91,16 @@
 
       <div class="mb-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-xl font-semibold">
-            Frage {(@engine_state.question_index || 0) + 1} / {length(
-              @engine_state.current_questions
-            )}
-          </h3>
+          <div>
+            <h3 class="text-xl font-semibold">
+              Frage {(@engine_state.question_index || 0) + 1} / {length(
+                @engine_state.current_questions
+              )}
+            </h3>
+            <%= if @current_topic_name do %>
+              <span class="text-sm text-base-content/60">{@current_topic_name}</span>
+            <% end %>
+          </div>
           <span class="badge badge-ghost text-lg px-4 py-2">
             {MapSet.size(answered)} / {total_teams} Teams geantwortet
           </span>
@@ -105,21 +110,19 @@
       <div class="card bg-base-200 mb-4 overflow-hidden">
         <div class="card-body">
           <%= if question[:image] do %>
-            <div class="flex flex-col sm:flex-row gap-6">
-              <div class="flex-1 min-w-0">
-                <h4 class="card-title text-5xl break-words leading-relaxed">{question.prompt}</h4>
-                <div class="space-y-4 mt-6">
-                  <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                    <div class="p-6 rounded-lg bg-base-300 text-3xl">
-                      <span class="font-mono font-bold mr-4">{String.capitalize(
-                        Enum.at(["a", "b", "c", "d", "e", "f"], idx, "")
-                      )}.</span>
-                      <span class="break-words">{option}</span>
-                    </div>
-                  <% end %>
-                </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <h4 class="card-title text-4xl break-words leading-relaxed sm:col-span-2">{question.prompt}</h4>
+              <div class="space-y-4">
+                <%= for {option, idx} <- Enum.with_index(question.options) do %>
+                  <div class="p-6 rounded-lg bg-base-300 text-3xl">
+                    <span class="font-mono font-bold mr-4">{String.capitalize(
+                      Enum.at(["a", "b", "c", "d", "e", "f"], idx, "")
+                    )}.</span>
+                    <span class="break-words">{option}</span>
+                  </div>
+                <% end %>
               </div>
-              <div class="shrink-0 flex items-start">
+              <div class="flex items-start">
                 <img src={question.image} alt="Fragebild" class="rounded-lg max-h-72 w-auto" />
               </div>
             </div>
@@ -141,7 +144,7 @@
 
       <% all_answered = MapSet.size(answered) == total_teams %>
 
-      <div class="flex gap-4 items-center">
+      <div class="flex justify-end">
         <%= if (@engine_state.question_index || 0) < length(@engine_state.current_questions) - 1 do %>
           <button
             phx-click="next_question"
@@ -153,16 +156,11 @@
         <% else %>
           <button
             phx-click="ask_reveal_round"
-            class="btn btn-warning btn-lg text-xl"
+            class="btn btn-primary btn-lg text-xl"
             disabled={!all_answered}
           >
             <.icon name="hero-eye" class="size-6" /> Runde auflösen
           </button>
-        <% end %>
-        <%= if !all_answered do %>
-          <span class="text-base text-base-content/60">
-            Warte auf alle Teams ({MapSet.size(answered)} / {total_teams})
-          </span>
         <% end %>
       </div>
     <% end %>
@@ -193,8 +191,8 @@
                 <div class="space-y-2">
                   <%= for {option, idx} <- Enum.with_index(question.options) do %>
                     <div class={[
-                      "p-4 rounded text-2xl",
-                      idx == question.correct_index && "bg-success/20",
+                      "p-4 rounded text-2xl transition-all duration-500 ease-out",
+                      idx == question.correct_index && "bg-success/30 border-2 border-success",
                       idx != question.correct_index && "bg-base-300"
                     ]}>
                       <span class="font-mono mr-3">{String.capitalize(
@@ -250,7 +248,7 @@
                 </span>
                 <span class={[
                   "flex-1 text-3xl font-bold",
-                  rank == 0 && "text-warning"
+                  rank == 0 && "text-base-content"
                 ]}>{name}</span>
                 <span class={[
                   "badge text-2xl py-4 px-6 font-bold",
@@ -263,13 +261,13 @@
             <% end %>
           </div>
 
-          <div class="mt-6 flex gap-2">
+          <div class="mt-6 flex justify-end">
             <button phx-click="next_round" class="btn btn-primary btn-lg text-xl">
               <.icon name="hero-chevron-right" class="size-6" /> Nächste Runde
             </button>
           </div>
         <% else %>
-          <div class="mb-6">
+          <div class="mb-6 flex justify-center">
             <button phx-click="show_standings" class="btn btn-primary btn-lg text-2xl px-12 py-4">
               <.icon name="hero-chevron-right" class="size-7" /> Team-Ergebnisse anzeigen
             </button>
@@ -336,18 +334,18 @@
         </div>
       <% end %>
 
-      <div class="mt-6 flex gap-2">
-        <.link
-          navigate={~p"/admin/events/#{@event.id}/results"}
-          class="btn btn-lg btn-primary"
-        >
-          <.icon name="hero-clipboard" class="size-6" /> Antworten ansehen
-        </.link>
+      <div class="mt-6 flex justify-between">
         <.link
           navigate={~p"/admin/events"}
           class="btn btn-lg btn-outline border-2 border-base-content/60"
         >
           <.icon name="hero-chevron-left" class="size-6" /> Zurück zum Quiz
+        </.link>
+        <.link
+          navigate={~p"/admin/events/#{@event.id}/results"}
+          class="btn btn-lg btn-primary"
+        >
+          <.icon name="hero-clipboard" class="size-6" /> Antworten ansehen
         </.link>
       </div>
     <% end %>

@@ -35,6 +35,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
               |> assign(:page_title, "Quiz — #{code}")
               |> assign(:standings, EngineState.standings_sorted(state))
               |> assign(:available_topics, compute_available_topics(state))
+              |> assign(:current_topic_name, compute_current_topic_name(state))
               |> assign(:shuffle_map, shuffle_map)
               |> assign(:shuffled_options, shuffled_options)
               |> assign(:selected_index, nil)
@@ -84,9 +85,10 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
     {:noreply,
      socket
      |> assign(:engine_state, state)
-     |> assign(:standings, EngineState.standings_sorted(state))
-     |> assign(:available_topics, compute_available_topics(state))
-     |> assign(:shuffle_map, shuffle_map)
+      |> assign(:standings, EngineState.standings_sorted(state))
+      |> assign(:available_topics, compute_available_topics(state))
+      |> assign(:current_topic_name, compute_current_topic_name(state))
+      |> assign(:shuffle_map, shuffle_map)
      |> assign(:shuffled_options, shuffled_options)
      |> assign(:selected_index, selected_index)}
   end
@@ -172,6 +174,13 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
       )
     else
       {[], %{}}
+    end
+  end
+
+  defp compute_current_topic_name(state) do
+    case state.current_topic_id do
+      nil -> nil
+      id -> Enum.find_value(state.available_topics, fn t -> if t.id == id, do: t.name end)
     end
   end
 

@@ -202,5 +202,13 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
     |> assign(:engine_state, state)
     |> assign(:available_topics, available_topics)
     |> assign(:standings, EngineState.standings_sorted(state))
+    |> assign(:current_topic_name, compute_current_topic_name(state))
+  end
+
+  defp compute_current_topic_name(state) do
+    case state.current_topic_id do
+      nil -> nil
+      id -> Enum.find_value(state.available_topics, fn t -> if t.id == id, do: t.name end)
+    end
   end
 end

@@ -59,8 +59,20 @@ let ScrollToBottom = {
       document.body.classList.add("presentation-mode")
     }
     this.handleEvent("scroll_to_bottom", () => {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })
+      requestAnimationFrame(() => {
+        this.el.scrollIntoView({ behavior: "smooth", block: "end" })
+      })
     })
+    this._keydown = (e) => {
+      if (e.key === "p" || e.key === "P") {
+        const active = document.body.classList.toggle("presentation-mode")
+        localStorage.setItem("pm", active)
+      }
+    }
+    document.addEventListener("keydown", this._keydown)
+  },
+  destroyed() {
+    document.removeEventListener("keydown", this._keydown)
   }
 }
 

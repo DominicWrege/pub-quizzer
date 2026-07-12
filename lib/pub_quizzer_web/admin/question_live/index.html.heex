@@ -13,7 +13,20 @@
     {@page_title}
     <:subtitle>{@topic.name}</:subtitle>
     <:actions>
-      <button phx-click="start_new" class="btn btn-primary btn-sm">Neue Frage</button>
+      <div class="flex items-center gap-2">
+        <form id="search-form" phx-change="search" class="contents">
+          <input
+            name="search"
+            type="text"
+            value={@search}
+            placeholder="Suchen..."
+            class="input input-sm"
+          />
+        </form>
+        <button phx-click="start_new" class="btn btn-primary btn-sm">
+          <.icon name="hero-plus" class="size-4" /> Neue Frage
+        </button>
+      </div>
     </:actions>
   </.header>
 
@@ -92,14 +105,14 @@
         phx-value-id={q.id}
         class="btn btn-sm"
       >
-        Bearbeiten
+        <.icon name="hero-pencil" class="size-4" /> Bearbeiten
       </button>
       <button
         phx-click="ask_delete"
         phx-value-id={q.id}
         class="btn btn-sm text-error"
       >
-        Löschen
+        <.icon name="hero-trash" class="size-4" /> Löschen
       </button>
     </:action>
   </.table>

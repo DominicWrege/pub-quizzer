@@ -1,5 +1,21 @@
 This is a web application written using the Phoenix web framework.
 
+## Session: Host/Team lobby UI polish (Jul 12, 2026)
+
+### Changes
+- **Reveal contrast**: `bg-success/20` → `bg-success/30 border-2 border-success` on correct answer in round reveal for better visibility on beamer.
+- **Team lobby width**: `max-w-sm` → `max-w-md` for more breathing room on larger phones.
+- **Question image layout**: Switched from `flex` to `grid grid-cols-1 sm:grid-cols-2` so the prompt spans both columns (`sm:col-span-2`) with options left, image right. Prompt font reduced from `text-5xl` to `text-4xl`.
+- **Host question button alignment**: "Nächste Frage" / "Runde auflösen" button always right-aligned (`flex justify-end`). Removed redundant "Warte auf alle Teams" text (badge already shows count).
+- **Scroll on reveal answer**: `ScrollToBottom` hook now uses `requestAnimationFrame` + `this.el.scrollIntoView({ block: "end" })` instead of `window.scrollTo(body.scrollHeight)`.
+- **"Team-Ergebnisse anzeigen" button**: Centered (`flex justify-center`).
+- **"Nächste Runde" button**: Right-aligned (`flex justify-end`).
+- **"Runde auflösen" button color**: `btn-warning` → `btn-primary` (matches "Nächste Frage" style).
+- **Topic/category name**: Added `current_topic_name` assign to both `TeamLobby` and `HostLobby` (looked up from `state.available_topics` via `current_topic_id`). Displayed under the question counter in both views.
+- **Presentation mode key shortcut**: `P` key toggles presentation mode via `keydown` listener in `ScrollToBottom` hook (with cleanup on `destroyed`). `P` badge shown in button text.
+- **Warning button text color**: Changed `--color-warning-content` from `oklch(0.28 0.04 60)` (dark) to `oklch(0.98 0 0)` (white) in the daisyUI theme — all `btn-warning` get white text now.
+- **Back button position**: Always place back buttons on the **left** side. Use the `<:back>` slot (not `<:actions>`) in `<.header>` components. In flex containers, put the back button first with `justify-between` to push other actions right.
+
 When you need to search docs for Elixir, Phoenix, Ecto, LiveView, or Tailwind, use the `context7` MCP server.
 
 ## Project guidelines
@@ -458,7 +474,7 @@ And **never** do this:
 ## Anti-patterns
 
 - **Ghost buttons**: Do not use buttons with no visible border, background, or affordance. Users should never guess whether something is clickable. Every button must have a clear background, a visible border, or both, plus a distinct hover/active state.
-- **Ghost tables**: Do not use tables with no borders, no alternating row shading, and no visual row separation. Data tables must have clear row delineation — use `divide-y`, striped rows, row hover highlighting (`hover:bg-base-200`), and visible column headers with adequate padding.
+- **Ghost tables**: **Never** use tables with no borders, no alternating row shading, and no visual row separation. Data tables **must always** have clear row delineation — use `divide-y divide-base-200` on `<tbody>`, visible column headers with `bg-base-200` and `border-b-2 border-base-300`, adequate cell padding (`px-4 py-3`), and `border border-base-300` on the table container. Consider `hover:bg-base-200` for interactive rows.
 - **Low contrast text**: Always ensure sufficient contrast between text and its background. Avoid dark text on dark backgrounds or light text on light backgrounds. Use `bg-base-100`/`bg-base-200` with `text-base-content` for neutral containers, or use proper semantic alert classes (`alert-info`, `alert-success`, etc.) which handle their own contrast — but never place custom elements (buttons, text) inside an alert without checking contrast. When in doubt, test with a browser or use a tool like the WebAIM contrast checker.
 <!-- anti-patterns:end -->
 

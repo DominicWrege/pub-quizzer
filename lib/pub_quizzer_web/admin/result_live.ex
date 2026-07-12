@@ -32,19 +32,20 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
       max_width="max-w-7xl"
     >
       <.header>
-        Ergebnisse
-        <:subtitle>
-          {@results.event.name || "Quiz"} · Code
-          <span class="font-mono font-bold">{@results.event.code}</span>
-        </:subtitle>
-        <:actions>
+        <div class="flex items-baseline gap-3">
+          <span>Ergebnisse</span>
+          <span class="text-sm text-base-content/70 whitespace-nowrap">
+            {@results.event.name || "Quiz"} · Code <span class="font-mono font-bold">{@results.event.code}</span>
+          </span>
+        </div>
+        <:back>
           <.link
             navigate={~p"/admin/events"}
             class="btn btn-sm btn-outline border-2 border-base-content/60"
           >
             <.icon name="hero-chevron-left" class="size-4" /> Zurück
           </.link>
-        </:actions>
+        </:back>
       </.header>
 
       <%!-- Final standings summary --%>
@@ -76,7 +77,7 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
       <%= for {round_data, r_idx} <- Enum.with_index(@results.rounds_data) do %>
         <div class="mb-8">
           <h3 class="text-lg font-semibold mb-3">
-            Runde {r_idx + 1}: {@round_data.round.topic.name}
+            Runde {r_idx + 1}: {round_data.round.topic.name}
           </h3>
           <div class="overflow-x-auto rounded-lg border border-base-300">
             <table class="table table-sm">
@@ -92,7 +93,7 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
                 <tr :for={{question, q_idx} <- Enum.with_index(round_data.questions)}>
                   <td>
                     <div class="font-medium">
-                      <span class="text-base-content/40 font-mono text-xs mr-1">Q{q_idx + 1}</span>
+                      <span class="text-base-content/60 font-mono text-xs mr-1">Q{q_idx + 1}</span>
                       {question.prompt}
                     </div>
                     <div class="text-xs text-success mt-0.5">
@@ -103,13 +104,13 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
                     <% selected =
                       Map.get(@results.answer_lookup, {round_data.round.id, question.id, team.id}) %>
                     <%= if selected == nil do %>
-                      <span class="text-base-content/30">—</span>
+                      <span class="text-base-content/50">—</span>
                     <% else %>
                       <% correct = selected == question.correct_index %>
                       <span class={[
                         "inline-flex items-center gap-1 px-2 py-1 rounded font-mono text-sm",
-                        correct && "bg-success/20 text-success",
-                        !correct && "bg-error/20 text-error"
+                        correct && "bg-success text-success-content",
+                        !correct && "bg-error text-error-content"
                       ]}>
                         {String.upcase(letter(selected))}
                         <.icon

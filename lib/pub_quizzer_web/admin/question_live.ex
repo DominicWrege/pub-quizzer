@@ -21,6 +21,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
      |> assign(:pending_delete_id, nil)
      |> assign(:editing_question_id, nil)
      |> assign(:image_preview_url, nil)
+     |> assign(:search, "")
      |> allow_upload(:image,
        accept: ~w(.jpg .jpeg .png .gif .webp),
        max_entries: 1,
@@ -29,11 +30,25 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   end
 
   @impl true
+  def handle_params(%{"search" => search}, _url, socket) when search != "" do
+    {:noreply,
+     socket
+     |> assign(:search, search)
+     |> assign(:page_title, "Fragen")
+     |> stream(:questions, Quiz.search_questions_for_topic(socket.assigns.topic.id, search))}
+  end
+
   def handle_params(_params, _url, socket) do
     {:noreply,
      socket
-     |> assign(:page_title, "Fragen — #{socket.assigns.topic.name}")
+     |> assign(:search, "")
+     |> assign(:page_title, "Fragen")
      |> stream(:questions, Quiz.list_questions_for_topic(socket.assigns.topic.id))}
+  end
+
+  @impl true
+  def handle_event("search", %{"search" => search}, socket) do
+    {:noreply, push_patch(socket, to: ~p"/admin/topics/#{socket.assigns.topic.id}/questions?search=#{search}")}
   end
 
   @impl true
@@ -82,7 +97,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
      socket
      |> assign(:confirm_action, nil)
      |> assign(:pending_delete_id, nil)
-     |> stream_delete(:questions, question)
+     |> restream_questions()
      |> put_flash(:info, "Frage gelöscht.")}
   end
 
@@ -171,6 +186,17 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     filename |> Path.extname() |> String.downcase()
   end
 
+  defp restream_questions(socket) do
+    questions =
+      if socket.assigns.search == "" do
+        Quiz.list_questions_for_topic(socket.assigns.topic.id)
+      else
+        Quiz.search_questions_for_topic(socket.assigns.topic.id, socket.assigns.search)
+      end
+
+    stream(socket, :questions, questions, reset: true)
+  end
+
   defp save_question(socket, :new, question_params) do
     question_params = Map.put(question_params, "topic_id", socket.assigns.topic.id)
 
@@ -180,9 +206,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
          socket
          |> assign(:editing_question_id, nil)
          |> assign(:image_preview_url, nil)
-         |> stream(:questions, Quiz.list_questions_for_topic(socket.assigns.topic.id),
-           reset: true
-         )
+         |> restream_questions()
          |> put_flash(:info, "Frage erstellt.")}
 
       {:error, changeset} ->
@@ -197,9 +221,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
          socket
          |> assign(:editing_question_id, nil)
          |> assign(:image_preview_url, nil)
-         |> stream(:questions, Quiz.list_questions_for_topic(socket.assigns.topic.id),
-           reset: true
-         )
+         |> restream_questions()
          |> put_flash(:info, "Frage aktualisiert.")}
 
       {:error, changeset} ->

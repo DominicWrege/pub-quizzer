@@ -33,7 +33,7 @@ defmodule PubQuizzer.Quiz.QuizEvent do
     ])
     |> validate_required([:code, :status, :team_count])
     |> validate_inclusion(:status, @statuses)
-    |> validate_number(:team_count, greater_than: 0, less_than_or_equal_to: 20)
+    |> validate_number(:team_count, greater_than: 0, less_than_or_equal_to: 10)
     |> unique_constraint(:code)
   end
 end

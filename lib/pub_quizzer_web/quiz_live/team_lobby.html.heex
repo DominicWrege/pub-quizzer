@@ -1,11 +1,11 @@
 <Layouts.app
   flash={@flash}
-  max_width="max-w-sm"
+  max_width="max-w-md"
   hide_nav_actions
   main_class="px-3 pt-1 pb-3 sm:pt-3 sm:pb-4 sm:px-4 lg:px-6"
 >
   <%!-- Team name header always visible --%>
-  <div class="text-center mb-3">
+  <div class="text-center mt-3 mb-3">
     <h1 class="text-lg font-bold">{@team.name}</h1>
   </div>
 
@@ -59,11 +59,16 @@
 
     <div class="mb-4">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-sm font-semibold">
-          Frage {(@engine_state.question_index || 0) + 1} / {length(
-            @engine_state.current_questions
-          )}
-        </h3>
+        <div>
+          <h3 class="text-sm font-semibold">
+            Frage {(@engine_state.question_index || 0) + 1} / {length(
+              @engine_state.current_questions
+            )}
+          </h3>
+          <%= if @current_topic_name do %>
+            <span class="text-xs text-base-content/60">{@current_topic_name}</span>
+          <% end %>
+        </div>
         <span class="badge badge-ghost badge-sm text-xs">
           {MapSet.size(answered)} / {length(@engine_state.teams)} geantwortet
         </span>
@@ -153,7 +158,7 @@
             </span>
             <span class={[
               "flex-1 text-sm font-semibold",
-              rank == 0 && "text-warning",
+              rank == 0 && "text-base-content",
               @team.id == id && "font-bold"
             ]}>
               {name}
@@ -215,7 +220,7 @@
             </span>
             <span class={[
               "flex-1 text-sm font-semibold",
-              rank == 0 && "text-warning",
+              rank == 0 && "text-base-content",
               @team.id == id && "font-bold"
             ]}>
               {name}

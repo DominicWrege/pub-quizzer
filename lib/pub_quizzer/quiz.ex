@@ -61,6 +61,16 @@ defmodule PubQuizzer.Quiz do
     |> Repo.all()
   end
 
+  def search_questions_for_topic(topic_id, query) when is_binary(query) do
+    pattern = "%#{query}%"
+
+    Question
+    |> where(topic_id: ^topic_id)
+    |> where([q], like(q.prompt, ^pattern))
+    |> order_by(asc: :position)
+    |> Repo.all()
+  end
+
   def get_question!(id) do
     Question
     |> preload(:topic)

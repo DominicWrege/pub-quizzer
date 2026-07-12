@@ -310,11 +310,11 @@ defmodule PubQuizzerWeb.Admin.EventLive do
           </div>
         <% else %>
           <div class="flex items-center justify-between">
-            <span class="font-mono font-bold text-lg tracking-widest">{@event.code}</span>
+            <span class="text-sm text-base-content/60 font-mono">{@event.code}</span>
             <span class="badge">{@event.team_count} Teams</span>
           </div>
           <span class={[
-            "text-xs font-semibold",
+            "text-sm font-semibold",
             @event.status in ["topic_selection", "question", "round_reveal"] && "text-primary",
             @event.status == "finished" && "text-success",
             @event.status == "lobby" && "text-base-content/40"
@@ -336,7 +336,6 @@ defmodule PubQuizzerWeb.Admin.EventLive do
               <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm">Verwalten</.link>
             <% true -> %>
               <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-primary">Ergebnisse</.link>
-              <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm">Details</.link>
           <% end %>
           <button
             phx-click="ask_delete"
