@@ -48,7 +48,17 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   @impl true
   def handle_event("search", %{"search" => search}, socket) do
-    {:noreply, push_patch(socket, to: ~p"/admin/topics/#{socket.assigns.topic.id}/questions?search=#{search}")}
+    questions =
+      if search == "" do
+        Quiz.list_questions_for_topic(socket.assigns.topic.id)
+      else
+        Quiz.search_questions_for_topic(socket.assigns.topic.id, search)
+      end
+
+    {:noreply,
+     socket
+     |> assign(:search, search)
+     |> stream(:questions, questions, reset: true)}
   end
 
   @impl true

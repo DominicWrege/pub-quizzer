@@ -85,10 +85,10 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
     {:noreply,
      socket
      |> assign(:engine_state, state)
-      |> assign(:standings, EngineState.standings_sorted(state))
-      |> assign(:available_topics, compute_available_topics(state))
-      |> assign(:current_topic_name, compute_current_topic_name(state))
-      |> assign(:shuffle_map, shuffle_map)
+     |> assign(:standings, EngineState.standings_sorted(state))
+     |> assign(:available_topics, compute_available_topics(state))
+     |> assign(:current_topic_name, compute_current_topic_name(state))
+     |> assign(:shuffle_map, shuffle_map)
      |> assign(:shuffled_options, shuffled_options)
      |> assign(:selected_index, selected_index)}
   end

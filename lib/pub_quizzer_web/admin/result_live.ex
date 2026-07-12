@@ -35,7 +35,8 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
         <div class="flex items-baseline gap-3">
           <span>Ergebnisse</span>
           <span class="text-sm text-base-content/70 whitespace-nowrap">
-            {@results.event.name || "Quiz"} · Code <span class="font-mono font-bold">{@results.event.code}</span>
+            {@results.event.name || "Quiz"} · Code
+            <span class="font-mono font-bold">{@results.event.code}</span>
           </span>
         </div>
         <:back>

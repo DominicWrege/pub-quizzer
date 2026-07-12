@@ -111,7 +111,9 @@
         <div class="card-body">
           <%= if question[:image] do %>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <h4 class="card-title text-4xl break-words leading-relaxed sm:col-span-2">{question.prompt}</h4>
+              <h4 class="card-title text-4xl break-words leading-relaxed sm:col-span-2">
+                {question.prompt}
+              </h4>
               <div class="space-y-4">
                 <%= for {option, idx} <- Enum.with_index(question.options) do %>
                   <div class="p-6 rounded-lg bg-base-300 text-3xl">
