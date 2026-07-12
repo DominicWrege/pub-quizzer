@@ -39,15 +39,6 @@ if config_env() == :dev do
 end
 
 if config_env() == :prod do
-  admin_password =
-    System.get_env("ADMIN_PASSWORD") ||
-      raise """
-      environment variable ADMIN_PASSWORD is missing.
-      Set it to a strong password for the admin panel.
-      """
-
-  config :pub_quizzer, :admin, password: admin_password
-
   database_path =
     System.get_env("DATABASE_PATH") ||
       raise """
@@ -85,6 +76,26 @@ if config_env() == :prod do
       ip: {0, 0, 0, 0, 0, 0, 0, 0}
     ],
     secret_key_base: secret_key_base
+
+  resend_api_key =
+    System.get_env("RESEND_API_KEY") ||
+      raise """
+      environment variable RESEND_API_KEY is missing.
+      Get one from https://resend.com/api-keys
+      """
+
+  config :pub_quizzer, PubQuizzer.Mailer,
+    adapter: Swoosh.Adapters.Resend,
+    api_key: resend_api_key
+
+  mail_from =
+    System.get_env("MAIL_FROM") ||
+      raise """
+      environment variable MAIL_FROM is missing.
+      Example: noreply@send.kneipenquiz.dwrege.de
+      """
+
+  config :pub_quizzer, :mailer, from_email: mail_from
 
   # ## SSL Support
   #

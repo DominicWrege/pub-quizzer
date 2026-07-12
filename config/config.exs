@@ -11,7 +11,11 @@ config :pub_quizzer,
   ecto_repos: [PubQuizzer.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-config :pub_quizzer, :admin, password: "changeme"
+config :pub_quizzer, PubQuizzer.Mailer, adapter: Swoosh.Adapters.Local
+
+config :pub_quizzer, :mailer, from_email: System.get_env("MAIL_FROM", "noreply@localhost")
+
+config :swoosh, :api_client, Swoosh.ApiClient.Req
 
 # Configure the endpoint
 config :pub_quizzer, PubQuizzerWeb.Endpoint,

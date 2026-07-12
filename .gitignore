@@ -32,3 +32,6 @@ pub_quizzer_scaffold-*.tar
 
 node_modules
 .direnv
+
+# direnv (contains secrets)
+.envrc

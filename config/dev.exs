@@ -54,6 +54,14 @@ config :pub_quizzer, PubQuizzerWeb.Endpoint,
 # configured to run both http and https servers on
 # different ports.
 
+# Mailer: use Resend when API key is present, otherwise fall back to Local adapter
+# (Local adapter emails are viewable at /dev/mailbox)
+if System.get_env("RESEND_API_KEY") do
+  config :pub_quizzer, PubQuizzer.Mailer,
+    adapter: Swoosh.Adapters.Resend,
+    api_key: System.get_env("RESEND_API_KEY")
+end
+
 # Enable dev routes for dashboard and mailbox
 config :pub_quizzer, dev_routes: true
 

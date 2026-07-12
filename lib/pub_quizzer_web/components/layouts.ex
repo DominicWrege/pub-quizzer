@@ -49,7 +49,7 @@ defmodule PubQuizzerWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <%= if @current_scope && @current_scope[:admin] do %>
+    <%= if @current_scope && @current_scope[:user] do %>
       <header class="bg-base-200 border-b border-base-300 px-4 sm:px-6 py-2">
         <div class="flex items-center justify-between">
           <a href="/" class="flex items-center gap-2">
@@ -57,6 +57,7 @@ defmodule PubQuizzerWeb.Layouts do
             <span class="text-sm font-semibold">Kneipenquiz</span>
           </a>
           <div class="flex-none flex items-center gap-2">
+            <span class="text-xs text-base-content/50 hidden sm:inline">{@current_scope.user.email}</span>
             <.link navigate={~p"/join"} class="btn btn-ghost btn-sm">Quiz beitreten</.link>
             <.link navigate={~p"/admin/logout"} class="btn btn-ghost btn-sm">Abmelden</.link>
           </div>
@@ -80,6 +81,17 @@ defmodule PubQuizzerWeb.Layouts do
               )
             ]}
           >Themen verwalten</.link>
+          <%= if @current_scope.user.role == "superadmin" do %>
+            <.link
+              navigate={~p"/admin/users"}
+              class={[
+                "btn btn-ghost btn-sm",
+                if(String.starts_with?(@current_path, "/admin/users"),
+                  do: "underline underline-offset-4 decoration-2"
+                )
+              ]}
+            >Benutzer</.link>
+          <% end %>
         </div>
       </header>
       <div class="flex">

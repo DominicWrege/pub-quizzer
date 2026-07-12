@@ -44,7 +44,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
   end
 
   defp host_start_quiz(conn, event) do
-    {:ok, view, _html} = live(conn, ~p"/quiz/#{event.code}/host")
+    {:ok, view, _html} = live(log_in_user(conn), ~p"/quiz/#{event.code}/host")
     view
   end
 
@@ -84,7 +84,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
 
   describe "lobby" do
     test "auto-starts to topic selection on mount", %{conn: conn, event: event, topic: _topic} do
-      {:ok, view, html} = live(conn, ~p"/quiz/#{event.code}/host")
+      {:ok, view, html} = live(log_in_user(conn), ~p"/quiz/#{event.code}/host")
 
       assert html =~ event.code
       {:ok, state} = Engine.get_state(event.id)
@@ -99,7 +99,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       event: event,
       topic: topic
     } do
-      {:ok, view, _html} = live(conn, ~p"/quiz/#{event.code}/host")
+      {:ok, view, _html} = live(log_in_user(conn), ~p"/quiz/#{event.code}/host")
 
       {:ok, state} = Engine.get_state(event.id)
       assert state.status == :topic_selection
@@ -149,7 +149,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       Engine.next_round(event.id)
 
       # Host connects — should see waiting message, not topic buttons
-      {:ok, view, html} = live(conn, ~p"/quiz/#{event.code}/host")
+      {:ok, view, html} = live(log_in_user(conn), ~p"/quiz/#{event.code}/host")
 
       assert html =~ "gewonnen — Vortritt"
       assert has_element?(view, "button[phx-click='choose_topic']")
@@ -346,7 +346,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       stop_engine(event.id)
 
       # Refresh should restart engine and recover state — re-mount the page
-      {:ok, view, _html} = live(conn, ~p"/quiz/#{event.code}/host")
+      {:ok, view, _html} = live(log_in_user(conn), ~p"/quiz/#{event.code}/host")
 
       {:ok, state} = Engine.get_state(event.id)
       assert state.status == :question

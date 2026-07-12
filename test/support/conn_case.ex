@@ -28,11 +28,48 @@ defmodule PubQuizzerWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import PubQuizzerWeb.ConnCase
+
+      alias PubQuizzer.Accounts
     end
   end
 
   setup tags do
     PubQuizzer.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
+  end
+
+  @doc """
+  Creates a user and authenticates the given conn with that user's session.
+  """
+  def log_in_user(conn, user \\ nil) do
+    user =
+      user ||
+        case PubQuizzer.Accounts.create_user(%{
+               email: "test@example.com",
+               role: "moderator",
+               active: true
+             }) do
+          {:ok, user} -> user
+          {:error, _} -> PubQuizzer.Accounts.get_user_by_email("test@example.com")
+        end
+
+    Plug.Test.init_test_session(conn, user_id: user.id)
+  end
+
+  @doc """
+  Creates a superadmin user and authenticates the given conn.
+  """
+  def log_in_superadmin(conn) do
+    user =
+      case PubQuizzer.Accounts.create_user(%{
+             email: "admin@example.com",
+             role: "superadmin",
+             active: true
+           }) do
+        {:ok, user} -> user
+        {:error, _} -> PubQuizzer.Accounts.get_user_by_email("admin@example.com")
+      end
+
+    Plug.Test.init_test_session(conn, user_id: user.id)
   end
 end

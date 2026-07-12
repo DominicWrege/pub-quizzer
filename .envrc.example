@@ -1,0 +1,4 @@
+use flake
+
+export RESEND_API_KEY="re_..."
+export MAIL_FROM="noreply@kneipenquiz.dwrege.de"

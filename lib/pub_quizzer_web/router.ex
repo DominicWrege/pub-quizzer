@@ -14,8 +14,12 @@ defmodule PubQuizzerWeb.Router do
     plug :accepts, ["json"]
   end
 
-  pipeline :admin_auth do
-    plug PubQuizzerWeb.AdminAuth
+  pipeline :moderator_auth do
+    plug PubQuizzerWeb.AdminAuth, required_role: :moderator
+  end
+
+  pipeline :superadmin_auth do
+    plug PubQuizzerWeb.AdminAuth, required_role: :superadmin
   end
 
   scope "/", PubQuizzerWeb do
@@ -28,22 +32,38 @@ defmodule PubQuizzerWeb.Router do
     post "/admin/login", AdminSessionController, :create
     get "/admin/logout", AdminSessionController, :delete
 
+    # Magic link
+    get "/admin/magic", MagicLinkController, :show
+
+    # First-run setup
+    live "/setup", SetupLive, :index
+
     # Team join (controller sets session cookie)
     post "/quiz/join", QuizJoinController, :join
     get "/quiz/join/:code", QuizJoinController, :join_with_code
 
-    live_session :quiz do
+    # Public quiz live session (team lobby only)
+    live_session :team_quiz do
       live "/join", QuizLive.Join, :index
       live "/quiz/:code/lobby", QuizLive.TeamLobby, :index
+    end
+  end
+
+  # Host lobby — requires moderator auth
+  scope "/", PubQuizzerWeb do
+    pipe_through [:browser, :moderator_auth]
+
+    live_session :host,
+      on_mount: [{PubQuizzerWeb.AdminAuth, :mount_current_scope}] do
       live "/quiz/:code/host", QuizLive.HostLobby, :index
     end
   end
 
-  # Admin panel — requires session
+  # Moderator panel — requires any authenticated user
   scope "/admin", PubQuizzerWeb.Admin do
-    pipe_through [:browser, :admin_auth]
+    pipe_through [:browser, :moderator_auth]
 
-    live_session :admin,
+    live_session :moderator,
       on_mount: [{PubQuizzerWeb.AdminAuth, :mount_current_scope}] do
       live "/topics", TopicLive, :index
 
@@ -55,6 +75,16 @@ defmodule PubQuizzerWeb.Router do
     end
   end
 
+  # Superadmin panel — user management
+  scope "/admin", PubQuizzerWeb.Admin do
+    pipe_through [:browser, :superadmin_auth]
+
+    live_session :superadmin,
+      on_mount: [{PubQuizzerWeb.AdminAuth, :mount_current_scope}] do
+      live "/users", UserLive, :index
+    end
+  end
+
   if Application.compile_env(:pub_quizzer, :dev_routes) do
     import Phoenix.LiveDashboard.Router
 
@@ -62,6 +92,7 @@ defmodule PubQuizzerWeb.Router do
       pipe_through :browser
 
       live_dashboard "/dashboard", metrics: PubQuizzerWeb.Telemetry
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
 

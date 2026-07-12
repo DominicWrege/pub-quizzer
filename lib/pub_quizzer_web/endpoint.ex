@@ -31,7 +31,8 @@ defmodule PubQuizzerWeb.Endpoint do
     store: :cookie,
     key: "_pub_quizzer_key",
     signing_salt: "PNW2iQHH",
-    same_site: "Lax"
+    same_site: "Lax",
+    max_age: 30 * 24 * 60 * 60
   ]
 
   socket "/live", Phoenix.LiveView.Socket,

@@ -1,33 +1,46 @@
 defmodule PubQuizzerWeb.AdminSessionController do
   use PubQuizzerWeb, :controller
 
+  alias PubQuizzer.Accounts
+
   def new(conn, _params) do
-    if get_session(conn, :admin) == true do
-      redirect(conn, to: "/admin/events")
+    if Accounts.has_users?() do
+      case get_session(conn, :user_id) do
+        nil ->
+          conn |> render(:new, flash: %{})
+
+        _user_id ->
+          redirect(conn, to: "/admin/events")
+      end
     else
-      conn |> render(:new, flash: %{})
+      redirect(conn, to: "/setup")
     end
   end
 
-  def create(conn, %{"password" => password}) do
-    admin_password = Application.fetch_env!(:pub_quizzer, :admin) |> Keyword.fetch!(:password)
+  def create(conn, %{"email" => email}) do
+    base_url = get_base_url(conn)
 
-    if password == admin_password do
-      conn
-      |> put_session(:admin, true)
-      |> put_flash(:info, "Willkommen im Administrationsbereich.")
-      |> redirect(to: "/admin/events")
-    else
-      conn
-      |> put_flash(:error, "Falsches Kennwort.")
-      |> redirect(to: "/admin/login")
+    case Accounts.deliver_magic_link(email, base_url) do
+      {:ok, _url} ->
+        conn
+        |> put_flash(:info, "Login-Link gesendet! Prüfe deine E-Mails.")
+        |> redirect(to: "/admin/login")
+
+      {:error, :not_found} ->
+        conn
+        |> put_flash(:info, "Falls die E-Mail-Adresse registriert ist, wurde ein Link gesendet.")
+        |> redirect(to: "/admin/login")
     end
   end
 
   def delete(conn, _params) do
     conn
     |> clear_session()
-    |> put_flash(:info, "Vom Administrationsbereich abgemeldet.")
+    |> put_flash(:info, "Abgemeldet.")
     |> redirect(to: "/admin/login")
+  end
+
+  defp get_base_url(conn) do
+    "#{conn.scheme}://#{conn.host}:#{conn.port}"
   end
 end

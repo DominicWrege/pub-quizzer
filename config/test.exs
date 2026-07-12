@@ -1,5 +1,7 @@
 import Config
 
+config :pub_quizzer, PubQuizzer.Mailer, adapter: Swoosh.Adapters.Test
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used

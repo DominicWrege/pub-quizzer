@@ -56,7 +56,9 @@ defmodule PubQuizzer.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:eqrcode, "~> 0.2"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:swoosh, "~> 1.26"},
+      {:req, "~> 0.5"}
     ]
   end
 

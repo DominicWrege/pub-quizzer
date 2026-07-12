@@ -1,24 +1,24 @@
 <Layouts.app flash={@flash} max_width="max-w-full" main_class="px-4 sm:px-6 lg:px-8">
   <div class="flex items-center justify-center min-h-[calc(100vh-4rem)]">
     <div class="text-center max-w-sm">
-      <.icon name="hero-lock-closed" class="size-[4rem] mx-auto text-primary" />
+      <.icon name="hero-envelope" class="size-[4rem] mx-auto text-primary" />
       <h1 class="text-3xl font-bold mt-4">Verwaltung</h1>
       <p class="py-4 text-base-content/70">
-        Gib das Administratorkennwort ein, um den Quiz-Inhalt zu verwalten.
+        Gib deine E-Mail-Adresse ein, um einen Login-Link zu erhalten.
       </p>
 
       <form action={~p"/admin/login"} method="post" id="admin-login-form">
         <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
         <.input
-          type="password"
-          name="password"
-          id="admin-password"
+          type="email"
+          name="email"
+          id="admin-email"
           value=""
-          placeholder="Kennwort"
+          placeholder="name@beispiel.de"
           required
-          autocomplete="current-password"
+          autocomplete="email"
         />
-        <button type="submit" class="btn btn-primary btn-block mt-4">Anmelden</button>
+        <button type="submit" class="btn btn-primary btn-block mt-4">Login-Link anfordern</button>
       </form>
 
       <div class="mt-8">

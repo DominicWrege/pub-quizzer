@@ -5,7 +5,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
   alias PubQuizzer.Quiz
 
   defp auth_conn(conn) do
-    Plug.Test.init_test_session(conn, admin: true)
+    log_in_user(conn)
   end
 
   defp create_topic do
