@@ -1,28 +1,51 @@
-<Layouts.app flash={@flash} max_width="max-w-full" main_class="px-4 sm:px-6 lg:px-8">
-  <div class="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-    <div class="text-center max-w-sm">
-      <.icon name="hero-envelope" class="size-[4rem] mx-auto text-primary" />
-      <h1 class="text-3xl font-bold mt-4">Verwaltung</h1>
-      <p class="py-4 text-base-content/70">
-        Gib deine E-Mail-Adresse ein, um einen Login-Link zu erhalten.
-      </p>
+<Layouts.app
+  flash={@flash}
+  max_width="max-w-full"
+  main_class="px-4 sm:px-6 lg:px-8"
+  hide_nav_actions={true}
+>
+  <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-base-200/50">
+    <div class="card bg-base-100 shadow-lg border border-base-300 w-full max-w-md mx-4 relative overflow-hidden">
+      <div class="card-body items-center text-center pt-10 pb-8">
+        <.icon name="hero-envelope" class="size-10 text-primary" />
 
-      <form action={~p"/admin/login"} method="post" id="admin-login-form">
-        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
-        <.input
-          type="email"
-          name="email"
-          id="admin-email"
-          value=""
-          placeholder="name@beispiel.de"
-          required
-          autocomplete="email"
-        />
-        <button type="submit" class="btn btn-primary btn-block mt-4">Login-Link anfordern</button>
-      </form>
+        <h1 class="card-title text-2xl mt-3">Login</h1>
 
-      <div class="mt-8">
-        <.link navigate={~p"/"} class="link link-hover text-sm text-base-content/50">Startseite</.link>
+        <p class="text-base-content/80 text-sm max-w-xs leading-relaxed">
+          Gib deine E-Mail-Adresse ein, um einen Login-Link zu erhalten.
+        </p>
+
+        <form action={~p"/admin/login"} method="post" id="admin-login-form" class="w-full mt-6">
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+
+          <.input
+            type="email"
+            name="email"
+            id="admin-email"
+            value=""
+            placeholder="name@beispiel.de"
+            required
+            autocomplete="email"
+            class="input w-full border-2 border-base-300"
+          />
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block mt-4"
+            id="admin-login-submit"
+          >
+            <span id="submit-text">Login-Link anfordern</span>
+            <span id="submit-loading" class="hidden">
+              <span class="loading loading-spinner loading-xs"></span> Wird gesendet...
+            </span>
+          </button>
+        </form>
+
+        <div class="mt-8">
+          <.link navigate={~p"/"} class="link link-hover text-sm text-base-content/60">
+            Zurück zur Startseite
+          </.link>
+        </div>
       </div>
     </div>
   </div>

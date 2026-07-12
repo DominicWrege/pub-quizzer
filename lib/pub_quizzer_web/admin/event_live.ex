@@ -335,6 +335,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
             <% @event.status == "lobby" -> %>
               <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm">Verwalten</.link>
             <% true -> %>
+              <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-primary">Ergebnisse</.link>
               <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm">Details</.link>
           <% end %>
           <button

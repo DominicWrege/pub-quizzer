@@ -8,7 +8,7 @@ defmodule PubQuizzer.Accounts do
   alias PubQuizzer.Accounts.{User, AuthEmail}
   alias PubQuizzer.Repo
 
-  @magic_link_expiry_minutes 15
+  @magic_link_expiry_minutes 10
 
   # --- Queries ---
 
@@ -52,6 +52,16 @@ defmodule PubQuizzer.Accounts do
     user
     |> User.changeset(%{active: !user.active})
     |> Repo.update()
+  end
+
+  def update_user(%User{} = user, attrs) do
+    user
+    |> User.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def change_user(%User{} = user) do
+    User.changeset(user, %{})
   end
 
   # --- Magic Link ---

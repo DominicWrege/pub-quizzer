@@ -4,11 +4,12 @@ import { LiveSocket } from "phoenix_live_view"
 
 let AutoDismiss = {
   mounted() {
+    let duration = parseInt(this.el.dataset.duration) || 3000
     setTimeout(() => {
       this.el.style.transition = "opacity 300ms"
       this.el.style.opacity = "0"
       setTimeout(() => this.el.remove(), 300)
-    }, 3000)
+    }, duration)
   }
 }
 
@@ -44,6 +45,14 @@ let CopyLink = {
   }
 }
 
+let ClipboardCopy = {
+  mounted() {
+    this.handleEvent("copy_to_clipboard", ({ url }) => {
+      navigator.clipboard.writeText(url)
+    })
+  }
+}
+
 let ScrollToBottom = {
   mounted() {
     if (localStorage.getItem("pm") === "true") {
@@ -58,7 +67,7 @@ let ScrollToBottom = {
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken },
-  hooks: { AutoDismiss, ImagePreview, CopyLink, ScrollToBottom }
+  hooks: { AutoDismiss, ImagePreview, CopyLink, ClipboardCopy, ScrollToBottom }
 })
 
 liveSocket.connect()

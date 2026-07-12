@@ -1,5 +1,7 @@
 This is a web application written using the Phoenix web framework.
 
+When you need to search docs for Elixir, Phoenix, Ecto, LiveView, or Tailwind, use the `context7` MCP server.
+
 ## Project guidelines
 
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
@@ -451,6 +453,14 @@ And **never** do this:
 - `@apply` still works but prefer component classes or inline utilities where practical
 - When using conditional classes in HEEx, prefer the list syntax documented in the Phoenix HTML guidelines above
 <!-- phoenix:tailwind-end -->
+
+<!-- anti-patterns:start -->
+## Anti-patterns
+
+- **Ghost buttons**: Do not use buttons with no visible border, background, or affordance. Users should never guess whether something is clickable. Every button must have a clear background, a visible border, or both, plus a distinct hover/active state.
+- **Ghost tables**: Do not use tables with no borders, no alternating row shading, and no visual row separation. Data tables must have clear row delineation — use `divide-y`, striped rows, row hover highlighting (`hover:bg-base-200`), and visible column headers with adequate padding.
+- **Low contrast text**: Always ensure sufficient contrast between text and its background. Avoid dark text on dark backgrounds or light text on light backgrounds. Use `bg-base-100`/`bg-base-200` with `text-base-content` for neutral containers, or use proper semantic alert classes (`alert-info`, `alert-success`, etc.) which handle their own contrast — but never place custom elements (buttons, text) inside an alert without checking contrast. When in doubt, test with a browser or use a tool like the WebAIM contrast checker.
+<!-- anti-patterns:end -->
 
 <!-- js:modern-start -->
 ## Modern JavaScript guidelines

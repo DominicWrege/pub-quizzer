@@ -7,7 +7,7 @@ defmodule PubQuizzerWeb.AdminSessionController do
     if Accounts.has_users?() do
       case get_session(conn, :user_id) do
         nil ->
-          conn |> render(:new, flash: %{})
+          conn |> render(:new)
 
         _user_id ->
           redirect(conn, to: "/admin/events")
@@ -23,12 +23,11 @@ defmodule PubQuizzerWeb.AdminSessionController do
     case Accounts.deliver_magic_link(email, base_url) do
       {:ok, _url} ->
         conn
-        |> put_flash(:info, "Login-Link gesendet! Prüfe deine E-Mails.")
-        |> redirect(to: "/admin/login")
+        |> render(:link_sent, email: email)
 
       {:error, :not_found} ->
         conn
-        |> put_flash(:info, "Falls die E-Mail-Adresse registriert ist, wurde ein Link gesendet.")
+        |> put_flash(:error, %{message: "E-Mail-Adresse nicht gefunden.", duration: 5000})
         |> redirect(to: "/admin/login")
     end
   end

@@ -54,43 +54,42 @@ defmodule PubQuizzerWeb.Layouts do
         <div class="flex items-center justify-between">
           <a href="/" class="flex items-center gap-2">
             <img src={~p"/images/logo.svg"} width="28" />
-            <span class="text-sm font-semibold">Kneipenquiz</span>
+            <span class="text-sm sm:text-xl font-semibold">Kneipenquiz</span>
           </a>
-          <div class="flex-none flex items-center gap-2">
-            <span class="text-xs text-base-content/50 hidden sm:inline">{@current_scope.user.email}</span>
-            <.link navigate={~p"/join"} class="btn btn-ghost btn-sm">Quiz beitreten</.link>
-            <.link navigate={~p"/admin/logout"} class="btn btn-ghost btn-sm">Abmelden</.link>
+          <div class="flex-none flex items-center gap-4">
+            <.link
+              :if={@current_scope.user.name && @current_scope.user.name != ""}
+              navigate={~p"/admin/profile"}
+              class="text-xs text-base-content/50 hidden sm:inline hover:text-base-content"
+            >{@current_scope.user.name}</.link>
+            <.link
+              navigate={~p"/admin/logout"}
+              class="btn btn-sm btn-outline border-2 border-base-content/60"
+            >
+              <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
+            </.link>
           </div>
         </div>
-        <div class="flex items-center gap-1 mt-1">
+        <div class="flex items-center gap-3 mt-4">
           <.link
             navigate={~p"/admin/events"}
-            class={[
-              "btn btn-ghost btn-sm",
-              if(String.starts_with?(@current_path, "/admin/events"),
-                do: "underline underline-offset-4 decoration-2"
-              )
-            ]}
-          >Quiz</.link>
+            class={nav_tab_class(@current_path, "/admin/events")}
+          >
+            <.icon name="hero-play" class="size-4" /> Quiz
+          </.link>
           <.link
             navigate={~p"/admin/topics"}
-            class={[
-              "btn btn-ghost btn-sm",
-              if(String.starts_with?(@current_path, "/admin/topics"),
-                do: "underline underline-offset-4 decoration-2"
-              )
-            ]}
-          >Themen verwalten</.link>
+            class={nav_tab_class(@current_path, "/admin/topics")}
+          >
+            <.icon name="hero-bookmark" class="size-4" /> Themen verwalten
+          </.link>
           <%= if @current_scope.user.role == "superadmin" do %>
             <.link
               navigate={~p"/admin/users"}
-              class={[
-                "btn btn-ghost btn-sm",
-                if(String.starts_with?(@current_path, "/admin/users"),
-                  do: "underline underline-offset-4 decoration-2"
-                )
-              ]}
-            >Benutzer</.link>
+              class={nav_tab_class(@current_path, "/admin/users")}
+            >
+              <.icon name="hero-key" class="size-4" /> Benutzer
+            </.link>
           <% end %>
         </div>
       </header>
@@ -106,7 +105,7 @@ defmodule PubQuizzerWeb.Layouts do
         <div class="flex-1">
           <a href="/" class="flex-1 flex w-fit items-center gap-2">
             <img src={~p"/images/logo.svg"} width="36" />
-            <span class="text-sm font-semibold">Kneipenquiz</span>
+            <span class="text-sm sm:text-xl font-semibold">Kneipenquiz</span>
           </a>
         </div>
         <%= unless @hide_nav_actions do %>
@@ -151,6 +150,20 @@ defmodule PubQuizzerWeb.Layouts do
 
     <.flash_group flash={@flash} />
     """
+  end
+
+  defp nav_tab_class(current_path, prefix) do
+    active = String.starts_with?(current_path, prefix)
+
+    base = "btn btn-sm rounded-lg transition-colors duration-150 px-6"
+
+    active_styles =
+      "bg-primary text-primary-content shadow-sm border border-primary hover:bg-primary/90"
+
+    inactive_styles =
+      "bg-base-100 border border-base-300/60 text-base-content/60 hover:bg-base-300/40 hover:text-base-content"
+
+    if active, do: [base, active_styles], else: [base, inactive_styles]
   end
 
   @doc """

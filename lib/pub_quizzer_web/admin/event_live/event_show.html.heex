@@ -12,6 +12,11 @@
     <% end %>
     <span class="badge badge-sm">{status_label(@event.status)}</span>
     <:actions>
+      <%= if @event.status == "finished" do %>
+        <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-primary btn-sm">
+          <.icon name="hero-clipboard" class="size-4" /> Ergebnisse
+        </.link>
+      <% end %>
       <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator-Konsole</.link>
       <button
         phx-click="ask_delete_event"

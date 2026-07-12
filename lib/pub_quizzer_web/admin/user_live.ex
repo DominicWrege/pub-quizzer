@@ -14,6 +14,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
      |> assign(:page_title, "Benutzer")
      |> assign(:form, to_form(%{"email" => ""}))
      |> assign(:invite_link, nil)
+     |> assign(:invite_link_timer, nil)
      |> assign(:confirm_delete_id, nil)
      |> assign(:base_url, base_url)}
   end
@@ -25,13 +26,17 @@ defmodule PubQuizzerWeb.Admin.UserLive do
     if Accounts.can_manage_users?(current_user) do
       case Accounts.create_user(%{email: email, name: name, role: "moderator"}) do
         {:ok, user} ->
-          {:ok, url} = Accounts.deliver_invite_link(user, socket.assigns.base_url)
+          {:ok, raw_token} = Accounts.generate_invite_link(user)
+          url = "#{socket.assigns.base_url}/admin/magic?token=#{raw_token}"
+
+          timer_ref = Process.send_after(self(), :clear_invite_link, 25_000)
 
           {:noreply,
            socket
            |> assign(:users, Accounts.list_users())
            |> assign(:form, to_form(%{"email" => ""}))
            |> assign(:invite_link, url)
+           |> assign(:invite_link_timer, timer_ref)
            |> put_flash(:info, "Moderator hinzugefügt.")}
 
         {:error, _changeset} ->
@@ -43,31 +48,16 @@ defmodule PubQuizzerWeb.Admin.UserLive do
     end
   end
 
-  def handle_event("toggle_active", %{"id" => id}, socket) do
-    current_user = socket.assigns.current_scope.user
-    user = Accounts.get_user!(id)
-
-    if Accounts.can_manage_users?(current_user) do
-      if user.id == current_user.id do
-        {:noreply, put_flash(socket, :error, "Du kannst dich nicht selbst deaktivieren.")}
-      else
-        {:ok, _} = Accounts.toggle_active(user)
-        {:noreply, assign(socket, :users, Accounts.list_users())}
-      end
-    else
-      {:noreply, put_flash(socket, :error, "Keine Berechtigung.")}
-    end
-  end
-
   def handle_event("resend_link", %{"id" => id}, socket) do
     user = Accounts.get_user!(id)
 
-    {:ok, url} = Accounts.deliver_invite_link(user, socket.assigns.base_url)
+    {:ok, raw_token} = Accounts.generate_invite_link(user)
+    url = "#{socket.assigns.base_url}/admin/magic?token=#{raw_token}"
 
     {:noreply,
      socket
-     |> assign(:invite_link, url)
-     |> put_flash(:info, "Neuer Login-Link für #{user.email} generiert.")}
+     |> push_event("copy_to_clipboard", %{url: url})
+     |> put_flash(:info, "Login-Link für #{user.email} kopiert.")}
   end
 
   def handle_event("ask_delete", %{"id" => id}, socket) do
@@ -97,7 +87,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
          socket
          |> assign(:users, Accounts.list_users())
          |> assign(:confirm_delete_id, nil)
-         |> assign(:invite_link, nil)
+         |> clear_invite_link()
          |> put_flash(:info, "Benutzer gelöscht.")}
 
       true ->
@@ -106,6 +96,25 @@ defmodule PubQuizzerWeb.Admin.UserLive do
          |> assign(:confirm_delete_id, nil)
          |> put_flash(:error, "Keine Berechtigung.")}
     end
+  end
+
+  def handle_event("dismiss_invite_link", _params, socket) do
+    {:noreply, clear_invite_link(socket)}
+  end
+
+  @impl true
+  def handle_info(:clear_invite_link, socket) do
+    {:noreply, clear_invite_link(socket)}
+  end
+
+  defp clear_invite_link(socket) do
+    if ref = socket.assigns[:invite_link_timer] do
+      Process.cancel_timer(ref)
+    end
+
+    socket
+    |> assign(:invite_link, nil)
+    |> assign(:invite_link_timer, nil)
   end
 
   defp connect_base_url(socket) do
@@ -142,7 +151,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           type="text"
           name="name"
           placeholder="Name (optional)"
-          class="input input-sm w-40"
+          class="input input-sm w-60"
           autocomplete="name"
         />
         <button type="submit" class="btn btn-primary btn-sm shrink-0">
@@ -150,20 +159,36 @@ defmodule PubQuizzerWeb.Admin.UserLive do
         </button>
       </.form>
 
+      <div id="clipboard" phx-hook="ClipboardCopy" class="hidden" />
+
       <%= if @invite_link do %>
-        <div class="alert alert-info">
-          <div class="text-sm break-all">
-            <span class="font-semibold">Login-Link:</span><br />
-            <a href={@invite_link} class="link link-primary">{@invite_link}</a>
+        <div class="rounded-lg border border-base-300 bg-base-200 px-4 py-3 flex items-center justify-between gap-4">
+          <span class="font-semibold text-sm">Login-Link generiert</span>
+          <div class="flex items-center gap-2">
+            <button
+              id="copy-invite-link"
+              phx-hook="CopyLink"
+              data-url={@invite_link}
+              class="btn btn-sm btn-outline border-2"
+            >
+              Link kopieren
+            </button>
+            <button
+              phx-click="dismiss_invite_link"
+              class="btn btn-sm btn-circle btn-ghost"
+              title="Schließen"
+            >
+              <.icon name="hero-x-mark" class="size-4" />
+            </button>
           </div>
         </div>
       <% end %>
 
       <!-- User list -->
-      <div class="overflow-x-auto">
-        <table class="table table-zebra table-sm">
+      <div class="overflow-x-auto rounded-lg border border-base-300">
+        <table class="table table-sm">
           <thead>
-            <tr>
+            <tr class="border-b-2 border-base-300 bg-base-200">
               <th>E-Mail</th>
               <th>Name</th>
               <th>Rolle</th>
@@ -172,7 +197,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
               <th class="text-right">Aktionen</th>
             </tr>
           </thead>
-          <tbody id="users">
+          <tbody id="users" class="divide-y divide-base-200">
             <tr :for={user <- @users} id={"user-#{user.id}"} class="hover">
               <td class="font-mono text-sm">{user.email}</td>
               <td class="font-medium">
@@ -208,30 +233,26 @@ defmodule PubQuizzerWeb.Admin.UserLive do
                     <button
                       phx-click="resend_link"
                       phx-value-id={user.id}
-                      class="btn btn-ghost btn-xs"
+                      class="btn btn-xs btn-outline border-2 border-base-content/60"
                       title="Neuen Login-Link senden"
                     >
                       Link
-                    </button>
-                    <button
-                      phx-click="toggle_active"
-                      phx-value-id={user.id}
-                      class="btn btn-ghost btn-xs"
-                    >
-                      {if user.active, do: "Deaktivieren", else: "Aktivieren"}
                     </button>
                     <%= if @confirm_delete_id == user.id do %>
                       <button phx-click="confirm_delete" class="btn btn-error btn-xs">
                         Wirklich?
                       </button>
-                      <button phx-click="cancel_delete" class="btn btn-ghost btn-xs">
+                      <button
+                        phx-click="cancel_delete"
+                        class="btn btn-xs btn-outline border-2 border-base-content/60"
+                      >
                         Abbrechen
                       </button>
                     <% else %>
                       <button
                         phx-click="ask_delete"
                         phx-value-id={user.id}
-                        class="btn btn-ghost btn-xs text-error"
+                        class="btn btn-xs btn-outline border-2 border-base-content/60 text-error"
                       >
                         Löschen
                       </button>

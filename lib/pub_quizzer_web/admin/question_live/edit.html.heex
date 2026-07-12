@@ -100,7 +100,7 @@
       <div class="flex flex-col gap-3 mt-2">
         <%= for {option, idx} <- Enum.with_index(@form[:options].value || ["", "", "", ""]) do %>
           <div class={[
-            "btn h-auto py-5 px-5 justify-start text-left text-lg shadow-md border-2 whitespace-normal",
+            "btn h-auto py-5 px-5 justify-start text-left text-lg shadow-md border-2 border-base-content/60 whitespace-normal",
             (@form[:correct_index].value || 0) == idx && "btn-primary",
             (@form[:correct_index].value || 0) != idx && "btn-outline"
           ]}>

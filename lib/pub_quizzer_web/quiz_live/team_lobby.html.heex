@@ -79,10 +79,10 @@
             phx-click="select_answer"
             phx-value-index={shuffled_idx}
             class={[
-              "btn h-auto w-full py-4 justify-center text-center shadow-sm border text-xl font-bold",
+              "btn h-auto w-full py-4 justify-center text-center shadow-lg border text-xl font-bold",
               is_selected && "btn-primary",
               !is_selected &&
-                "bg-transparent border-base-content/20 hover:border-base-content/50"
+                "bg-base-200 border-[3px] border-base-content/40 hover:bg-base-300 hover:border-base-content/70"
             ]}
           >
             <span class="font-mono font-bold text-3xl">

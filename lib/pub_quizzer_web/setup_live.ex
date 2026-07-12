@@ -22,7 +22,8 @@ defmodule PubQuizzerWeb.SetupLive do
     else
       case Accounts.create_user(%{email: email, role: "superadmin"}) do
         {:ok, user} ->
-          {:ok, url} = Accounts.deliver_invite_link(user, socket.assigns.base_url)
+          {:ok, raw_token} = Accounts.generate_invite_link(user)
+          url = "#{socket.assigns.base_url}/admin/magic?token=#{raw_token}"
           {:noreply, assign(socket, magic_link_url: url)}
 
         {:error, changeset} ->

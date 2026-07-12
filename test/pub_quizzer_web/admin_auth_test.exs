@@ -9,7 +9,7 @@ defmodule PubQuizzerWeb.AdminAuthTest do
       {:ok, _} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
 
       conn = get(conn, ~p"/admin/login")
-      assert html_response(conn, 200) =~ "Verwaltung"
+      assert html_response(conn, 200) =~ "Login"
       assert html_response(conn, 200) =~ "admin-login-form"
     end
 
@@ -29,20 +29,22 @@ defmodule PubQuizzerWeb.AdminAuthTest do
       assert redirected_to(conn) == "/admin/events"
     end
 
-    test "POST /admin/login with known email sends magic link", %{conn: conn} do
-      {:ok, user} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
+    test "POST /admin/login with known email renders link sent page", %{conn: conn} do
+      {:ok, user} =
+        Accounts.create_user(%{email: "admin@test.com", role: "superadmin", active: true})
 
       conn = post(conn, ~p"/admin/login", %{"email" => user.email})
-      assert redirected_to(conn) == "/admin/login"
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "gesendet"
+      assert html_response(conn, 200) =~ "Link gesendet"
+      assert html_response(conn, 200) =~ user.email
     end
 
-    test "POST /admin/login with unknown email shows generic message", %{conn: conn} do
+    test "POST /admin/login with unknown email shows error", %{conn: conn} do
       {:ok, _} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
 
       conn = post(conn, ~p"/admin/login", %{"email" => "nobody@test.com"})
       assert redirected_to(conn) == "/admin/login"
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "gesendet"
+      assert %{message: msg} = Phoenix.Flash.get(conn.assigns.flash, :error)
+      assert msg =~ "nicht gefunden"
     end
 
     test "GET /admin/logout clears session", %{conn: conn} do
@@ -71,6 +73,26 @@ defmodule PubQuizzerWeb.AdminAuthTest do
 
       assert redirected_to(conn) == "/admin/login"
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Ungültig"
+    end
+
+    test "expired token shows error", %{conn: conn} do
+      {:ok, user} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
+      {:ok, raw_token} = Accounts.generate_invite_link(user)
+
+      eleven_min_ago =
+        DateTime.utc_now()
+        |> DateTime.add(-11, :minute)
+        |> DateTime.truncate(:second)
+
+      {:ok, _} =
+        user
+        |> Ecto.Changeset.change(%{magic_link_sent_at: eleven_min_ago})
+        |> PubQuizzer.Repo.update()
+
+      conn = get(conn, ~p"/admin/magic?token=#{raw_token}")
+
+      assert redirected_to(conn) == "/admin/login"
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "abgelaufen"
     end
 
     test "token is single-use", %{conn: conn} do

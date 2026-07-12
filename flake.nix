@@ -20,6 +20,8 @@
             inotify-tools
             watchman
             nodejs
+            uv
+            (writeShellScriptBin "dev" "exec mix phx.server $@")
           ];
         };
       });

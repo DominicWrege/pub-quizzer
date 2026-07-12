@@ -58,10 +58,11 @@ defmodule PubQuizzerWeb.CoreComponents do
 
     ~H"""
     <div
-      :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
+      :if={flash_raw = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
       id={@id}
       data-flash
       phx-hook="AutoDismiss"
+      data-duration={extract_duration(flash_raw)}
       role="alert"
       class="toast toast-end z-50"
       {@rest}
@@ -75,12 +76,12 @@ defmodule PubQuizzerWeb.CoreComponents do
         <.icon :if={@kind == :error} name="hero-exclamation-circle" class="size-5 shrink-0" />
         <div>
           <p :if={@title} class="font-semibold">{@title}</p>
-          <p>{msg}</p>
+          <p>{extract_msg(flash_raw)}</p>
         </div>
         <div class="flex-1" />
         <button
           type="button"
-          class="group self-start cursor-pointer"
+          class="btn btn-sm"
           aria-label="close"
           phx-click={JS.hide(to: "##{@id}")}
         >
@@ -90,6 +91,12 @@ defmodule PubQuizzerWeb.CoreComponents do
     </div>
     """
   end
+
+  defp extract_msg(%{message: msg}), do: msg
+  defp extract_msg(msg), do: msg
+
+  defp extract_duration(%{duration: d}), do: d
+  defp extract_duration(_), do: nil
 
   @doc """
   Renders a button with navigation support.
@@ -584,7 +591,10 @@ defmodule PubQuizzerWeb.CoreComponents do
           <h3 class="text-lg font-bold">{@title}</h3>
           <p class="py-4">{@message}</p>
           <div class="modal-action">
-            <button phx-click={@cancel_event} class="btn btn-sm btn-ghost">Abbrechen</button>
+            <button
+              phx-click={@cancel_event}
+              class="btn btn-sm btn-outline border-2 border-base-content/60"
+            >Abbrechen</button>
             <button phx-click={@confirm_event} class={["btn btn-sm", @confirm_class]}>{@confirm_label}</button>
           </div>
         </div>

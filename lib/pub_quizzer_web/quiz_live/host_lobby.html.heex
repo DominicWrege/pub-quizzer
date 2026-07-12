@@ -18,7 +18,10 @@
         >
           Präsentationsmodus
         </button>
-        <button phx-click="ask_finish_quiz" class="btn btn-sm btn-outline">
+        <button
+          phx-click="ask_finish_quiz"
+          class="btn btn-sm btn-outline border-2 border-base-content/60"
+        >
           <.icon name="hero-flag" class="size-4" /> Quiz beenden
         </button>
       </:actions>
@@ -333,8 +336,17 @@
         </div>
       <% end %>
 
-      <div class="mt-6">
-        <.link navigate={~p"/admin/events"} class="btn btn-ghost btn-lg text-xl">
+      <div class="mt-6 flex gap-2">
+        <.link
+          navigate={~p"/admin/events/#{@event.id}/results"}
+          class="btn btn-lg btn-primary"
+        >
+          <.icon name="hero-clipboard" class="size-6" /> Antworten ansehen
+        </.link>
+        <.link
+          navigate={~p"/admin/events"}
+          class="btn btn-lg btn-outline border-2 border-base-content/60"
+        >
           <.icon name="hero-chevron-left" class="size-6" /> Zurück zum Quiz
         </.link>
       </div>

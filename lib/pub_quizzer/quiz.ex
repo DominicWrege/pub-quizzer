@@ -331,4 +331,50 @@ defmodule PubQuizzer.Quiz do
     |> preload(:question)
     |> Repo.all()
   end
+
+  # --- Results ---
+
+  def get_event_results(event_id) do
+    event = get_event_with_teams!(event_id)
+    teams = Enum.filter(event.teams, & &1.claimed_at)
+
+    rounds =
+      Round
+      |> where(quiz_event_id: ^event_id)
+      |> order_by(asc: :round_number)
+      |> preload(:topic)
+      |> Repo.all()
+
+    answers = list_answers_for_event(event_id)
+
+    answer_lookup =
+      Enum.reduce(answers, %{}, fn answer, acc ->
+        Map.put(acc, {answer.round_id, answer.question_id, answer.team_id}, answer.selected_index)
+      end)
+
+    rounds_data =
+      Enum.map(rounds, fn round ->
+        %{round: round, questions: list_questions_for_topic(round.topic_id)}
+      end)
+
+    standings =
+      teams
+      |> Enum.map(fn team ->
+        score =
+          Enum.count(answers, fn answer ->
+            answer.team_id == team.id and answer.selected_index == answer.question.correct_index
+          end)
+
+        {team.id, team.name, score}
+      end)
+      |> Enum.sort_by(&elem(&1, 2), :desc)
+
+    %{
+      event: event,
+      teams: teams,
+      rounds_data: rounds_data,
+      answer_lookup: answer_lookup,
+      standings: standings
+    }
+  end
 end
