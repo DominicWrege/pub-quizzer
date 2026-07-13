@@ -9,18 +9,19 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   @impl true
   def render(assigns) do
-    index(assigns)
+    case assigns.live_action do
+      :index -> index(assigns)
+      :new -> new(assigns)
+      :edit -> edit(assigns)
+    end
   end
 
   @impl true
-  def mount(%{"topic_id" => topic_id}, _session, socket) do
+  def mount(_params, _session, socket) do
     {:ok,
      socket
-     |> assign(:topic, Quiz.get_topic!(topic_id))
      |> assign(:confirm_action, nil)
      |> assign(:pending_delete_id, nil)
-     |> assign(:editing_question_id, nil)
-     |> assign(:image_preview_url, nil)
      |> assign(:search, "")
      |> allow_upload(:image,
        accept: ~w(.jpg .jpeg .png .gif .webp),
@@ -30,20 +31,41 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   end
 
   @impl true
-  def handle_params(%{"search" => search}, _url, socket) when search != "" do
-    {:noreply,
-     socket
-     |> assign(:search, search)
-     |> assign(:page_title, "Fragen")
-     |> stream(:questions, Quiz.search_questions_for_topic(socket.assigns.topic.id, search))}
+  def handle_params(params, _url, socket) do
+    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
 
-  def handle_params(_params, _url, socket) do
-    {:noreply,
-     socket
-     |> assign(:search, "")
-     |> assign(:page_title, "Fragen")
-     |> stream(:questions, Quiz.list_questions_for_topic(socket.assigns.topic.id))}
+  defp apply_action(socket, :index, %{"topic_id" => topic_id}) do
+    topic = Quiz.get_topic!(topic_id)
+
+    socket
+    |> assign(:topic, topic)
+    |> assign(:page_title, "Fragen")
+    |> stream(:questions, Quiz.list_questions_for_topic(topic.id))
+  end
+
+  defp apply_action(socket, :new, %{"topic_id" => topic_id}) do
+    topic = Quiz.get_topic!(topic_id)
+    changeset = Question.changeset(%Question{options: ["", "", "", ""]}, %{})
+
+    socket
+    |> assign(:topic, topic)
+    |> assign(:page_title, "Neue Frage")
+    |> assign(:form, to_form(changeset))
+    |> assign(:image_preview_url, nil)
+  end
+
+  defp apply_action(socket, :edit, %{"topic_id" => topic_id, "id" => id}) do
+    topic = Quiz.get_topic!(topic_id)
+    question = Quiz.get_question!(id)
+    changeset = Question.changeset(question, %{})
+
+    socket
+    |> assign(:topic, topic)
+    |> assign(:question, question)
+    |> assign(:page_title, "Frage bearbeiten")
+    |> assign(:form, to_form(changeset))
+    |> assign(:image_preview_url, nil)
   end
 
   @impl true
@@ -59,37 +81,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
      socket
      |> assign(:search, search)
      |> stream(:questions, questions, reset: true)}
-  end
-
-  @impl true
-  def handle_event("start_new", _params, socket) do
-    changeset =
-      Question.changeset(%Question{options: ["", "", "", ""]}, %{})
-
-    {:noreply,
-     socket
-     |> assign(:editing_question_id, :new)
-     |> assign(:form, to_form(changeset))
-     |> assign(:image_preview_url, nil)}
-  end
-
-  def handle_event("start_edit", %{"id" => id}, socket) do
-    question = Quiz.get_question!(String.to_integer(id))
-    changeset = Question.changeset(question, %{})
-
-    {:noreply,
-     socket
-     |> assign(:editing_question_id, question.id)
-     |> assign(:form, to_form(changeset))
-     |> assign(:question, question)
-     |> assign(:image_preview_url, nil)}
-  end
-
-  def handle_event("cancel_edit", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:editing_question_id, nil)
-     |> assign(:image_preview_url, nil)}
   end
 
   def handle_event("ask_delete", %{"id" => id}, socket) do
@@ -138,16 +129,17 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         question_params
       end
 
-    save_question(socket, socket.assigns.editing_question_id, question_params)
+    save_question(socket, question_params)
   end
 
   def handle_event("validate", params, socket) do
     question_params = normalize_params(params)
+    question = Map.get(socket.assigns, :question)
 
     changeset =
-      case socket.assigns.editing_question_id do
-        :new -> Question.changeset(%Question{options: ["", "", "", ""]}, question_params)
-        _id -> Question.changeset(socket.assigns.question, question_params)
+      case question do
+        nil -> Question.changeset(%Question{options: ["", "", "", ""]}, question_params)
+        _ -> Question.changeset(question, question_params)
       end
 
     {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
@@ -207,35 +199,31 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     stream(socket, :questions, questions, reset: true)
   end
 
-  defp save_question(socket, :new, question_params) do
-    question_params = Map.put(question_params, "topic_id", socket.assigns.topic.id)
+  defp save_question(socket, question_params) do
+    question = Map.get(socket.assigns, :question)
+    topic_id = socket.assigns.topic.id
 
-    case Quiz.create_question(question_params) do
+    {result, action} =
+      case question do
+        nil ->
+          {Quiz.create_question(Map.put(question_params, "topic_id", topic_id)), :insert}
+
+        q ->
+          {Quiz.update_question(q, question_params), :insert}
+      end
+
+    case result do
       {:ok, _question} ->
+        flash = if question, do: "Frage aktualisiert.", else: "Frage erstellt."
+
         {:noreply,
          socket
-         |> assign(:editing_question_id, nil)
          |> assign(:image_preview_url, nil)
-         |> restream_questions()
-         |> put_flash(:info, "Frage erstellt.")}
+         |> put_flash(:info, flash)
+         |> push_navigate(to: ~p"/admin/topics/#{topic_id}/questions")}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, :form, to_form(changeset, action: :insert))}
-    end
-  end
-
-  defp save_question(socket, id, question_params) when is_integer(id) do
-    case Quiz.update_question(socket.assigns.question, question_params) do
-      {:ok, _question} ->
-        {:noreply,
-         socket
-         |> assign(:editing_question_id, nil)
-         |> assign(:image_preview_url, nil)
-         |> restream_questions()
-         |> put_flash(:info, "Frage aktualisiert.")}
-
-      {:error, changeset} ->
-        {:noreply, assign(socket, :form, to_form(changeset, action: :insert))}
+        {:noreply, assign(socket, :form, to_form(changeset, action: action))}
     end
   end
 end

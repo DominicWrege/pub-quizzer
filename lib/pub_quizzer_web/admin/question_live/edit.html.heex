@@ -1,10 +1,7 @@
 <Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
   <.header>
     <:back>
-      <.link
-        navigate={~p"/admin/topics/#{@topic}/questions"}
-        class="btn btn-sm"
-      >
+      <.link navigate={~p"/admin/topics/#{@topic}/questions"} class="btn btn-sm">
         ← Zurück
       </.link>
     </:back>
@@ -20,66 +17,75 @@
   >
     <.input
       field={@form[:prompt]}
-      type="text"
+      type="textarea"
       label="Frage"
-      placeholder="z.B. Was ist die Hauptstadt von Frankreich?"
+      placeholder="Wie lautet die Frage?"
     />
 
     <fieldset class="fieldset">
-      <legend class="label mb-2">Optionen (wähle die richtige Antwort)</legend>
+      <legend class="label mb-2">Optionen (richtige Antwort markieren)</legend>
 
       <div class="space-y-2">
-        <%= for {option, idx} <- Enum.with_index(@form[:options].value || ["", "", "", ""]) do %>
+        <%= for i <- 0..3 do %>
           <div class="flex items-start gap-2">
             <input
               type="radio"
               name="question[correct_index]"
-              value={idx}
-              id={"correct-#{idx}"}
-              checked={(@form[:correct_index].value || 0) == idx}
+              value={i}
+              id={"correct-#{i}"}
+              checked={@form[:correct_index].value == i}
               class="radio radio-sm mt-3"
             />
             <textarea
-              name="question[options][]"
-              id={"option-#{idx}"}
+              name={"question[options][#{i}]"}
+              id={"question_options_#{i}"}
               class="textarea textarea-bordered w-full"
-              placeholder={"Option #{idx + 1}"}
               rows="2"
-              required
-            >{option}</textarea>
+            ><%= Phoenix.HTML.Form.input_value(@form, :options) |> Enum.at(i) || "" %></textarea>
           </div>
         <% end %>
       </div>
     </fieldset>
 
-    <fieldset class="fieldset mt-4">
-      <legend class="label mb-2">Bild (optional)</legend>
-      <%= if @form[:image].value do %>
-        <div class="mb-3">
-          <img src={@form[:image].value} alt="Aktuelles Bild" class="max-h-48 rounded-lg border" />
-          <p class="text-sm text-base-content/60 mt-1">Aktuelles Bild</p>
+    <div
+      id="image-upload-zone"
+      phx-hook="ImagePreview"
+      phx-drop-target={@uploads.image.ref}
+      class="flex flex-col gap-2 p-4 border-2 border-dashed border-base-300 rounded-box mt-4"
+    >
+      <label class="text-sm font-semibold">Bild (optional)</label>
+      <%= if @question.image do %>
+        <div class="mb-2">
+          <img src={@question.image} alt="Aktuelles Bild" class="max-h-32 rounded-lg" />
+          <p class="text-xs text-base-content/60 mt-1">Aktuelles Bild</p>
         </div>
       <% end %>
-      <div id="image-upload-zone" phx-hook="ImagePreview">
-        <.live_file_input upload={@uploads.image} class="file-input file-input-bordered w-full" />
+      <.live_file_input upload={@uploads.image} class="file-input file-input-bordered w-full" />
+      <p class="text-xs text-base-content/60">Neues Bild hochladen (ersetzt das alte)</p>
+      <div :for={entry <- @uploads.image.entries} class="flex items-center gap-2 text-sm">
+        <span>{entry.client_name}</span>
+        <button
+          type="button"
+          phx-click="cancel_upload"
+          phx-value-ref={entry.ref}
+          class="btn btn-xs"
+        >
+          Entfernen
+        </button>
       </div>
-      <p class="label-text mt-1">Neues Bild hochladen (ersetzt das alte)</p>
-      <%= for entry <- @uploads.image.entries do %>
-        <div class="flex items-center gap-2 mt-2">
-          <span class="text-sm">{entry.client_name}</span>
-          <button
-            type="button"
-            phx-click="cancel_upload"
-            phx-value-ref={entry.ref}
-            class="btn btn-sm"
-          >
-            Entfernen
-          </button>
+      <%= if @image_preview_url do %>
+        <div class="relative w-fit">
+          <img src={@image_preview_url} class="max-h-32 rounded-lg" />
         </div>
       <% end %>
-    </fieldset>
+    </div>
 
-    <button type="submit" class="btn btn-primary mt-4">Frage speichern</button>
+    <div class="flex justify-end gap-2 mt-6">
+      <.link navigate={~p"/admin/topics/#{@topic}/questions"} class="btn btn-sm">
+        Abbrechen
+      </.link>
+      <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
+    </div>
   </.form>
 
   <%!-- Question preview --%>
@@ -91,24 +97,24 @@
   <div class="card bg-base-200 mb-4">
     <div class="card-body">
       <h4 class="card-title text-xl">{@form[:prompt].value || "Frage"}</h4>
-      <%= if img = @form[:image].value do %>
+      <%= if img = @question.image do %>
         <img src={img} alt="Fragebild" class="rounded-lg max-h-64 mx-auto mb-2" />
       <% end %>
       <%= if @image_preview_url do %>
         <img src={@image_preview_url} alt="Neues Bild" class="rounded-lg max-h-64 mx-auto mb-2" />
       <% end %>
       <div class="flex flex-col gap-3 mt-2">
-        <%= for {option, idx} <- Enum.with_index(@form[:options].value || ["", "", "", ""]) do %>
+        <%= for {option, idx} <- Enum.with_index(Phoenix.HTML.Form.input_value(@form, :options) || ["", "", "", ""]) do %>
           <div class={[
             "btn h-auto py-5 px-5 justify-start text-left text-lg shadow-md border-2 border-base-content/60 whitespace-normal",
-            (@form[:correct_index].value || 0) == idx && "btn-primary",
-            (@form[:correct_index].value || 0) != idx && "btn-outline"
+            @form[:correct_index].value == idx && "btn-primary",
+            @form[:correct_index].value != idx && "btn-outline"
           ]}>
             <span class="font-mono font-bold mr-3 shrink-0">
-              {String.capitalize(Enum.at(["a", "b", "c", "d", "e", "f"], idx, ""))}.
+              {String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(idx))}.
             </span>
             <span class="font-semibold">{option}</span>
-            <%= if (@form[:correct_index].value || 0) == idx do %>
+            <%= if @form[:correct_index].value == idx do %>
               <span class="hero-check-circle size-6 shrink-0 ml-auto"></span>
             <% end %>
           </div>

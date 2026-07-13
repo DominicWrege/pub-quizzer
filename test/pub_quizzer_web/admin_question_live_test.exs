@@ -34,20 +34,18 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       assert html =~ "Option 1"
     end
 
-    test "shows inline form with 4 option inputs on new", %{conn: conn} do
+    test "shows new page with 4 option inputs", %{conn: conn} do
       topic = create_topic()
 
-      {:ok, view, _html} =
+      {:ok, _view, html} =
         conn
         |> auth_conn()
-        |> live(~p"/admin/topics/#{topic}/questions")
+        |> live(~p"/admin/topics/#{topic}/questions/new")
 
-      view |> element("button", "Neue Frage") |> render_click()
-
-      assert has_element?(view, "#question_options_0")
-      assert has_element?(view, "#question_options_1")
-      assert has_element?(view, "#question_options_2")
-      assert has_element?(view, "#question_options_3")
+      assert html =~ "question_options_0"
+      assert html =~ "question_options_1"
+      assert html =~ "question_options_2"
+      assert html =~ "question_options_3"
     end
   end
 
@@ -58,9 +56,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       {:ok, view, _html} =
         conn
         |> auth_conn()
-        |> live(~p"/admin/topics/#{topic}/questions")
-
-      view |> element("button", "Neue Frage") |> render_click()
+        |> live(~p"/admin/topics/#{topic}/questions/new")
 
       view
       |> form("#question-form", %{
@@ -101,11 +97,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       {:ok, view, _html} =
         conn
         |> auth_conn()
-        |> live(~p"/admin/topics/#{topic}/questions")
-
-      view
-      |> element("tr#questions-#{question.id} button[phx-click='start_edit']")
-      |> render_click()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
 
       view
       |> form("#question-form", %{
