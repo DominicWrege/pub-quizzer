@@ -70,7 +70,7 @@ defmodule PubQuizzerWeb.Layouts do
             </.link>
           </div>
         </div>
-        <div class="flex items-center gap-3 mt-4">
+        <div class="flex items-center gap-1 -mb-2">
           <.link
             navigate={~p"/admin/events"}
             class={nav_tab_class(@current_path, "/admin/events")}
@@ -155,13 +155,14 @@ defmodule PubQuizzerWeb.Layouts do
   defp nav_tab_class(current_path, prefix) do
     active = String.starts_with?(current_path, prefix)
 
-    base = "btn btn-sm rounded-lg transition-colors duration-150 px-6"
+    base =
+      "inline-flex items-center gap-2 px-4 py-2 text-sm border-b-2 transition-colors duration-150"
 
     active_styles =
-      "bg-primary text-primary-content shadow-sm border border-primary hover:bg-primary/90"
+      "border-primary text-base-content font-semibold border-b-[3px]"
 
     inactive_styles =
-      "bg-base-100 border border-base-300/60 text-base-content/60 hover:bg-base-300/40 hover:text-base-content"
+      "border-transparent text-base-content/60 hover:text-base-content hover:border-base-content/20"
 
     if active, do: [base, active_styles], else: [base, inactive_styles]
   end
