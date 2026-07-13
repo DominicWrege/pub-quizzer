@@ -76,10 +76,35 @@ let ScrollToBottom = {
   }
 }
 
+let Dialog = {
+  mounted() {
+    this._closing = false
+    this.el.addEventListener("close", () => {
+      if (this._closing) {
+        this._closing = false
+        return
+      }
+      this.pushEvent(this.el.dataset.cancelEvent || "cancel_confirm")
+    })
+  },
+  updated() {
+    if (this.el.hasAttribute("data-show")) {
+      if (!this.el.open) {
+        this.el.showModal()
+      }
+    } else {
+      if (this.el.open) {
+        this._closing = true
+        this.el.close()
+      }
+    }
+  }
+}
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken },
-  hooks: { AutoDismiss, ImagePreview, CopyLink, ClipboardCopy, ScrollToBottom }
+  hooks: { AutoDismiss, ImagePreview, CopyLink, ClipboardCopy, ScrollToBottom, Dialog }
 })
 
 liveSocket.connect()

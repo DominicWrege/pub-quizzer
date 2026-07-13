@@ -298,6 +298,7 @@
   </div>
 
   <.confirm_modal
+    id="reveal-round-modal"
     show={@confirm_action == :reveal_round}
     title="Runde auflösen?"
     message="Rundenergebnisse jetzt anzeigen?"
@@ -308,6 +309,7 @@
   />
 
   <.confirm_modal
+    id="finish-quiz-modal"
     show={@confirm_action == :finish_quiz}
     title="Quiz beenden?"
     message="Quiz vorzeitig beenden?"

@@ -14,8 +14,9 @@ defmodule PubQuizzerWeb.Admin.UserLive do
      |> assign(:page_title, "Benutzer")
      |> assign(:form, to_form(%{"email" => ""}))
      |> assign(:invite_link, nil)
-     |> assign(:invite_link_timer, nil)
-     |> assign(:confirm_delete_id, nil)
+      |> assign(:invite_link_timer, nil)
+      |> assign(:confirm_action, nil)
+      |> assign(:pending_delete_id, nil)
      |> assign(:base_url, base_url)}
   end
 
@@ -61,22 +62,26 @@ defmodule PubQuizzerWeb.Admin.UserLive do
   end
 
   def handle_event("ask_delete", %{"id" => id}, socket) do
-    {:noreply, assign(socket, :confirm_delete_id, String.to_integer(id))}
+    {:noreply,
+     socket
+     |> assign(:confirm_action, :delete_user)
+     |> assign(:pending_delete_id, String.to_integer(id))}
   end
 
-  def handle_event("cancel_delete", _params, socket) do
-    {:noreply, assign(socket, :confirm_delete_id, nil)}
+  def handle_event("cancel_confirm", _params, socket) do
+    {:noreply, socket |> assign(:confirm_action, nil) |> assign(:pending_delete_id, nil)}
   end
 
   def handle_event("confirm_delete", _params, socket) do
     current_user = socket.assigns.current_scope.user
-    id = socket.assigns.confirm_delete_id
+    id = socket.assigns.pending_delete_id
 
     cond do
       id == current_user.id ->
         {:noreply,
          socket
-         |> assign(:confirm_delete_id, nil)
+         |> assign(:confirm_action, nil)
+         |> assign(:pending_delete_id, nil)
          |> put_flash(:error, "Du kannst dich nicht selbst löschen.")}
 
       Accounts.can_manage_users?(current_user) ->
@@ -86,14 +91,16 @@ defmodule PubQuizzerWeb.Admin.UserLive do
         {:noreply,
          socket
          |> assign(:users, Accounts.list_users())
-         |> assign(:confirm_delete_id, nil)
+         |> assign(:confirm_action, nil)
+         |> assign(:pending_delete_id, nil)
          |> clear_invite_link()
          |> put_flash(:info, "Benutzer gelöscht.")}
 
       true ->
         {:noreply,
          socket
-         |> assign(:confirm_delete_id, nil)
+         |> assign(:confirm_action, nil)
+         |> assign(:pending_delete_id, nil)
          |> put_flash(:error, "Keine Berechtigung.")}
     end
   end
@@ -238,25 +245,13 @@ defmodule PubQuizzerWeb.Admin.UserLive do
                     >
                       Link
                     </button>
-                    <%= if @confirm_delete_id == user.id do %>
-                      <button phx-click="confirm_delete" class="btn btn-error btn-xs">
-                        Wirklich?
-                      </button>
-                      <button
-                        phx-click="cancel_delete"
-                        class="btn btn-xs btn-outline border-2 border-base-content/60"
-                      >
-                        Abbrechen
-                      </button>
-                    <% else %>
-                      <button
-                        phx-click="ask_delete"
-                        phx-value-id={user.id}
-                        class="btn btn-xs btn-outline border-2 border-base-content/60 text-error"
-                      >
-                        Löschen
-                      </button>
-                    <% end %>
+                    <button
+                      phx-click="ask_delete"
+                      phx-value-id={user.id}
+                      class="btn btn-xs btn-outline border-2 border-base-content/60 text-error"
+                    >
+                      Löschen
+                    </button>
                   <% end %>
                 </div>
               </td>
@@ -264,6 +259,16 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           </tbody>
         </table>
       </div>
+
+      <.confirm_modal
+        id="delete-user-modal"
+        show={@confirm_action == :delete_user}
+        title="Benutzer löschen?"
+        message="Diesen Benutzer unwiderruflich löschen?"
+        confirm_label="Löschen"
+        confirm_event="confirm_delete"
+        cancel_event="cancel_confirm"
+      />
     </Layouts.app>
     """
   end

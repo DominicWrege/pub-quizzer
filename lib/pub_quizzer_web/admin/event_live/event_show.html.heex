@@ -28,6 +28,7 @@
   </.header>
 
   <.confirm_modal
+    id="delete-event-modal"
     show={@confirm_action == :delete}
     title="Event löschen?"
     message="Event und alle Daten unwiderruflich löschen?"
@@ -37,6 +38,7 @@
   />
 
   <.confirm_modal
+    id="start-quiz-modal"
     show={@confirm_action == :start}
     title="Quiz starten?"
     message="Das Quiz wird gestartet und die Themenauswahl beginnt. Fortfahren?"

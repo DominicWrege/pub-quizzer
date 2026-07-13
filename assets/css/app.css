@@ -79,3 +79,8 @@ body.presentation-mode .host-header {
 body.presentation-mode header.bg-base-200 {
   display: none;
 }
+
+/* Native <dialog> backdrop styling */
+dialog::backdrop {
+  background-color: oklch(0 0 0 / 0.5);
+}

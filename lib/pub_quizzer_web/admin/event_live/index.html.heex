@@ -53,25 +53,22 @@
       <% end %>
   <% end %>
 
-  <%= if @delete_event_id do %>
-    <% event = Enum.find(@events, &(&1.id == @delete_event_id)) %>
-    <div class="modal modal-open">
-      <div class="modal-box">
-        <h3 class="text-lg font-bold">Veranstaltung löschen?</h3>
-        <p class="py-4">
-          <%= if event do %>
-            Veranstaltung <strong>{event.code}</strong>
-            und alle zugehörigen Daten (Teams, Runden, Antworten)
-            werden unwiderruflich gelöscht.
-          <% else %>
-            Diese Veranstaltung und alle zugehörigen Daten werden unwiderruflich gelöscht.
-          <% end %>
-        </p>
-        <div class="modal-action">
-          <button phx-click="cancel_delete" class="btn btn-sm">Abbrechen</button>
-          <button phx-click="confirm_delete" class="btn btn-sm btn-error">Löschen</button>
-        </div>
-      </div>
-    </div>
-  <% end %>
+  <.confirm_modal
+    id="delete-event-index-modal"
+    show={@delete_event_id != nil}
+    title="Veranstaltung löschen?"
+    confirm_label="Löschen"
+    confirm_event="confirm_delete"
+    cancel_event="cancel_delete"
+  >
+    <p>
+      <%= if event = Enum.find(@events, &(&1.id == @delete_event_id)) do %>
+        Veranstaltung <strong>{event.code}</strong>
+        und alle zugehörigen Daten (Teams, Runden, Antworten)
+        werden unwiderruflich gelöscht.
+      <% else %>
+        Diese Veranstaltung und alle zugehörigen Daten werden unwiderruflich gelöscht.
+      <% end %>
+    </p>
+  </.confirm_modal>
 </Layouts.app>
