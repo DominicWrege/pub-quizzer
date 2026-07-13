@@ -3021,6 +3021,10 @@
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 3px;
   }
+  .border-dashed {
+    --tw-border-style: dashed;
+    border-style: dashed;
+  }
   .badge-ghost {
     @layer daisyui.l1.l2 {
       border-color: var(--color-base-200);

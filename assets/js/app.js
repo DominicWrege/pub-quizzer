@@ -17,14 +17,20 @@ let ImagePreview = {
   mounted() {
     this.el.addEventListener("change", (e) => {
       if (e.target.type !== "file") return
-      const file = e.target.files[0]
-      if (!file) return
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        this.pushEvent("image_preview", { data_url: ev.target.result })
-      }
-      reader.readAsDataURL(file)
+      this.previewFile(e.target.files[0])
     })
+    this.el.addEventListener("drop", (e) => {
+      const file = e.dataTransfer?.files?.[0]
+      if (file) this.previewFile(file)
+    })
+  },
+  previewFile(file) {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      this.pushEvent("image_preview", { data_url: ev.target.result })
+    }
+    reader.readAsDataURL(file)
   }
 }
 

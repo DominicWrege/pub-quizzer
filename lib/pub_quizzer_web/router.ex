@@ -18,10 +18,6 @@ defmodule PubQuizzerWeb.Router do
     plug PubQuizzerWeb.AdminAuth, required_role: :moderator
   end
 
-  pipeline :superadmin_auth do
-    plug PubQuizzerWeb.AdminAuth, required_role: :superadmin
-  end
-
   scope "/", PubQuizzerWeb do
     pipe_through :browser
 
@@ -59,11 +55,14 @@ defmodule PubQuizzerWeb.Router do
     end
   end
 
-  # Moderator panel — requires any authenticated user
+  # Admin panel — requires authenticated user (moderator+)
+  # All admin routes share one live_session so navigation between
+  # pages stays in the same LiveView process (no layout flicker).
+  # The superadmin-only /users route enforces its role in UserLive.
   scope "/admin", PubQuizzerWeb.Admin do
     pipe_through [:browser, :moderator_auth]
 
-    live_session :moderator,
+    live_session :admin,
       on_mount: [{PubQuizzerWeb.AdminAuth, :mount_current_scope}] do
       live "/topics", TopicLive, :index
 
@@ -75,15 +74,7 @@ defmodule PubQuizzerWeb.Router do
       live "/events/:id/results", ResultLive, :index
 
       live "/profile", ProfileLive, :index
-    end
-  end
 
-  # Superadmin panel — user management
-  scope "/admin", PubQuizzerWeb.Admin do
-    pipe_through [:browser, :superadmin_auth]
-
-    live_session :superadmin,
-      on_mount: [{PubQuizzerWeb.AdminAuth, :mount_current_scope}] do
       live "/users", UserLive, :index
     end
   end

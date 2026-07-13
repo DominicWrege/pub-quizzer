@@ -5,19 +5,36 @@ defmodule PubQuizzerWeb.Admin.UserLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    users = Accounts.list_users()
-    base_url = connect_base_url(socket)
+    user = socket.assigns[:current_scope] && socket.assigns.current_scope[:user]
 
-    {:ok,
-     socket
-     |> assign(:users, users)
-     |> assign(:page_title, "Benutzer")
-     |> assign(:form, to_form(%{"email" => ""}))
-     |> assign(:invite_link, nil)
-      |> assign(:invite_link_timer, nil)
-      |> assign(:confirm_action, nil)
-      |> assign(:pending_delete_id, nil)
-     |> assign(:base_url, base_url)}
+    cond do
+      is_nil(user) ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Bitte melde dich an.")
+         |> redirect(to: "/admin/login")}
+
+      user.role != "superadmin" ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Keine Berechtigung für diesen Bereich.")
+         |> redirect(to: "/admin/events")}
+
+      true ->
+        users = Accounts.list_users()
+        base_url = connect_base_url(socket)
+
+        {:ok,
+         socket
+         |> assign(:users, users)
+         |> assign(:page_title, "Benutzer")
+         |> assign(:form, to_form(%{"email" => ""}))
+         |> assign(:invite_link, nil)
+         |> assign(:invite_link_timer, nil)
+         |> assign(:confirm_action, nil)
+         |> assign(:pending_delete_id, nil)
+         |> assign(:base_url, base_url)}
+    end
   end
 
   @impl true

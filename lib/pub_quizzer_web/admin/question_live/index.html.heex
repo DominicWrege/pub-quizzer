@@ -43,45 +43,51 @@
             label="Frage"
             placeholder="Wie lautet die Frage?"
           />
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <fieldset class="fieldset">
+            <legend class="label mb-2">Optionen (richtige Antwort markieren)</legend>
             <%= for i <- 0..3 do %>
-              <% letter = Enum.at(["a", "b", "c", "d"], i) %>
-              <div class="fieldset mb-2">
-                <label
-                  for={"question_options_#{i}"}
-                  class="label mb-1"
-                >Option {String.upcase(letter)}</label>
+              <div class="flex items-start gap-2 mb-2">
+                <input
+                  type="radio"
+                  name="question[correct_index]"
+                  value={i}
+                  id={"correct-#{i}"}
+                  checked={@form[:correct_index].value == i}
+                  class="radio radio-sm mt-3"
+                />
                 <input
                   type="text"
                   name={"question[options][#{i}]"}
                   id={"question_options_#{i}"}
                   value={Phoenix.HTML.Form.input_value(@form, :options) |> Enum.at(i) || ""}
-                  class="w-full input"
+                  class="input w-full"
                 />
               </div>
             <% end %>
-          </div>
-          <.input
-            field={@form[:correct_index]}
-            type="number"
-            label="Korrekte Option (0-3)"
-            min="0"
-            max="3"
-          />
-          <div id="image-upload-zone" phx-hook="ImagePreview" class="flex flex-col gap-2">
+          </fieldset>
+          <div
+            id="image-upload-zone"
+            phx-hook="ImagePreview"
+            phx-drop-target={@uploads.image.ref}
+            class="flex flex-col gap-2 p-4 border-2 border-dashed border-base-300 rounded-box"
+          >
             <label class="text-sm font-semibold">Bild (optional)</label>
-            <.live_file_input upload={@uploads.image} />
+            <.live_file_input upload={@uploads.image} class="file-input file-input-bordered w-full" />
+            <p class="text-xs text-base-content/60">Klicken oder Datei hierher ziehen</p>
+            <div :for={entry <- @uploads.image.entries} class="flex items-center gap-2 text-sm">
+              <span>{entry.client_name}</span>
+              <button
+                type="button"
+                phx-click="cancel_upload"
+                phx-value-ref={entry.ref}
+                class="btn btn-xs"
+              >
+                Entfernen
+              </button>
+            </div>
             <%= if @image_preview_url do %>
               <div class="relative w-fit">
                 <img src={@image_preview_url} class="max-h-32 rounded-lg" />
-                <button
-                  type="button"
-                  phx-click="cancel_upload"
-                  phx-value-ref={hd(@uploads.image.entries).ref}
-                  class="btn btn-error btn-xs absolute top-1 right-1"
-                >
-                  ×
-                </button>
               </div>
             <% end %>
           </div>

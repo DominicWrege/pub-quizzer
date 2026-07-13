@@ -5,6 +5,11 @@
   max_width="max-w-3xl"
 >
   <.header>
+    <:back>
+      <.link navigate={~p"/admin/events"} class="btn btn-sm">
+        <.icon name="hero-chevron-left" class="size-4" /> Zurück
+      </.link>
+    </:back>
     <%= if @event.name && @event.name != "" do %>
       {@event.name}
     <% else %>

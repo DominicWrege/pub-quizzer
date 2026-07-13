@@ -3,8 +3,8 @@ defmodule PubQuizzerWeb.AdminAuth do
   Plug-based authentication via magic link sessions.
 
   Reads `:user_id` from the session, loads the user, and sets `current_scope`.
-  Supports two levels: `:moderator_auth` (any active user) and
-  `:superadmin_auth` (only superadmin role).
+  The plug supports `:moderator_auth` (any active user).
+  The superadmin role check is handled at the LiveView level in UserLive.
   """
 
   import Plug.Conn
@@ -86,40 +86,12 @@ defmodule PubQuizzerWeb.AdminAuth do
           socket
           |> Phoenix.Component.assign(:current_scope, %{user: user})
           |> Phoenix.LiveView.attach_hook(:set_current_path, :handle_params, fn _params,
-                                                                                url,
-                                                                                socket ->
+                                                                                 url,
+                                                                                 socket ->
             {:cont, Phoenix.Component.assign(socket, :current_path, URI.parse(url).path)}
           end)
 
         {:cont, socket}
-
-      :error ->
-        {:halt,
-         socket
-         |> Phoenix.LiveView.put_flash(:error, "Bitte melde dich an.")
-         |> Phoenix.LiveView.redirect(to: "/admin/login")}
-    end
-  end
-
-  def on_mount(:ensure_superadmin, _params, session, socket) do
-    case load_current_user_from_session(session) do
-      {:ok, %User{role: "superadmin"} = user} ->
-        socket =
-          socket
-          |> Phoenix.Component.assign(:current_scope, %{user: user})
-          |> Phoenix.LiveView.attach_hook(:set_current_path, :handle_params, fn _params,
-                                                                                url,
-                                                                                socket ->
-            {:cont, Phoenix.Component.assign(socket, :current_path, URI.parse(url).path)}
-          end)
-
-        {:cont, socket}
-
-      {:ok, _user} ->
-        {:halt,
-         socket
-         |> Phoenix.LiveView.put_flash(:error, "Keine Berechtigung für diesen Bereich.")
-         |> Phoenix.LiveView.redirect(to: "/admin/events")}
 
       :error ->
         {:halt,
