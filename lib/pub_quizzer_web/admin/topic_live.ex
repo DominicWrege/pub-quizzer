@@ -17,7 +17,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
      socket
      |> assign(:topics, Quiz.list_topics())
      |> assign(:editing_topic_id, nil)
-     |> assign(:form, nil)
+     |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))
      |> assign(:topic, nil)
      |> assign(:confirm_action, nil)
      |> assign(:pending_delete_id, nil)}
@@ -55,7 +55,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
      socket
      |> assign(:editing_topic_id, nil)
      |> assign(:topic, nil)
-     |> assign(:form, nil)}
+     |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))}
   end
 
   def handle_event("ask_delete", %{"id" => id}, socket) do
@@ -70,14 +70,14 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
     {:ok, _} = Quiz.delete_topic(topic)
 
     {:noreply,
-     socket
-     |> assign(:confirm_action, nil)
-     |> assign(:pending_delete_id, nil)
-     |> assign(:editing_topic_id, nil)
-     |> assign(:topic, nil)
-     |> assign(:form, nil)
-     |> assign(:topics, Quiz.list_topics())
-     |> put_flash(:info, "Thema gelöscht.")}
+      socket
+      |> assign(:confirm_action, nil)
+      |> assign(:pending_delete_id, nil)
+      |> assign(:editing_topic_id, nil)
+      |> assign(:topic, nil)
+      |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))
+      |> assign(:topics, Quiz.list_topics())
+      |> put_flash(:info, "Thema gelöscht.")}
   end
 
   def handle_event("cancel_confirm", _params, socket) do
@@ -106,7 +106,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
          socket
          |> assign(:editing_topic_id, nil)
          |> assign(:topic, nil)
-         |> assign(:form, nil)
+         |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))
          |> assign(:topics, Quiz.list_topics())
          |> put_flash(:info, "Thema erstellt.")}
 
@@ -122,7 +122,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
          socket
          |> assign(:editing_topic_id, nil)
          |> assign(:topic, nil)
-         |> assign(:form, nil)
+         |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))
          |> assign(:topics, Quiz.list_topics())
          |> put_flash(:info, "Thema aktualisiert.")}
 

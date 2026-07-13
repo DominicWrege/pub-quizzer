@@ -14,41 +14,44 @@
     </:actions>
   </.header>
 
-  <%= if @editing_topic_id do %>
-    <div class="card bg-base-200 shadow-sm mb-6">
-      <div class="card-body">
-        <h3 class="card-title text-lg">
-          {if @editing_topic_id == :new, do: "Neues Thema", else: "Thema bearbeiten"}
-        </h3>
-        <.form for={@form} id="topic-form" phx-change="validate" phx-submit="save">
-          <.input field={@form[:name]} type="text" label="Name" placeholder="z.B. Geografie" />
-          <.input
-            field={@form[:description]}
-            type="text"
-            label="Beschreibung"
-            placeholder="Optional"
-          />
-          <div class="card-actions justify-between mt-4">
-            <div class="flex gap-2">
-              <%= if @editing_topic_id != :new do %>
-                <.link
-                  phx-click="ask_delete"
-                  phx-value-id={@editing_topic_id}
-                  class="btn btn-sm text-error"
-                >
-                  <.icon name="hero-trash" class="size-4" /> Löschen
-                </.link>
-              <% end %>
-              <.link phx-click="cancel_edit" class="btn btn-sm">
-                Abbrechen
-              </.link>
-            </div>
-            <button type="submit" class="btn btn-primary">Speichern</button>
-          </div>
-        </.form>
+  <dialog
+    id="topic-form-modal"
+    data-show={@editing_topic_id != nil}
+    phx-hook="Dialog"
+    data-cancel-event="cancel_edit"
+    class="m-auto rounded-box bg-base-100 p-6 shadow-xl max-w-md"
+  >
+    <h3 class="text-lg font-bold">
+      {if @editing_topic_id == :new, do: "Neues Thema", else: "Thema bearbeiten"}
+    </h3>
+    <.form for={@form} id="topic-form" phx-change="validate" phx-submit="save">
+      <.input field={@form[:name]} type="text" label="Name" placeholder="z.B. Geografie" />
+      <.input
+        field={@form[:description]}
+        type="text"
+        label="Beschreibung"
+        placeholder="Optional"
+      />
+      <div class="flex justify-between items-center mt-6">
+        <div>
+          <%= if @editing_topic_id != :new do %>
+            <button
+              type="button"
+              phx-click="ask_delete"
+              phx-value-id={@editing_topic_id}
+              class="btn btn-sm text-error"
+            >
+              <.icon name="hero-trash" class="size-4" /> Löschen
+            </button>
+          <% end %>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" phx-click="cancel_edit" class="btn btn-sm">Abbrechen</button>
+          <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
+        </div>
       </div>
-    </div>
-  <% end %>
+    </.form>
+  </dialog>
 
   <%= if @topics == [] do %>
     <div class="text-center py-12 text-base-content/50">

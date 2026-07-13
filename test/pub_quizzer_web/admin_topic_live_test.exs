@@ -43,13 +43,11 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
   end
 
   describe "new topic" do
-    test "shows inline form on the index page", %{conn: conn} do
+    test "shows form dialog on the index page", %{conn: conn} do
       {:ok, view, _html} =
         conn
         |> auth_conn()
         |> live(~p"/admin/topics")
-
-      view |> element("button", "Neues Thema") |> render_click()
 
       assert has_element?(view, "#topic-form")
     end
@@ -67,7 +65,6 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
       |> render_submit()
 
       assert Quiz.list_topics() |> Enum.any?(&(&1.name == "History"))
-      refute has_element?(view, "#topic-form")
     end
 
     test "shows validation errors", %{conn: conn} do
@@ -107,7 +104,6 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
       updated = Quiz.get_topic!(topic.id)
       assert updated.name == "New Name"
       assert updated.description == "Updated"
-      refute has_element?(view, "#topic-form")
     end
   end
 
@@ -126,7 +122,7 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
       |> element("div#topics-#{topic.id} a", "Bearbeiten")
       |> render_click()
 
-      view |> element("a", "Löschen") |> render_click()
+      view |> element("button[phx-click='ask_delete']") |> render_click()
       view |> element("button[phx-click='confirm_delete']") |> render_click()
       refute has_element?(view, "div#topics-#{topic.id}")
     end
