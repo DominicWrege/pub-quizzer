@@ -17,7 +17,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
      socket
      |> assign(:topics, Quiz.list_topics())
      |> assign(:editing_topic_id, nil)
-     |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))
+     |> assign(:form, nil)
      |> assign(:topic, nil)
      |> assign(:confirm_action, nil)
      |> assign(:pending_delete_id, nil)}
@@ -55,7 +55,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
      socket
      |> assign(:editing_topic_id, nil)
      |> assign(:topic, nil)
-     |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))}
+     |> assign(:form, nil)}
   end
 
   def handle_event("ask_delete", %{"id" => id}, socket) do
@@ -75,7 +75,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
       |> assign(:pending_delete_id, nil)
       |> assign(:editing_topic_id, nil)
       |> assign(:topic, nil)
-      |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))
+      |> assign(:form, nil)
       |> assign(:topics, Quiz.list_topics())
       |> put_flash(:info, "Thema gelöscht.")}
   end
@@ -106,7 +106,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
          socket
          |> assign(:editing_topic_id, nil)
          |> assign(:topic, nil)
-         |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))
+         |> assign(:form, nil)
          |> assign(:topics, Quiz.list_topics())
          |> put_flash(:info, "Thema erstellt.")}
 
@@ -122,7 +122,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
          socket
          |> assign(:editing_topic_id, nil)
          |> assign(:topic, nil)
-         |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))
+         |> assign(:form, nil)
          |> assign(:topics, Quiz.list_topics())
          |> put_flash(:info, "Thema aktualisiert.")}
 

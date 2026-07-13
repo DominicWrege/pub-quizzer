@@ -84,25 +84,14 @@ let ScrollToBottom = {
 
 let Dialog = {
   mounted() {
-    this._closing = false
+    this.el.showModal()
     this.el.addEventListener("close", () => {
-      if (this._closing) {
-        this._closing = false
-        return
-      }
       this.pushEvent(this.el.dataset.cancelEvent || "cancel_confirm")
     })
   },
-  updated() {
-    if (this.el.hasAttribute("data-show")) {
-      if (!this.el.open) {
-        this.el.showModal()
-      }
-    } else {
-      if (this.el.open) {
-        this._closing = true
-        this.el.close()
-      }
+  destroyed() {
+    if (this.el.open) {
+      this.el.close()
     }
   }
 }

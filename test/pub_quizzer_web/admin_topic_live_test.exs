@@ -43,11 +43,15 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
   end
 
   describe "new topic" do
-    test "shows form dialog on the index page", %{conn: conn} do
+    test "shows form dialog after clicking new", %{conn: conn} do
       {:ok, view, _html} =
         conn
         |> auth_conn()
         |> live(~p"/admin/topics")
+
+      refute has_element?(view, "#topic-form")
+
+      view |> element("button", "Neues Thema") |> render_click()
 
       assert has_element?(view, "#topic-form")
     end

@@ -598,29 +598,30 @@ defmodule PubQuizzerWeb.CoreComponents do
 
   def confirm_modal(assigns) do
     ~H"""
-    <dialog
-      id={@id}
-      data-show={@show}
-      phx-hook="Dialog"
-      data-cancel-event={@cancel_event}
-      class="m-auto rounded-box bg-base-100 p-6 shadow-xl max-w-md"
-    >
-      <h3 class="text-lg font-bold">{@title}</h3>
-      <%= if @inner_block do %>
-        <div class="py-4">
-          {render_slot(@inner_block)}
+    <%= if @show do %>
+      <dialog
+        id={@id}
+        phx-hook="Dialog"
+        data-cancel-event={@cancel_event}
+        class="m-auto rounded-box bg-base-100 p-6 shadow-xl max-w-md min-w-sm"
+      >
+        <h3 class="text-lg font-bold">{@title}</h3>
+        <%= if @inner_block do %>
+          <div class="py-4">
+            {render_slot(@inner_block)}
+          </div>
+        <% else %>
+          <p class="py-4">{@message}</p>
+        <% end %>
+        <div class="flex gap-2 justify-end">
+          <button
+            phx-click={@cancel_event}
+            class="btn btn-sm btn-outline border-2 border-base-content/60"
+          >Abbrechen</button>
+          <button phx-click={@confirm_event} class={["btn btn-sm", @confirm_class]}>{@confirm_label}</button>
         </div>
-      <% else %>
-        <p class="py-4">{@message}</p>
-      <% end %>
-      <div class="flex gap-2 justify-end">
-        <button
-          phx-click={@cancel_event}
-          class="btn btn-sm btn-outline border-2 border-base-content/60"
-        >Abbrechen</button>
-        <button phx-click={@confirm_event} class={["btn btn-sm", @confirm_class]}>{@confirm_label}</button>
-      </div>
-    </dialog>
+      </dialog>
+    <% end %>
     """
   end
 
