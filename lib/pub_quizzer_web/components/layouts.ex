@@ -38,7 +38,7 @@ defmodule PubQuizzerWeb.Layouts do
   attr :max_width, :string, default: "max-w-2xl", doc: "max width class for the content area"
 
   attr :main_class, :string,
-    default: "px-4 py-4 sm:pt-8 sm:pb-10 sm:px-6 lg:px-8",
+    default: "px-4 pt-2 sm:pt-4 pb-4 sm:pb-10 sm:px-6 lg:px-8",
     doc: "classes for the main element"
 
   attr :hide_nav_actions, :boolean,
@@ -50,8 +50,8 @@ defmodule PubQuizzerWeb.Layouts do
   def app(assigns) do
     ~H"""
     <%= if @current_scope && @current_scope[:user] do %>
-      <header class="bg-base-200 border-b border-base-300 px-4 sm:px-6 py-2">
-        <div class="flex items-center justify-between">
+      <header class="bg-base-200 border-b border-base-300 px-4 sm:px-6 pt-2 pb-0">
+        <div class="flex items-center justify-between mb-1.5">
           <a href="/" class="flex items-center gap-2">
             <img src={~p"/images/logo.svg"} width="28" />
             <span class="text-sm sm:text-xl font-semibold">Kneipenquiz</span>
@@ -70,7 +70,7 @@ defmodule PubQuizzerWeb.Layouts do
             </.link>
           </div>
         </div>
-        <div class="flex items-center gap-1 -mb-2">
+        <div class="flex items-center gap-1">
           <.link
             navigate={~p"/admin/events"}
             class={nav_tab_class(@current_path, "/admin/events")}
