@@ -259,7 +259,6 @@ defmodule PubQuizzer.Quiz.Engine do
     case EngineState.reveal_round(state.engine_state) do
       {:ok, new_es} ->
         persist_round_winner(new_es)
-        persist_answers(new_es)
         persist_event_status(new_es)
         broadcast(new_es)
         {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
@@ -333,7 +332,7 @@ defmodule PubQuizzer.Quiz.Engine do
     alias PubQuizzer.Quiz
 
     event = Quiz.get_event_with_teams!(event_id)
-    topics = Quiz.list_topics()
+    topics = Quiz.list_topic_names()
 
     case event.status do
       "lobby" ->
@@ -520,8 +519,13 @@ defmodule PubQuizzer.Quiz.Engine do
     ])
     |> Repo.update()
     |> case do
-      {:ok, _} -> :ok
-      {:error, _} -> :ok
+      {:ok, _} ->
+        :ok
+
+      {:error, changeset} ->
+        require Logger
+        Logger.error("Failed to persist event status: #{inspect(changeset.errors)}")
+        :ok
     end
   end
 
@@ -574,10 +578,6 @@ defmodule PubQuizzer.Quiz.Engine do
         )
       end
     end
-  end
-
-  defp persist_answers(_state) do
-    :ok
   end
 
   # --- Broadcasting ---

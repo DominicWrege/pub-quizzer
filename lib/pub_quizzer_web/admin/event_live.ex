@@ -49,25 +49,17 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     join_url = base <> ~p"/quiz/join/#{event.code}"
     qr_svg = EQRCode.encode(join_url) |> EQRCode.svg(color: "#1e40af", background: "#ffffff")
 
-    claimed_ids =
-      event.teams
-      |> Enum.filter(& &1.claimed_at)
-      |> Enum.map(& &1.id)
-      |> MapSet.new()
-
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
     end
-
-    all_connected = MapSet.size(claimed_ids) > 0 and MapSet.subset?(claimed_ids, claimed_ids)
 
     socket
     |> assign(:page_title, "Event #{event.code}")
     |> assign(:event, event)
     |> assign(:join_url, join_url)
     |> assign(:qr_svg, qr_svg)
-    |> assign(:connected_team_ids, claimed_ids)
-    |> assign(:all_teams_connected, all_connected)
+    |> assign(:connected_team_ids, MapSet.new())
+    |> assign(:all_teams_connected, false)
   end
 
   @impl true
@@ -292,36 +284,28 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     ~H"""
     <div id={"event-#{@event.id}"} class="card bg-base-200 shadow-sm">
       <div class="card-body gap-3">
-        <%= if @event.name && @event.name != "" do %>
-          <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between">
+          <%= if @event.name && @event.name != "" do %>
             <h3 class="card-title text-base">{@event.name}</h3>
-            <span class="badge">{@event.team_count} Teams</span>
-          </div>
-          <div class="flex items-center gap-2">
+          <% else %>
             <span class="text-sm text-base-content/60 font-mono">{@event.code}</span>
-            <span class={[
-              "text-xs font-semibold",
-              @event.status in ["topic_selection", "question", "round_reveal"] && "text-primary",
-              @event.status == "finished" && "text-success",
-              @event.status == "lobby" && "text-base-content/40"
-            ]}>
-              {status_label(@event.status)}
-            </span>
-          </div>
-        <% else %>
-          <div class="flex items-center justify-between">
+          <% end %>
+          <span class="badge">{@event.team_count} Teams</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <%= if @event.name && @event.name != "" do %>
             <span class="text-sm text-base-content/60 font-mono">{@event.code}</span>
-            <span class="badge">{@event.team_count} Teams</span>
-          </div>
+          <% end %>
           <span class={[
-            "text-sm font-semibold",
+            "text-xs font-semibold",
             @event.status in ["topic_selection", "question", "round_reveal"] && "text-primary",
             @event.status == "finished" && "text-success",
             @event.status == "lobby" && "text-base-content/40"
           ]}>
             {status_label(@event.status)}
           </span>
-        <% end %>
+        </div>
 
         <span class="text-3xl font-bold font-mono">{Calendar.strftime(
           @event.inserted_at,

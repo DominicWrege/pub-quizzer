@@ -137,7 +137,7 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
     """
   end
 
-  defp letter(index), do: Enum.at(~w(a b c d e f), index, "?")
+  defp letter(index), do: letter_for_index(index)
 
   defp round_score(answer_lookup, round_data, team) do
     Enum.count(round_data.questions, fn question ->

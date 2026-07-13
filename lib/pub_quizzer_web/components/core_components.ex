@@ -662,4 +662,76 @@ defmodule PubQuizzerWeb.CoreComponents do
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
+
+  # --- Quiz helpers ---
+
+  @doc """
+  Converts a 0-based index to a letter: 0 → "A", 1 → "B", etc.
+  Returns "?" for out-of-range indices.
+  """
+  def letter_for_index(index) do
+    Enum.at(~w(A B C D E F), index, "?")
+  end
+
+  attr :rank, :integer, required: true
+  attr :id, :any, required: true
+  attr :name, :string, required: true
+  attr :score, :integer, required: true
+  attr :size, :string, default: "lg", values: ["lg", "sm"]
+  attr :rest, :global
+  slot :inner_block, required: false
+
+  @doc """
+  Renders a single ranked standing row with gold/silver/bronze styling.
+  Used in both host lobby and team lobby for round reveal and final standings.
+  """
+  def podium_row(assigns) do
+    ~H"""
+    <div
+      id={@id}
+      class={[
+        "flex items-center gap-6 rounded-2xl px-8 py-6 shadow-lg",
+        @size == "sm" && "gap-3 rounded-lg px-4 py-3 shadow-sm",
+        @rank == 0 && "bg-warning/20 border-2 border-warning",
+        @rank == 0 && @size == "sm" && "bg-warning/20 border border-warning",
+        @rank == 1 && "bg-base-300",
+        @rank == 2 && "bg-amber-800/20",
+        @rank > 2 && "bg-base-200"
+      ]}
+      {@rest}
+    >
+      <span class={[
+        "flex items-center justify-center rounded-full text-3xl font-bold shrink-0",
+        @size == "sm" && "w-8 h-8 text-base",
+        @size == "lg" && "w-16 h-16 text-3xl",
+        @rank == 0 && "bg-warning text-warning-content",
+        @rank == 1 && "bg-base-content/20 text-base-content",
+        @rank == 2 && "bg-amber-800 text-amber-100",
+        @rank > 2 && "bg-base-content/20 text-base-content"
+      ]}>
+        {@rank + 1}
+      </span>
+      <span class={[
+        "flex-1 font-bold",
+        @size == "sm" && "text-sm",
+        @size == "lg" && "text-3xl",
+        @rank == 0 && "text-base-content"
+      ]}>
+        {@name}
+        <slot />
+      </span>
+      <span class={[
+        "badge font-bold",
+        @size == "sm" && "text-sm py-1 px-3",
+        @size == "lg" && "text-2xl py-4 px-6",
+        @rank == 0 && "badge-warning",
+        @rank == 1 && "badge-primary",
+        @rank == 2 && "badge-primary",
+        @rank > 2 && "badge-ghost"
+      ]}>
+        {@score}
+      </span>
+    </div>
+    """
+  end
 end

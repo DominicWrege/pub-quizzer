@@ -272,6 +272,23 @@ defmodule PubQuizzer.Quiz.EngineState do
   end
 
   @doc """
+  Returns the list of topics that haven't been used in a completed round yet.
+  """
+  def available_topics(%__MODULE__{available_topics: topics, completed_rounds: rounds}) do
+    used_ids = Enum.map(rounds, & &1.topic_id) |> Enum.filter(& &1)
+    Enum.reject(topics, fn t -> t.id in used_ids end)
+  end
+
+  @doc """
+  Returns the name of the currently selected topic, or nil.
+  """
+  def current_topic_name(%__MODULE__{current_topic_id: nil}, _state), do: nil
+
+  def current_topic_name(%__MODULE__{current_topic_id: id}, %__MODULE__{available_topics: topics}) do
+    Enum.find_value(topics, fn t -> if t.id == id, do: t.name end)
+  end
+
+  @doc """
   Register a newly joined team in the engine state.
   """
   def register_team(%__MODULE__{} = state, team_id, name, slot_index) do

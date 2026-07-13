@@ -91,7 +91,7 @@
             ]}
           >
             <span class="font-mono font-bold text-3xl">
-              {String.capitalize(Enum.at(["a", "b", "c", "d", "e", "f"], shuffled_idx, ""))}
+              {letter_for_index(shuffled_idx)}
             </span>
           </button>
         <% end %>
@@ -137,43 +137,17 @@
       </div>
       <div class="space-y-2">
         <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-          <div
+          <.podium_row
             id={"team-standing-#{id}"}
-            class={[
-              "flex items-center gap-3 rounded-lg px-4 py-3 shadow-sm",
-              rank == 0 && "bg-warning/20 border border-warning",
-              rank == 1 && "bg-base-300",
-              rank == 2 && "bg-amber-800/20",
-              rank > 2 && "bg-base-200"
-            ]}
+            rank={rank}
+            name={name}
+            score={score}
+            size="sm"
           >
-            <span class={[
-              "flex items-center justify-center w-8 h-8 rounded-full text-base font-bold shrink-0",
-              rank == 0 && "bg-warning text-warning-content",
-              rank == 1 && "bg-base-content/20 text-base-content",
-              rank == 2 && "bg-amber-800 text-amber-100",
-              rank > 2 && "bg-base-content/20 text-base-content"
-            ]}>
-              {rank + 1}
-            </span>
-            <span class={[
-              "flex-1 text-sm font-semibold",
-              rank == 0 && "text-base-content",
-              @team.id == id && "font-bold"
-            ]}>
-              {name}
-              <%= if @team.id == id do %>
-                <span class="text-xs font-normal">(du)</span>
-              <% end %>
-            </span>
-            <span class={[
-              "badge text-sm py-1 px-3 font-bold",
-              rank == 0 && "badge-warning",
-              rank == 1 && "badge-primary",
-              rank == 2 && "badge-primary",
-              rank > 2 && "badge-ghost"
-            ]}>{score}</span>
-          </div>
+            <%= if @team.id == id do %>
+              <span class="text-xs font-normal">(du)</span>
+            <% end %>
+          </.podium_row>
         <% end %>
       </div>
     <% end %>
@@ -199,43 +173,18 @@
       </div>
       <div class="space-y-2">
         <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-          <div
+          <.podium_row
             id={"team-final-#{id}"}
-            class={[
-              "flex items-center gap-3 rounded-lg px-4 py-3 shadow-sm",
-              rank == 0 && "bg-warning/20 border border-warning",
-              rank == 1 && "bg-base-300",
-              rank == 2 && "bg-amber-800/20",
-              rank > 2 && "bg-base-200"
-            ]}
+            rank={rank}
+            name={name}
+            score={score}
+            size="sm"
+            class={if @team.id == id, do: "font-bold"}
           >
-            <span class={[
-              "flex items-center justify-center w-8 h-8 rounded-full text-base font-bold shrink-0",
-              rank == 0 && "bg-warning text-warning-content",
-              rank == 1 && "bg-base-content/20 text-base-content",
-              rank == 2 && "bg-amber-800 text-amber-100",
-              rank > 2 && "bg-base-content/20 text-base-content"
-            ]}>
-              {rank + 1}
-            </span>
-            <span class={[
-              "flex-1 text-sm font-semibold",
-              rank == 0 && "text-base-content",
-              @team.id == id && "font-bold"
-            ]}>
-              {name}
-              <%= if @team.id == id do %>
-                <span class="text-xs font-normal">(du)</span>
-              <% end %>
-            </span>
-            <span class={[
-              "badge text-sm py-1 px-3 font-bold",
-              rank == 0 && "badge-warning",
-              rank == 1 && "badge-primary",
-              rank == 2 && "badge-primary",
-              rank > 2 && "badge-ghost"
-            ]}>{score}</span>
-          </div>
+            <%= if @team.id == id do %>
+              <span class="text-xs font-normal">(du)</span>
+            <% end %>
+          </.podium_row>
         <% end %>
       </div>
     <% else %>

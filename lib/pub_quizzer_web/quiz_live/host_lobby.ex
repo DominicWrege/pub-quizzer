@@ -168,19 +168,10 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
 
     case Engine.get_state(socket.assigns.event.id) do
       {:ok, state} ->
-        used_topic_ids =
-          state.completed_rounds
-          |> Enum.map(& &1.topic_id)
-          |> Enum.filter(& &1)
-
-        available_topics =
-          state.available_topics
-          |> Enum.reject(fn t -> t.id in used_topic_ids end)
-
         {:noreply,
          socket
          |> assign(:engine_state, state)
-         |> assign(:available_topics, available_topics)
+         |> assign(:available_topics, EngineState.available_topics(state))
          |> assign(:standings, EngineState.standings_sorted(state))}
 
       {:error, :not_found} ->
@@ -189,26 +180,10 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
   end
 
   defp apply_engine_state(socket, state) do
-    used_topic_ids =
-      state.completed_rounds
-      |> Enum.map(& &1.topic_id)
-      |> Enum.filter(& &1)
-
-    available_topics =
-      state.available_topics
-      |> Enum.reject(fn t -> t.id in used_topic_ids end)
-
     socket
     |> assign(:engine_state, state)
-    |> assign(:available_topics, available_topics)
+    |> assign(:available_topics, EngineState.available_topics(state))
     |> assign(:standings, EngineState.standings_sorted(state))
-    |> assign(:current_topic_name, compute_current_topic_name(state))
-  end
-
-  defp compute_current_topic_name(state) do
-    case state.current_topic_id do
-      nil -> nil
-      id -> Enum.find_value(state.available_topics, fn t -> if t.id == id, do: t.name end)
-    end
+    |> assign(:current_topic_name, EngineState.current_topic_name(state, state))
   end
 end

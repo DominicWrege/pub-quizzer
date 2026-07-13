@@ -117,9 +117,7 @@
               <div class="space-y-4">
                 <%= for {option, idx} <- Enum.with_index(question.options) do %>
                   <div class="p-6 rounded-lg bg-base-300 text-3xl">
-                    <span class="font-mono font-bold mr-4">{String.capitalize(
-                      Enum.at(["a", "b", "c", "d", "e", "f"], idx, "")
-                    )}.</span>
+                    <span class="font-mono font-bold mr-4">{letter_for_index(idx)}.</span>
                     <span class="break-words">{option}</span>
                   </div>
                 <% end %>
@@ -133,9 +131,7 @@
             <div class="space-y-4 mt-6">
               <%= for {option, idx} <- Enum.with_index(question.options) do %>
                 <div class="p-6 rounded-lg bg-base-300 text-3xl">
-                  <span class="font-mono font-bold mr-4">{String.capitalize(
-                    Enum.at(["a", "b", "c", "d", "e", "f"], idx, "")
-                  )}.</span>
+                  <span class="font-mono font-bold mr-4">{letter_for_index(idx)}.</span>
                   <span class="break-words">{option}</span>
                 </div>
               <% end %>
@@ -197,9 +193,7 @@
                       idx == question.correct_index && "bg-success/30 border-2 border-success",
                       idx != question.correct_index && "bg-base-300"
                     ]}>
-                      <span class="font-mono mr-3">{String.capitalize(
-                        Enum.at(["a", "b", "c", "d", "e", "f"], idx, "")
-                      )}.</span>
+                      <span class="font-mono mr-3">{letter_for_index(idx)}.</span>
                       <span class="break-words">{option}</span>
                       <%= if idx == question.correct_index do %>
                         <.icon name="hero-check-circle" class="size-6 inline text-success" />
@@ -229,37 +223,12 @@
           </div>
           <div class="space-y-4">
             <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-              <div
+              <.podium_row
                 id={"standing-#{id}"}
-                class={[
-                  "flex items-center gap-6 rounded-2xl px-8 py-6 shadow-lg",
-                  rank == 0 && "bg-warning/20 border-2 border-warning",
-                  rank == 1 && "bg-base-300",
-                  rank == 2 && "bg-amber-800/20",
-                  rank > 2 && "bg-base-200"
-                ]}
-              >
-                <span class={[
-                  "flex items-center justify-center w-16 h-16 rounded-full text-3xl font-bold shrink-0",
-                  rank == 0 && "bg-warning text-warning-content",
-                  rank == 1 && "bg-base-content/20 text-base-content",
-                  rank == 2 && "bg-amber-800 text-amber-100",
-                  rank > 2 && "bg-base-content/20 text-base-content"
-                ]}>
-                  {rank + 1}
-                </span>
-                <span class={[
-                  "flex-1 text-3xl font-bold",
-                  rank == 0 && "text-base-content"
-                ]}>{name}</span>
-                <span class={[
-                  "badge text-2xl py-4 px-6 font-bold",
-                  rank == 0 && "badge-warning",
-                  rank == 1 && "badge-primary",
-                  rank == 2 && "badge-primary",
-                  rank > 2 && "badge-ghost"
-                ]}>{score}</span>
-              </div>
+                rank={rank}
+                name={name}
+                score={score}
+              />
             <% end %>
           </div>
 
@@ -296,37 +265,12 @@
 
         <div class="space-y-4">
           <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-            <div
+            <.podium_row
               id={"final-#{id}"}
-              class={[
-                "flex items-center gap-6 rounded-2xl px-8 py-6 shadow-lg",
-                rank == 0 && "bg-warning/20 border-2 border-warning",
-                rank == 1 && "bg-base-300",
-                rank == 2 && "bg-amber-800/20",
-                rank > 2 && "bg-base-200"
-              ]}
-            >
-              <span class={[
-                "flex items-center justify-center w-16 h-16 rounded-full text-3xl font-bold shrink-0",
-                rank == 0 && "bg-warning text-warning-content",
-                rank == 1 && "bg-base-content/20 text-base-content",
-                rank == 2 && "bg-amber-800 text-amber-100",
-                rank > 2 && "bg-base-content/20 text-base-content"
-              ]}>
-                {rank + 1}
-              </span>
-              <span class={[
-                "flex-1 text-3xl font-bold",
-                rank == 0 && "text-warning"
-              ]}>{name}</span>
-              <span class={[
-                "badge text-2xl py-4 px-6 font-bold",
-                rank == 0 && "badge-warning",
-                rank == 1 && "badge-primary",
-                rank == 2 && "badge-primary",
-                rank > 2 && "badge-ghost"
-              ]}>{score}</span>
-            </div>
+              rank={rank}
+              name={name}
+              score={score}
+            />
           <% end %>
         </div>
       <% else %>

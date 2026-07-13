@@ -19,6 +19,17 @@ defmodule PubQuizzer.Quiz do
     |> Repo.all()
   end
 
+  @doc """
+  Returns all topics as lightweight `%{id, name}` maps, without preloading questions.
+  Used by the engine to build available_topics lists.
+  """
+  def list_topic_names do
+    Topic
+    |> order_by(asc: :name)
+    |> select([t], %{id: t.id, name: t.name})
+    |> Repo.all()
+  end
+
   def get_topic!(id) do
     Topic
     |> preload(:questions)
@@ -251,15 +262,10 @@ defmodule PubQuizzer.Quiz do
   end
 
   def delete_event(event) do
-    Repo.transaction(fn ->
-      event_id = event.id
-      team_ids = from(t in Team, where: t.quiz_event_id == ^event_id, select: t.id) |> Repo.all()
-
-      from(a in Answer, where: a.team_id in ^team_ids) |> Repo.delete_all()
-      from(r in Round, where: r.quiz_event_id == ^event_id) |> Repo.delete_all()
-      from(t in Team, where: t.quiz_event_id == ^event_id) |> Repo.delete_all()
-      Repo.delete(event)
-    end)
+    # DB foreign keys with on_delete: :delete_all handle cascading:
+    # quiz_events → teams → answers (via team_id)
+    # quiz_events → rounds → answers (via round_id)
+    Repo.delete(event)
   end
 
   @doc """
@@ -302,11 +308,17 @@ defmodule PubQuizzer.Quiz do
     Phoenix.PubSub.broadcast(@pubsub, "quiz:event:#{event_id}", {:team_update, event_id})
   end
 
-  defp generate_unique_code do
+  defp generate_unique_code(tries \\ 10)
+
+  defp generate_unique_code(0) do
+    raise "could not generate unique event code after 10 attempts"
+  end
+
+  defp generate_unique_code(tries) do
     code = generate_code()
 
     if Repo.get_by(QuizEvent, code: code) do
-      generate_unique_code()
+      generate_unique_code(tries - 1)
     else
       code
     end
