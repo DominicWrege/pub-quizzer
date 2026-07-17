@@ -4739,9 +4739,24 @@
       grid-template-columns: 1fr minmax(260px,380px);
     }
   }
+  .lg\:grid-cols-\[2fr_1fr\] {
+    @media (width >= 64rem) {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
   .lg\:grid-cols-\[3fr_1fr\] {
     @media (width >= 64rem) {
       grid-template-columns: 3fr 1fr;
+    }
+  }
+  .lg\:gap-2 {
+    @media (width >= 64rem) {
+      gap: calc(var(--spacing) * 2);
+    }
+  }
+  .lg\:gap-4 {
+    @media (width >= 64rem) {
+      gap: calc(var(--spacing) * 4);
     }
   }
   .lg\:gap-6 {
@@ -4777,6 +4792,11 @@
   .xl\:grid-cols-\[1fr_480px\] {
     @media (width >= 80rem) {
       grid-template-columns: 1fr 480px;
+    }
+  }
+  .xl\:grid-cols-\[3fr_1fr\] {
+    @media (width >= 80rem) {
+      grid-template-columns: 3fr 1fr;
     }
   }
   .xl\:grid-cols-\[4fr_1fr\] {
