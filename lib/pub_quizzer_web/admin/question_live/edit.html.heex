@@ -13,30 +13,18 @@
     Frage bearbeiten
     <:subtitle>{@topic.name}</:subtitle>
     <:actions>
-      <div class="join">
-        <button
-          type="button"
-          phx-click="set_view"
-          phx-value-mode="edit"
-          class={[
-            "btn btn-sm join-item gap-1 border-2",
-            (!@show_preview && "btn-primary") || "btn-soft"
-          ]}
-        >
-          <.icon name="hero-pencil" class="size-4" /> Bearbeiten
-        </button>
-        <button
-          type="button"
-          phx-click="set_view"
-          phx-value-mode="preview"
-          class={[
-            "btn btn-sm join-item gap-1 border-2",
-            (@show_preview && "btn-primary") || "btn-soft"
-          ]}
-        >
-          <.icon name="hero-eye" class="size-4" /> Vorschau
-        </button>
-      </div>
+      <button
+        type="button"
+        phx-click="set_view"
+        phx-value-mode={if @show_preview, do: "edit", else: "preview"}
+        class={[
+          "btn btn-sm gap-1",
+          @show_preview && "btn-primary",
+          !@show_preview && "btn-soft"
+        ]}
+      >
+        <.icon name="hero-eye" class="size-4" /> Vorschau
+      </button>
       <button
         type="submit"
         form="question-form"
