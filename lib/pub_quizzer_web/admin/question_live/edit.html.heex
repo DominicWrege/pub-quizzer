@@ -23,13 +23,13 @@
     </:actions>
   </.header>
 
-  <div class="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6">
+  <div class="lg:grid lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_480px] lg:gap-6">
     <.form
       for={@form}
       id="question-form"
       phx-change="validate"
       phx-submit="save"
-      class="bg-base-200 rounded-2xl p-5 sm:p-6 space-y-5 border border-base-300"
+      class="bg-base-200 rounded-2xl p-5 sm:p-6 space-y-5 border border-base-300 w-full mx-auto max-w-[1700px]"
     >
         <%!-- Hidden correct index — driven by click-to-select on option cards --%>
         <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
@@ -327,4 +327,75 @@
       </section>
     </aside>
   </div>
+
+  <%!-- Edit history (mobile: below the grid) --%>
+  <section class="lg:hidden card bg-base-200 border border-base-300">
+    <div class="card-body p-5 gap-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-base-content/80">Bearbeitungsverlauf</h3>
+        <span class="text-xs text-base-content/50">{length(@versions)} Versionen</span>
+      </div>
+      <%= if @versions == [] do %>
+        <p class="text-sm text-base-content/70 italic">Noch keine Versionen.</p>
+      <% else %>
+        <div class="space-y-2">
+          <%= for {version, diffs} <- @versions do %>
+            <div class="rounded-lg border border-base-300 bg-base-100 px-3 py-2">
+              <div class="flex items-center gap-2">
+                <div class="avatar avatar-placeholder">
+                  <div class="bg-primary text-primary-content rounded-full w-7">
+                    <span class="text-xs font-semibold">
+                      {String.at((version.user && version.user.name) || "?", 0)}
+                    </span>
+                  </div>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <span class="font-medium text-sm block truncate">
+                    {(version.user && version.user.name) || "Unbekannt"}
+                  </span>
+                  <span class="text-xs text-base-content/70">
+                    {Calendar.strftime(version.inserted_at, "%d.%m.%y %H:%M")}
+                  </span>
+                </div>
+              </div>
+              <%= if diffs != [] do %>
+                <ul class="mt-2 space-y-1 text-xs text-base-content/80 border-t border-base-300 pt-2">
+                  <%= for diff <- diffs do %>
+                    <li class="flex items-start gap-1">
+                      <.icon
+                        name="hero-pencil"
+                        class="size-3 mt-0.5 shrink-0 text-base-content/60"
+                      />
+                      <%= case diff.field do %>
+                        <% :prompt -> %>
+                          <span class="font-semibold">Frage geändert</span>
+                        <% :options -> %>
+                          <span class="font-semibold">Optionen geändert</span>
+                        <% :correct_index -> %>
+                          <span class="font-semibold">Antwort:</span>
+                          {String.capitalize(
+                            PubQuizzerWeb.CoreComponents.letter_for_index(diff.old || 0)
+                          )} → {String.capitalize(
+                            PubQuizzerWeb.CoreComponents.letter_for_index(diff.new || 0)
+                          )}
+                        <% :image -> %>
+                          <%= cond do %>
+                            <% is_nil(diff.old) and not is_nil(diff.new) -> %>
+                              <span class="font-semibold">Bild hinzugefügt</span>
+                            <% not is_nil(diff.old) and is_nil(diff.new) -> %>
+                              <span class="font-semibold">Bild entfernt</span>
+                            <% true -> %>
+                              <span class="font-semibold">Bild geändert</span>
+                          <% end %>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </section>
 </Layouts.app>
