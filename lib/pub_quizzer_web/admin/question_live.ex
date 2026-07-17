@@ -6,6 +6,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   embed_templates "question_live/*"
 
   @upload_dir "priv/static/uploads"
+  @option_count 4
 
   @impl true
   def render(assigns) do
@@ -18,16 +19,28 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok,
-     socket
-     |> assign(:confirm_action, nil)
-     |> assign(:pending_delete_id, nil)
-     |> assign(:search, "")
-     |> allow_upload(:image,
-       accept: ~w(.jpg .jpeg .png .gif .webp),
-       max_entries: 1,
-       max_file_size: 5_000_000
-     )}
+    socket =
+      socket
+      |> assign(:confirm_action, nil)
+      |> assign(:pending_delete_id, nil)
+      |> assign(:search, "")
+      |> assign(:option_image_previews, %{})
+      |> allow_upload(:image,
+        accept: ~w(.jpg .jpeg .png .gif .webp),
+        max_entries: 1,
+        max_file_size: 5_000_000
+      )
+
+    socket =
+      Enum.reduce(0..(@option_count - 1), socket, fn i, acc ->
+        allow_upload(acc, :"option_image_#{i}",
+          accept: ~w(.jpg .jpeg .png .gif .webp),
+          max_entries: 1,
+          max_file_size: 5_000_000
+        )
+      end)
+
+    {:ok, socket}
   end
 
   @impl true
@@ -46,14 +59,16 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   defp apply_action(socket, :new, %{"topic_id" => topic_id}) do
     topic = Quiz.get_topic!(topic_id)
-    changeset = Question.changeset(%Question{options: ["", "", "", ""]}, %{})
+    empty_opts = [%{"text" => ""}, %{"text" => ""}, %{"text" => ""}, %{"text" => ""}]
+    changeset = Question.changeset(%Question{options: empty_opts}, %{})
 
     socket
     |> assign(:topic, topic)
     |> assign(:page_title, "Neue Frage")
     |> assign(:form, to_form(changeset))
     |> assign(:image_preview_url, nil)
-    |> assign(:show_preview, false)
+    |> assign(:option_image_previews, %{})
+    |> assign_option_uploads()
   end
 
   defp apply_action(socket, :edit, %{"topic_id" => topic_id, "id" => id}) do
@@ -68,8 +83,9 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:page_title, "Frage bearbeiten")
     |> assign(:form, to_form(changeset))
     |> assign(:image_preview_url, nil)
-    |> assign(:show_preview, false)
+    |> assign(:option_image_previews, %{})
     |> assign(:versions, compute_version_diffs(versions))
+    |> assign_option_uploads()
   end
 
   @impl true
@@ -113,7 +129,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   def handle_event("save", params, socket) do
     question_params = normalize_params(params)
 
-    image_path =
+    question_params =
       consume_uploaded_entries(socket, :image, fn %{path: tmp_path}, entry ->
         ext = extname(entry.client_name)
         filename = "#{System.unique_integer([:positive, :monotonic])}#{ext}"
@@ -125,24 +141,36 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         {:ok, "/uploads/#{filename}"}
       end)
       |> List.first()
+      |> then(fn image_path ->
+        if image_path, do: Map.put(question_params, "image", image_path), else: question_params
+      end)
+
+    option_images = consume_option_images(socket)
+    existing_images = existing_option_images(socket)
 
     question_params =
-      if image_path do
-        Map.put(question_params, "image", image_path)
-      else
-        question_params
-      end
+      Map.update!(question_params, "options", fn options ->
+        options
+        |> Enum.with_index()
+        |> Enum.map(fn {opt, idx} ->
+          img = Map.get(option_images, idx) || Map.get(existing_images, idx)
+          if img, do: Map.put(opt, "image", img), else: Map.delete(opt, "image")
+        end)
+      end)
 
     save_question(socket, question_params)
   end
 
   def handle_event("validate", params, socket) do
     question_params = normalize_params(params)
+
     question = Map.get(socket.assigns, :question)
+
+    empty_opts = [%{"text" => ""}, %{"text" => ""}, %{"text" => ""}, %{"text" => ""}]
 
     changeset =
       case question do
-        nil -> Question.changeset(%Question{options: ["", "", "", ""]}, question_params)
+        nil -> Question.changeset(%Question{options: empty_opts}, question_params)
         _ -> Question.changeset(question, question_params)
       end
 
@@ -160,8 +188,73 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     {:noreply, assign(socket, :image_preview_url, data_url)}
   end
 
-  def handle_event("set_view", %{"mode" => mode}, socket) do
-    {:noreply, assign(socket, :show_preview, mode == "preview")}
+  def handle_event("option_image_preview", %{"index" => index, "data_url" => data_url}, socket) do
+    index = String.to_integer(index)
+    previews = Map.put(socket.assigns.option_image_previews, index, data_url)
+    {:noreply, assign(socket, :option_image_previews, previews)}
+  end
+
+  def handle_event("cancel_option_upload", %{"index" => index}, socket) do
+    index = String.to_integer(index)
+    upload_name = :"option_image_#{index}"
+
+    socket =
+      socket.assigns.uploads[upload_name].entries
+      |> Enum.reduce(socket, fn entry, acc ->
+        cancel_upload(acc, upload_name, entry.ref)
+      end)
+
+    previews = Map.drop(socket.assigns.option_image_previews, [index])
+    {:noreply, assign(socket, :option_image_previews, previews)}
+  end
+
+  def handle_event("remove_option_image", %{"index" => index}, socket) do
+    index = String.to_integer(index)
+
+    case socket.assigns[:question] do
+      nil ->
+        {:noreply, socket}
+
+      q ->
+        new_options =
+          q.options
+          |> List.wrap()
+          |> Enum.with_index()
+          |> Enum.map(fn {opt, idx} ->
+            if idx == index, do: Map.delete(opt, "image"), else: opt
+          end)
+
+        updated_q = %{q | options: new_options}
+        changeset = Question.changeset(updated_q, %{})
+
+        {:noreply,
+         socket
+         |> assign(:question, updated_q)
+         |> assign(:form, to_form(changeset))}
+    end
+  end
+
+  def handle_event("select_correct", %{"index" => index}, socket) do
+    index = String.to_integer(index)
+    form = socket.assigns.form
+    current_opts = Phoenix.HTML.Form.input_value(form, :options) || []
+
+    question_params = %{
+      "correct_index" => index,
+      "options" => current_opts,
+      "prompt" => Phoenix.HTML.Form.input_value(form, :prompt)
+    }
+
+    question = Map.get(socket.assigns, :question)
+    empty_opts = [%{"text" => ""}, %{"text" => ""}, %{"text" => ""}, %{"text" => ""}]
+
+    changeset =
+      case question do
+        nil -> Question.changeset(%Question{options: empty_opts}, question_params)
+        _ -> Question.changeset(question, question_params)
+      end
+
+    {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
   end
 
   defp normalize_params(%{"question" => q}) do
@@ -171,25 +264,81 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     end)
     |> Map.update("correct_index", nil, fn
       nil -> nil
+      "" -> nil
       v -> String.to_integer(v)
     end)
   end
 
   defp normalize_params(%{"prompt" => _, "options" => _} = params) do
     params
+    |> Map.update("options", [], fn opts -> normalize_options(opts) end)
+    |> Map.update("correct_index", nil, fn
+      nil -> nil
+      "" -> nil
+      v -> String.to_integer(v)
+    end)
   end
 
   defp normalize_options(opts) when is_list(opts) do
-    opts
-    |> Enum.map(&String.trim/1)
-    |> Enum.filter(&(&1 != ""))
+    Enum.map(opts, fn
+      %{"text" => _} = opt -> opt
+      opt when is_binary(opt) -> %{"text" => opt}
+    end)
   end
 
   defp normalize_options(opts) when is_map(opts) do
     opts
-    |> Map.values()
-    |> Enum.map(&String.trim/1)
-    |> Enum.filter(&(&1 != ""))
+    |> Map.keys()
+    |> Enum.filter(fn key -> key =~ ~r/^\d+$/ end)
+    |> Enum.sort_by(&String.to_integer/1)
+    |> Enum.map(fn key ->
+      %{"text" => Map.get(opts, key, "")}
+    end)
+  end
+
+  defp assign_option_uploads(socket) do
+    assign(
+      socket,
+      :option_uploads,
+      for i <- 0..(@option_count - 1), into: %{} do
+        {i, socket.assigns.uploads[:"option_image_#{i}"]}
+      end
+    )
+  end
+
+  defp consume_option_images(socket) do
+    for i <- 0..(@option_count - 1) do
+      path =
+        consume_uploaded_entries(socket, :"option_image_#{i}", fn %{path: tmp_path}, entry ->
+          ext = extname(entry.client_name)
+          filename = "#{System.unique_integer([:positive, :monotonic])}#{ext}"
+          dest = Path.join(@upload_dir, filename)
+
+          File.mkdir_p!(@upload_dir)
+          File.cp!(tmp_path, dest)
+
+          {:ok, "/uploads/#{filename}"}
+        end)
+        |> List.first()
+
+      {i, path}
+    end
+    |> Map.new()
+  end
+
+  defp existing_option_images(socket) do
+    case socket.assigns[:question] do
+      nil ->
+        %{}
+
+      q ->
+        q.options
+        |> List.wrap()
+        |> Enum.with_index()
+        |> Enum.map(fn {opt, idx} -> {idx, Map.get(opt, "image")} end)
+        |> Enum.reject(fn {_, v} -> is_nil(v) end)
+        |> Map.new()
+    end
   end
 
   defp extname(filename) do

@@ -121,16 +121,29 @@ defmodule PubQuizzer.Quiz do
     topic_id = Map.get(attrs, "topic_id") || Map.get(attrs, :topic_id)
 
     %Question{}
-    |> Question.changeset(Map.drop(attrs, ["topic_id", :topic_id]))
+    |> Question.changeset(Map.drop(attrs, ["topic_id", :topic_id]) |> normalize_option_strings())
     |> Ecto.Changeset.put_change(:topic_id, topic_id)
     |> Repo.insert()
   end
 
   def update_question(question, attrs) do
     question
-    |> Question.changeset(attrs)
+    |> Question.changeset(normalize_option_strings(attrs))
     |> Repo.update()
   end
+
+  defp normalize_option_strings(attrs) when is_map(attrs) do
+    case Map.get(attrs, :options) do
+      opts when is_list(opts) ->
+        Map.put(attrs, :options, Enum.map(opts, &normalize_one_option/1))
+
+      _ ->
+        attrs
+    end
+  end
+
+  defp normalize_one_option(opt) when is_binary(opt), do: %{"text" => opt}
+  defp normalize_one_option(opt) when is_map(opt), do: opt
 
   def delete_question(question) do
     Repo.delete(question)

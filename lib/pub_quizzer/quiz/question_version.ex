@@ -4,7 +4,7 @@ defmodule PubQuizzer.Quiz.QuestionVersion do
 
   schema "question_versions" do
     field :prompt, :string
-    field :options, {:array, :string}
+    field :options, {:array, :map}
     field :correct_index, :integer
     field :image, :string
     field :action, :string

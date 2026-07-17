@@ -34,6 +34,47 @@ let ImagePreview = {
   }
 }
 
+let OptionImagePreview = {
+  mounted() {
+    // Stop clicks on the image zone from bubbling to the parent option card's
+    // phx-click="select_correct" handler — clicking the photo icon should
+    // only open the file dialog, not change the correct answer.
+    this.el.addEventListener("click", (e) => e.stopPropagation())
+
+    this.el.addEventListener("change", (e) => {
+      if (e.target.type !== "file") return
+      this.previewFile(e.target.files[0])
+    })
+    this.el.addEventListener("drop", (e) => {
+      const file = e.dataTransfer?.files?.[0]
+      if (file) this.previewFile(file)
+    })
+  },
+  previewFile(file) {
+    if (!file) return
+    const reader = new FileReader()
+    const idx = this.el.dataset.optionIndex
+    reader.onload = (ev) => {
+      this.pushEvent("option_image_preview", { index: idx, data_url: ev.target.result })
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+let AutoResize = {
+  mounted() {
+    this.resize()
+    this.el.addEventListener("input", () => this.resize())
+  },
+  updated() {
+    this.resize()
+  },
+  resize() {
+    this.el.style.height = "auto"
+    this.el.style.height = this.el.scrollHeight + "px"
+  }
+}
+
 let CopyLink = {
   mounted() {
     const url = this.el.dataset.url
@@ -221,10 +262,6 @@ let OptionSorter = {
     const rows = this.el.querySelectorAll('.opt-row')
     const moving = rows[from]
 
-    // Save checked state — some browsers reset radio groups on DOM detach
-    const checkedRadio = this.el.querySelector('input[type="radio"]:checked')
-    const savedCheckedVal = checkedRadio ? checkedRadio.value : null
-
     // Remove transforms so items settle via CSS transition
     Array.from(rows).forEach(r => { r.style.transform = '' })
 
@@ -233,29 +270,46 @@ let OptionSorter = {
     this.el.insertBefore(moving, ref)
 
     this._updateIndices()
-
-    // Restore checked state if browser reset it
-    if (savedCheckedVal !== null) {
-      const restored = this.el.querySelector(`input[type="radio"][value="${savedCheckedVal}"]`)
-      if (restored && !restored.checked) restored.checked = true
-    }
-
     this._resetRows()
 
-    // Trigger validation
-    const ta = moving.querySelector('textarea')
-    ta.dispatchEvent(new Event('input', { bubbles: true }))
+    // Trigger validation — reorder may have moved the correct option
+    const ta = moving.querySelector('textarea[data-option-text]')
+    if (ta) ta.dispatchEvent(new Event('input', { bubbles: true }))
+
+    // Also send a select_correct from the moved row's new position so the
+    // server picks up the new index (otherwise the form's hidden correct_index
+    // would still reference the old visual slot).
+    const fromIdx = from
+    const oldCorrect = parseInt(this.el.dataset.correctIndex ?? "0")
+    if (fromIdx === oldCorrect) {
+      // Correct option moved — server will receive its new index via validate
+      // but we must tell the server that the correct_index also moved.
+      this.pushEvent("select_correct", { index: to })
+    } else if (fromIdx < oldCorrect && to >= oldCorrect) {
+      // Correct option shifted down by one (something moved from above)
+      this.pushEvent("select_correct", { index: oldCorrect - 1 })
+    } else if (fromIdx > oldCorrect && to <= oldCorrect) {
+      // Correct option shifted up by one (something moved from below)
+      this.pushEvent("select_correct", { index: oldCorrect + 1 })
+    }
   },
 
   _updateIndices() {
     this.el.querySelectorAll('.opt-row').forEach((row, i) => {
       row.dataset.index = i
-      const radio = row.querySelector('input[type="radio"]')
-      radio.value = i
-      radio.id = `correct-${i}`
-      const ta = row.querySelector('textarea')
-      ta.name = `question[options][${i}]`
-      ta.id = `question_options_${i}`
+      const ta = row.querySelector('textarea[data-option-text]')
+      if (ta) {
+        ta.name = `question[options][${i}]`
+        ta.id = `question_options_${i}`
+      }
+      const fileInput = row.querySelector('input[type="file"][data-option-file]')
+      if (fileInput) {
+        fileInput.name = `option_image_${i}`
+      }
+      const zone = row.querySelector('[data-option-index]')
+      if (zone) {
+        zone.dataset.optionIndex = i
+      }
     })
   },
 
@@ -297,7 +351,7 @@ let Dialog = {
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken },
-  hooks: { AutoDismiss, ImagePreview, CopyLink, ClipboardCopy, ScrollToBottom, OptionSorter, Dialog }
+  hooks: { AutoDismiss, ImagePreview, OptionImagePreview, AutoResize, CopyLink, ClipboardCopy, ScrollToBottom, OptionSorter, Dialog }
 })
 
 liveSocket.connect()

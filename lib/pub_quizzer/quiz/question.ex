@@ -4,7 +4,7 @@ defmodule PubQuizzer.Quiz.Question do
 
   schema "questions" do
     field :prompt, :string
-    field :options, {:array, :string}
+    field :options, {:array, :map}
     field :correct_index, :integer
     field :position, :integer, default: 0
     field :image, :string
@@ -20,7 +20,26 @@ defmodule PubQuizzer.Quiz.Question do
     |> validate_required([:prompt, :options, :correct_index])
     |> validate_length(:prompt, min: 1, max: 500)
     |> validate_length(:options, min: 2, max: 6)
+    |> validate_options_text()
     |> validate_correct_index()
+  end
+
+  defp validate_options_text(changeset) do
+    options = get_field(changeset, :options)
+
+    if is_list(options) do
+      empty_text? =
+        Enum.any?(options, fn opt ->
+          text = if is_map(opt), do: Map.get(opt, "text", "") |> String.trim(), else: ""
+          text == ""
+        end)
+
+      if empty_text?,
+        do: add_error(changeset, :options, "jede Option muss einen Text haben"),
+        else: changeset
+    else
+      changeset
+    end
   end
 
   defp validate_correct_index(changeset) do

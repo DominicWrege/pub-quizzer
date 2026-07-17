@@ -50,7 +50,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
   end
 
   describe "new question" do
-    test "creates question with options and correct_index", %{conn: conn} do
+    test "creates question with options and correct_index via select_correct", %{conn: conn} do
       topic = create_topic()
 
       {:ok, view, _html} =
@@ -58,17 +58,25 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
         |> auth_conn()
         |> live(~p"/admin/topics/#{topic}/questions/new")
 
+      # WYSIWYG: prompt + options are typed via validate, correct answer picked via click
       view
       |> form("#question-form", %{
         "question" => %{
           "prompt" => "Capital of Japan?",
-          "options" => %{
-            "0" => "Tokyo",
-            "1" => "Osaka",
-            "2" => "Kyoto",
-            "3" => "Nagoya"
-          },
-          "correct_index" => "0"
+          "options" => %{"0" => "Tokyo", "1" => "Osaka", "2" => "Kyoto", "3" => "Nagoya"}
+        }
+      })
+      |> render_change()
+
+      view
+      |> element("[phx-click='select_correct'][phx-value-index='0']")
+      |> render_click()
+
+      view
+      |> form("#question-form", %{
+        "question" => %{
+          "prompt" => "Capital of Japan?",
+          "options" => %{"0" => "Tokyo", "1" => "Osaka", "2" => "Kyoto", "3" => "Nagoya"}
         }
       })
       |> render_submit()
@@ -77,13 +85,20 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       assert length(questions) == 1
       q = hd(questions)
       assert q.prompt == "Capital of Japan?"
-      assert q.options == ["Tokyo", "Osaka", "Kyoto", "Nagoya"]
+
+      assert q.options == [
+               %{"text" => "Tokyo"},
+               %{"text" => "Osaka"},
+               %{"text" => "Kyoto"},
+               %{"text" => "Nagoya"}
+             ]
+
       assert q.correct_index == 0
     end
   end
 
   describe "edit question" do
-    test "updates question", %{conn: conn} do
+    test "updates question text and options", %{conn: conn} do
       topic = create_topic()
 
       {:ok, question} =
@@ -103,21 +118,100 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       |> form("#question-form", %{
         "question" => %{
           "prompt" => "New prompt",
-          "options" => %{
-            "0" => "W",
-            "1" => "X",
-            "2" => "Y",
-            "3" => "Z"
-          },
-          "correct_index" => "2"
+          "options" => %{"0" => "W", "1" => "X", "2" => "Y", "3" => "Z"}
         }
       })
       |> render_submit()
 
       updated = Quiz.get_question!(question.id)
       assert updated.prompt == "New prompt"
-      assert updated.options == ["W", "X", "Y", "Z"]
+
+      assert updated.options == [
+               %{"text" => "W"},
+               %{"text" => "X"},
+               %{"text" => "Y"},
+               %{"text" => "Z"}
+             ]
+
+      # correct_index preserved from the hidden input (was 1 at load)
+      assert updated.correct_index == 1
+    end
+
+    test "clicking an option card updates the correct answer", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, question} =
+        Quiz.create_question(%{
+          prompt: "Which one?",
+          options: ["Alpha", "Beta", "Gamma", "Delta"],
+          correct_index: 0,
+          topic_id: topic.id
+        })
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      # Click option C
+      view
+      |> element("[phx-click='select_correct'][phx-value-index='2']")
+      |> render_click()
+
+      # Hidden input should now carry correct_index=2 — verify via form submit
+      view
+      |> form("#question-form", %{
+        "question" => %{
+          "prompt" => "Which one?",
+          "options" => %{"0" => "Alpha", "1" => "Beta", "2" => "Gamma", "3" => "Delta"}
+        }
+      })
+      |> render_submit()
+
+      updated = PubQuizzer.Quiz.get_question!(question.id)
       assert updated.correct_index == 2
+    end
+
+    test "validate does not crash when OptionSorter leaves _unused_N keys in options", %{
+      conn: conn
+    } do
+      topic = create_topic()
+
+      {:ok, question} =
+        Quiz.create_question(%{
+          prompt: "Which one?",
+          options: ["Alpha", "Beta", "Gamma", "Delta"],
+          correct_index: 0,
+          topic_id: topic.id
+        })
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      html =
+        render_change(view, "validate", %{
+          "_target" => "question[correct_index]",
+          "question" => %{
+            "prompt" => "Which one?",
+            "options" => %{
+              "_unused_0" => "",
+              "0" => "Alpha",
+              "_unused_1" => "",
+              "1" => "Beta",
+              "_unused_2" => "",
+              "2" => "Gamma",
+              "_unused_3" => "",
+              "3" => "Delta"
+            },
+            "correct_index" => "1"
+          }
+        })
+
+      refute html =~ "ArgumentError"
+      assert html =~ "Alpha"
+      assert html =~ "Delta"
     end
   end
 

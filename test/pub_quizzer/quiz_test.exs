@@ -62,7 +62,14 @@ defmodule PubQuizzer.QuizTest do
 
       assert {:ok, %Question{} = q} = Quiz.create_question(attrs)
       assert q.prompt == "What is H2O?"
-      assert q.options == ["Water", "Salt", "Sugar", "Acid"]
+
+      assert q.options == [
+               %{"text" => "Water"},
+               %{"text" => "Salt"},
+               %{"text" => "Sugar"},
+               %{"text" => "Acid"}
+             ]
+
       assert q.correct_index == 0
     end
 
