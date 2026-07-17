@@ -35,7 +35,7 @@
         <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
 
         <%!-- Prompt card --%>
-        <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card bg-base-100 border border-base-300 shadow-md">
           <div class="card-body p-5 gap-4">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
@@ -149,9 +149,9 @@
                 phx-click="select_correct"
                 phx-value-index={i}
                 class={[
-                  "opt-row group relative rounded-xl border-2 p-4 transition-all cursor-pointer shadow-sm",
-                  is_correct && "border-success bg-success/10 shadow-md",
-                  !is_correct && "border-base-300 bg-base-100 hover:border-base-content/40 hover:shadow-md"
+                  "opt-row group relative rounded-xl border-2 p-4 transition-all cursor-pointer shadow-md",
+                  is_correct && "border-success bg-success/10 shadow-lg",
+                  !is_correct && "border-base-300 bg-base-100 hover:border-base-content/40 hover:shadow-lg"
                 ]}
               >
                 <div class="flex items-start gap-3">
