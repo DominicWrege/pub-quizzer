@@ -57,17 +57,27 @@ defmodule PubQuizzerWeb.Layouts do
             <span class="text-sm sm:text-xl font-semibold">Kneipenquiz</span>
           </a>
           <div class="flex-none flex items-center gap-4">
-            <.link
-              :if={@current_scope.user.name && @current_scope.user.name != ""}
-              navigate={~p"/admin/profile"}
-              class="text-xs text-base-content/50 hidden sm:inline hover:text-base-content"
-            >{@current_scope.user.name}</.link>
-            <.link
-              navigate={~p"/admin/logout"}
-              class="btn btn-sm btn-outline border-2 border-base-content/60"
-            >
-              <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
-            </.link>
+            <details class="dropdown dropdown-end">
+              <summary class="btn btn-sm btn-soft rounded-full p-0 w-8 h-8">
+                <div class="avatar avatar-placeholder">
+                  <div class="bg-primary text-primary-content rounded-full w-7 text-xs font-semibold flex items-center justify-center">
+                    {String.at(@current_scope.user.name || "?", 0)}
+                  </div>
+                </div>
+              </summary>
+              <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg min-w-40 p-2 mt-2 z-50 border border-base-200">
+                <li>
+                  <.link navigate={~p"/admin/profile"} class="text-sm">
+                    <span class="truncate max-w-32">{@current_scope.user.name || "Profil"}</span>
+                  </.link>
+                </li>
+                <li>
+                  <.link navigate={~p"/admin/logout"} class="text-sm">
+                    <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
+                  </.link>
+                </li>
+              </ul>
+            </details>
           </div>
         </div>
         <div class="flex items-center gap-1">
@@ -112,7 +122,7 @@ defmodule PubQuizzerWeb.Layouts do
           <div class="flex-none hidden sm:flex">
             <ul class="flex px-1 space-x-4 items-center">
               <li>
-                <.link navigate={~p"/join"} class="btn btn-sm">Quiz beitreten</.link>
+                <.link navigate={~p"/join"} class="btn btn-sm btn-soft">Quiz beitreten</.link>
               </li>
               <li>
                 <.link navigate={~p"/admin/login"} class="btn btn-primary btn-sm">

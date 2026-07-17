@@ -12,6 +12,19 @@
         · Runde {(@engine_state.round_number || 0) + 1}
       </:subtitle>
       <:actions>
+        <div class="flex items-center gap-1">
+          <button
+            onclick="var s=parseInt(localStorage.getItem('qfz')||'0')-1;s=Math.max(-2,Math.min(3,s));localStorage.setItem('qfz',s);document.body.dataset.quizFontSize=s;document.getElementById('qfz-label').textContent=['80%','90%','100%','125%','150%','200%'][s+2]"
+            class="btn btn-sm btn-soft btn-square"
+            title="Kleine Schrift"
+          >A−</button>
+          <span id="qfz-label" class="text-xs w-10 text-center tabular-nums text-base-content/70">100%</span>
+          <button
+            onclick="var s=parseInt(localStorage.getItem('qfz')||'0')+1;s=Math.max(-2,Math.min(3,s));localStorage.setItem('qfz',s);document.body.dataset.quizFontSize=s;document.getElementById('qfz-label').textContent=['80%','90%','100%','125%','150%','200%'][s+2]"
+            class="btn btn-sm btn-soft btn-square"
+            title="Große Schrift"
+          >A+</button>
+        </div>
         <button
           onclick="var b=document.body,c=b.classList.toggle('presentation-mode');localStorage.setItem('pm',c)"
           class="btn btn-sm btn-primary"
@@ -20,7 +33,7 @@
         </button>
         <button
           phx-click="ask_finish_quiz"
-          class="btn btn-sm btn-outline border-2 border-base-content/60"
+          class="btn btn-sm btn-soft"
         >
           <.icon name="hero-flag" class="size-4" /> Quiz beenden
         </button>
@@ -108,15 +121,15 @@
       </div>
 
       <div class="card bg-base-200 mb-4 overflow-hidden">
-        <div class="card-body">
+        <div class="card-body" id="quiz-qa-area">
           <%= if question[:image] do %>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <h4 class="card-title text-4xl break-words leading-relaxed sm:col-span-2">
+              <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-2">
                 {question.prompt}
               </h4>
               <div class="space-y-4">
                 <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                  <div class="p-6 rounded-lg bg-base-300 text-3xl">
+                  <div class="p-6 rounded-lg bg-base-300 text-3xl qa-option">
                     <span class="font-mono font-bold mr-4">{letter_for_index(idx)}.</span>
                     <span class="break-words">{option}</span>
                   </div>
@@ -127,10 +140,10 @@
               </div>
             </div>
           <% else %>
-            <h4 class="card-title text-5xl break-words leading-relaxed">{question.prompt}</h4>
+            <h4 class="card-title text-3xl break-words leading-relaxed">{question.prompt}</h4>
             <div class="space-y-4 mt-6">
               <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                <div class="p-6 rounded-lg bg-base-300 text-3xl">
+                <div class="p-6 rounded-lg bg-base-300 text-3xl qa-option">
                   <span class="font-mono font-bold mr-4">{letter_for_index(idx)}.</span>
                   <span class="break-words">{option}</span>
                 </div>
@@ -176,7 +189,7 @@
           <%= for {question, q_idx} <- Enum.with_index(@engine_state.current_questions), q_idx < revealed do %>
             <div class="card bg-base-200">
               <div class="card-body">
-                <h4 class="card-title text-3xl">
+                <h4 class="card-title text-2xl">
                   Frage {q_idx + 1}: {question.prompt}
                 </h4>
                 <%= if question[:image] do %>
@@ -238,9 +251,12 @@
             </button>
           </div>
         <% else %>
-          <div class="mb-6 flex justify-center">
-            <button phx-click="show_standings" class="btn btn-primary btn-lg text-2xl px-12 py-4">
-              <.icon name="hero-chevron-right" class="size-7" /> Team-Ergebnisse anzeigen
+          <div class="mb-6 flex flex-wrap items-center justify-center gap-3">
+            <button phx-click="show_standings" class="btn btn-lg text-xl px-12 py-4 btn-soft">
+              <.icon name="hero-clipboard" class="size-7" /> Team-Ergebnisse anzeigen
+            </button>
+            <button phx-click="next_round" class="btn btn-primary btn-lg text-2xl px-12 py-4">
+              <.icon name="hero-bookmark" class="size-5" /> Weiter zur Kategorie
             </button>
           </div>
         <% end %>
@@ -283,7 +299,7 @@
       <div class="mt-6 flex justify-between">
         <.link
           navigate={~p"/admin/events"}
-          class="btn btn-lg btn-outline border-2 border-base-content/60"
+          class="btn btn-lg btn-soft"
         >
           <.icon name="hero-chevron-left" class="size-6" /> Zurück zum Quiz
         </.link>

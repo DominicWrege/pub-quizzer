@@ -194,7 +194,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
               id="copy-invite-link"
               phx-hook="CopyLink"
               data-url={@invite_link}
-              class="btn btn-sm btn-outline border-2"
+              class="btn btn-sm btn-soft"
             >
               Link kopieren
             </button>
@@ -210,10 +210,10 @@ defmodule PubQuizzerWeb.Admin.UserLive do
       <% end %>
 
       <!-- User list -->
-      <div class="overflow-x-auto rounded-lg border border-base-300">
+      <div class="overflow-x-auto rounded-lg border-2 border-base-300">
         <table class="table table-sm">
           <thead>
-            <tr class="border-b-2 border-base-300 bg-base-200">
+            <tr class="border-b-2 border-base-300 bg-base-300">
               <th>E-Mail</th>
               <th>Name</th>
               <th>Rolle</th>
@@ -222,8 +222,8 @@ defmodule PubQuizzerWeb.Admin.UserLive do
               <th class="text-right">Aktionen</th>
             </tr>
           </thead>
-          <tbody id="users" class="divide-y divide-base-200">
-            <tr :for={user <- @users} id={"user-#{user.id}"} class="hover">
+          <tbody id="users" class="divide-y divide-base-300">
+            <tr :for={user <- @users} id={"user-#{user.id}"} class="bg-base-200 hover">
               <td class="font-mono text-sm">{user.email}</td>
               <td class="font-medium">
                 {if user.name && user.name != "", do: user.name, else: "—"}
@@ -258,7 +258,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
                     <button
                       phx-click="resend_link"
                       phx-value-id={user.id}
-                      class="btn btn-xs btn-outline border-2 border-base-content/60"
+                      class="btn btn-xs btn-soft"
                       title="Neuen Login-Link senden"
                     >
                       Link
@@ -266,7 +266,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
                     <button
                       phx-click="ask_delete"
                       phx-value-id={user.id}
-                      class="btn btn-xs btn-outline border-2 border-base-content/60 text-error"
+                      class="btn btn-xs btn-danger-soft"
                     >
                       Löschen
                     </button>

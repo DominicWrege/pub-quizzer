@@ -53,12 +53,14 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:page_title, "Neue Frage")
     |> assign(:form, to_form(changeset))
     |> assign(:image_preview_url, nil)
+    |> assign(:show_preview, false)
   end
 
   defp apply_action(socket, :edit, %{"topic_id" => topic_id, "id" => id}) do
     topic = Quiz.get_topic!(topic_id)
     question = Quiz.get_question!(id)
     changeset = Question.changeset(question, %{})
+    versions = Quiz.list_question_versions(question.id)
 
     socket
     |> assign(:topic, topic)
@@ -66,6 +68,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:page_title, "Frage bearbeiten")
     |> assign(:form, to_form(changeset))
     |> assign(:image_preview_url, nil)
+    |> assign(:show_preview, false)
+    |> assign(:versions, compute_version_diffs(versions))
   end
 
   @impl true
@@ -156,6 +160,10 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     {:noreply, assign(socket, :image_preview_url, data_url)}
   end
 
+  def handle_event("set_view", %{"mode" => mode}, socket) do
+    {:noreply, assign(socket, :show_preview, mode == "preview")}
+  end
+
   defp normalize_params(%{"question" => q}) do
     q
     |> Map.update("options", [], fn opts ->
@@ -199,9 +207,35 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     stream(socket, :questions, questions, reset: true)
   end
 
+  defp compute_version_diffs(versions) do
+    versions
+    |> Enum.with_index()
+    |> Enum.map(fn {version, idx} ->
+      prev = Enum.at(versions, idx + 1)
+      {version, diff_against(version, prev)}
+    end)
+  end
+
+  defp diff_against(_current, nil), do: []
+
+  defp diff_against(current, prev) do
+    []
+    |> maybe_diff(:prompt, current.prompt, prev.prompt)
+    |> maybe_diff(:options, current.options, prev.options)
+    |> maybe_diff(:correct_index, current.correct_index, prev.correct_index)
+    |> maybe_diff(:image, current.image, prev.image)
+  end
+
+  defp maybe_diff(acc, _field, same, same), do: acc
+
+  defp maybe_diff(acc, field, current_val, prev_val) do
+    acc ++ [%{field: field, old: prev_val, new: current_val}]
+  end
+
   defp save_question(socket, question_params) do
     question = Map.get(socket.assigns, :question)
     topic_id = socket.assigns.topic.id
+    user = socket.assigns.current_scope.user
 
     {result, action} =
       case question do
@@ -213,7 +247,10 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       end
 
     case result do
-      {:ok, _question} ->
+      {:ok, saved_question} ->
+        version_action = if question, do: "updated", else: "created"
+        Quiz.create_question_version!(saved_question, user, version_action)
+
         flash = if question, do: "Frage aktualisiert.", else: "Frage erstellt."
 
         {:noreply,

@@ -334,7 +334,7 @@ defmodule PubQuizzerWeb.CoreComponents do
 
   def header(assigns) do
     ~H"""
-    <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4"]}>
+    <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-2"]}>
       <div class="flex items-center gap-4">
         <div :if={@back != []} class="flex-none">
           {render_slot(@back)}
@@ -389,10 +389,10 @@ defmodule PubQuizzerWeb.CoreComponents do
       end
 
     ~H"""
-    <div class="overflow-x-auto rounded-lg border border-base-300">
-      <table class={["table table-zebra", @class]}>
+    <div class="overflow-x-auto rounded-lg border-2 border-base-300">
+      <table class={["table", @class]}>
         <thead>
-          <tr class="bg-base-200 border-b-2 border-base-300">
+          <tr class="bg-base-300 border-b-2 border-base-300">
             <th :for={col <- @col}>{col[:label]}</th>
             <th :if={@action != []}>
               <span class="sr-only">Aktionen</span>
@@ -402,9 +402,13 @@ defmodule PubQuizzerWeb.CoreComponents do
         <tbody
           id={@id}
           phx-update={is_struct(@rows, Phoenix.LiveView.LiveStream) && "stream"}
-          class="divide-y divide-base-200"
+          class="divide-y divide-base-300"
         >
-          <tr :for={row <- @rows} id={@row_id && @row_id.(row)}>
+          <tr
+            :for={row <- @rows}
+            class="bg-base-200 hover:bg-base-300 transition-colors duration-150"
+            id={@row_id && @row_id.(row)}
+          >
             <td
               :for={col <- @col}
               phx-click={@row_click && @row_click.(row)}
@@ -616,7 +620,7 @@ defmodule PubQuizzerWeb.CoreComponents do
         <div class="flex gap-2 justify-end">
           <button
             phx-click={@cancel_event}
-            class="btn btn-sm btn-outline border-2 border-base-content/60"
+            class="btn btn-sm btn-soft"
           >Abbrechen</button>
           <button phx-click={@confirm_event} class={["btn btn-sm", @confirm_class]}>{@confirm_label}</button>
         </div>

@@ -1,116 +1,157 @@
-<Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
+<Layouts.app
+  flash={@flash}
+  current_scope={@current_scope}
+  current_path={@current_path}
+  max_width="max-w-4xl"
+>
   <.header>
     <:back>
-      <.link navigate={~p"/admin/topics/#{@topic}/questions"} class="btn btn-sm">
+      <.link navigate={~p"/admin/topics/#{@topic.id}/questions"} class="btn btn-sm btn-soft">
         ← Zurück
       </.link>
     </:back>
     Neue Frage
     <:subtitle>{@topic.name}</:subtitle>
-  </.header>
-
-  <.form
-    for={@form}
-    id="question-form"
-    phx-change="validate"
-    phx-submit="save"
-  >
-    <.input
-      field={@form[:prompt]}
-      type="textarea"
-      label="Frage"
-      placeholder="Wie lautet die Frage?"
-    />
-
-    <fieldset class="fieldset">
-      <legend class="label mb-2">Optionen (richtige Antwort markieren)</legend>
-
-      <div class="space-y-2">
-        <%= for i <- 0..3 do %>
-          <div class="flex items-start gap-2">
-            <input
-              type="radio"
-              name="question[correct_index]"
-              value={i}
-              id={"correct-#{i}"}
-              checked={@form[:correct_index].value == i}
-              class="radio radio-sm mt-3"
-            />
-            <textarea
-              name={"question[options][#{i}]"}
-              id={"question_options_#{i}"}
-              class="textarea textarea-bordered w-full"
-              rows="2"
-            ><%= Phoenix.HTML.Form.input_value(@form, :options) |> Enum.at(i) || "" %></textarea>
-          </div>
-        <% end %>
-      </div>
-    </fieldset>
-
-    <div
-      id="image-upload-zone"
-      phx-hook="ImagePreview"
-      phx-drop-target={@uploads.image.ref}
-      class="flex flex-col gap-2 p-4 border-2 border-dashed border-base-300 rounded-box mt-4"
-    >
-      <label class="text-sm font-semibold">Bild (optional)</label>
-      <.live_file_input upload={@uploads.image} class="file-input file-input-bordered w-full" />
-      <p class="text-xs text-base-content/60">Klicken oder Datei hierher ziehen</p>
-      <div :for={entry <- @uploads.image.entries} class="flex items-center gap-2 text-sm">
-        <span>{entry.client_name}</span>
+    <:actions>
+      <div class="join">
         <button
           type="button"
-          phx-click="cancel_upload"
-          phx-value-ref={entry.ref}
-          class="btn btn-xs"
+          phx-click="set_view"
+          phx-value-mode="edit"
+          class={[
+            "btn btn-sm join-item gap-1 border-2",
+            (!@show_preview && "btn-primary") || "btn-soft"
+          ]}
         >
-          Entfernen
+          <.icon name="hero-pencil" class="size-4" /> Bearbeiten
+        </button>
+        <button
+          type="button"
+          phx-click="set_view"
+          phx-value-mode="preview"
+          class={[
+            "btn btn-sm join-item gap-1 border-2",
+            (@show_preview && "btn-primary") || "btn-soft"
+          ]}
+        >
+          <.icon name="hero-eye" class="size-4" /> Vorschau
         </button>
       </div>
-      <%= if @image_preview_url do %>
-        <div class="relative w-fit">
-          <img src={@image_preview_url} class="max-h-32 rounded-lg" />
-        </div>
-      <% end %>
-    </div>
+      <button
+        type="submit"
+        form="question-form"
+        class="btn btn-primary btn-sm gap-1"
+        disabled={@show_preview}
+      >
+        <.icon name="hero-check-circle" class="size-4" /> Speichern
+      </button>
+    </:actions>
+  </.header>
 
-    <div class="flex justify-end gap-2 mt-6">
-      <.link navigate={~p"/admin/topics/#{@topic}/questions"} class="btn btn-sm">
-        Abbrechen
-      </.link>
-      <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
-    </div>
-  </.form>
-
-  <%!-- Question preview --%>
-  <div class="divider mt-8">Vorschau</div>
-  <p class="text-sm text-base-content/60 mb-4">
-    So sieht die Frage für die Teams im Quiz aus:
-  </p>
-
-  <div class="card bg-base-200 mb-4">
-    <div class="card-body">
-      <h4 class="card-title text-xl">{@form[:prompt].value || "Frage"}</h4>
-      <%= if @image_preview_url do %>
-        <img src={@image_preview_url} alt="Bild" class="rounded-lg max-h-64 mx-auto mb-2" />
-      <% end %>
-      <div class="flex flex-col gap-3 mt-2">
-        <%= for {option, idx} <- Enum.with_index(Phoenix.HTML.Form.input_value(@form, :options) || ["", "", "", ""]) do %>
-          <div class={[
-            "btn h-auto py-5 px-5 justify-start text-left text-lg shadow-md border-2 border-base-content/60 whitespace-normal",
-            @form[:correct_index].value == idx && "btn-primary",
-            @form[:correct_index].value != idx && "btn-outline"
-          ]}>
-            <span class="font-mono font-bold mr-3 shrink-0">
-              {String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(idx))}.
-            </span>
-            <span class="font-semibold">{option}</span>
-            <%= if @form[:correct_index].value == idx do %>
-              <span class="hero-check-circle size-6 shrink-0 ml-auto"></span>
-            <% end %>
-          </div>
+  <%= if @show_preview do %>
+    <%!-- Preview only --%>
+    <div class="card bg-base-200 border border-base-300">
+      <div class="card-body">
+        <h4 class="card-title text-2xl break-words leading-snug">
+          {@form[:prompt].value || "Frage"}
+        </h4>
+        <%= if @image_preview_url do %>
+          <img src={@image_preview_url} alt="Bild" class="rounded-lg max-h-64 mx-auto mb-2" />
         <% end %>
+        <div class="flex flex-col gap-3 mt-2">
+          <%= for {option, idx} <- Enum.with_index(Phoenix.HTML.Form.input_value(@form, :options) || ["", "", "", ""]) do %>
+            <div class={[
+              "btn h-auto py-5 px-5 justify-start text-left text-lg shadow-md border-2 border-base-content/60 whitespace-normal",
+              @form[:correct_index].value == idx && "btn-primary",
+              @form[:correct_index].value != idx && "bg-base-200 border-base-300"
+            ]}>
+              <span class="font-mono font-bold mr-3 shrink-0">
+                {String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(idx))}.
+              </span>
+              <span class="font-semibold">{option}</span>
+              <%= if @form[:correct_index].value == idx do %>
+                <.icon name="hero-check-circle" class="size-6 shrink-0 ml-auto" />
+              <% end %>
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
-  </div>
+  <% else %>
+    <%!-- Form only --%>
+    <div class="card bg-base-200 border border-base-300">
+      <div class="card-body">
+        <.form
+          for={@form}
+          id="question-form"
+          phx-change="validate"
+          phx-submit="save"
+          class="space-y-4"
+        >
+          <.input
+            field={@form[:prompt]}
+            type="textarea"
+            label="Frage"
+            placeholder="Wie lautet die Frage?"
+            rows="3"
+          />
+
+          <fieldset class="fieldset">
+            <legend class="label mb-2">Optionen (richtige Antwort markieren)</legend>
+
+            <div class="space-y-2">
+              <%= for i <- 0..3 do %>
+                <div class="flex items-start gap-2">
+                  <input
+                    type="radio"
+                    name="question[correct_index]"
+                    value={i}
+                    id={"correct-#{i}"}
+                    checked={@form[:correct_index].value == i}
+                    class="radio radio-sm mt-3"
+                  />
+                  <textarea
+                    name={"question[options][#{i}]"}
+                    id={"question_options_#{i}"}
+                    class="textarea textarea-bordered w-full"
+                    rows="2"
+                  ><%= Phoenix.HTML.Form.input_value(@form, :options) |> Enum.at(i) || "" %></textarea>
+                </div>
+              <% end %>
+            </div>
+          </fieldset>
+
+          <div
+            id="image-upload-zone"
+            phx-hook="ImagePreview"
+            phx-drop-target={@uploads.image.ref}
+            class="flex flex-col gap-2 p-4 border-2 border-dashed border-base-300 bg-base-100 rounded-box"
+          >
+            <label class="text-sm font-semibold">Bild (optional)</label>
+            <.live_file_input
+              upload={@uploads.image}
+              class="file-input file-input-bordered w-full"
+            />
+            <p class="text-xs text-base-content/70">Klicken oder Datei hierher ziehen</p>
+            <div :for={entry <- @uploads.image.entries} class="flex items-center gap-2 text-sm">
+              <span>{entry.client_name}</span>
+              <button
+                type="button"
+                phx-click="cancel_upload"
+                phx-value-ref={entry.ref}
+                class="btn btn-xs"
+              >
+                Entfernen
+              </button>
+            </div>
+            <%= if @image_preview_url do %>
+              <div class="relative w-fit">
+                <img src={@image_preview_url} class="max-h-32 rounded-lg" />
+              </div>
+            <% end %>
+          </div>
+        </.form>
+      </div>
+    </div>
+  <% end %>
 </Layouts.app>

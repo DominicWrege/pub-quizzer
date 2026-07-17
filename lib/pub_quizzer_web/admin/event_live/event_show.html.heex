@@ -6,7 +6,7 @@
 >
   <.header>
     <:back>
-      <.link navigate={~p"/admin/events"} class="btn btn-sm">
+      <.link navigate={~p"/admin/events"} class="btn btn-sm btn-soft">
         <.icon name="hero-chevron-left" class="size-4" /> Zurück
       </.link>
     </:back>
@@ -25,7 +25,7 @@
       <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator-Konsole</.link>
       <button
         phx-click="ask_delete_event"
-        class="btn btn-sm text-error"
+        class="btn btn-sm btn-danger-soft"
       >
         <.icon name="hero-trash" class="size-4" /> Löschen
       </button>
@@ -39,16 +39,6 @@
     message="Event und alle Daten unwiderruflich löschen?"
     confirm_label="Löschen"
     confirm_event="do_delete_event"
-    cancel_event="cancel_action"
-  />
-
-  <.confirm_modal
-    id="start-quiz-modal"
-    show={@confirm_action == :start}
-    title="Quiz starten?"
-    message="Das Quiz wird gestartet und die Themenauswahl beginnt. Fortfahren?"
-    confirm_label="Starten"
-    confirm_event="do_start"
     cancel_event="cancel_action"
   />
 
@@ -75,18 +65,23 @@
     </div>
 
     <div class="flex gap-2 mb-6">
-      <button phx-click="add_slot" class="btn btn-sm">
+      <button phx-click="add_slot" class="btn btn-sm btn-soft">
         <.icon name="hero-plus" class="size-4" /> Team hinzufügen
       </button>
-      <button phx-click="remove_slot" class="btn btn-sm">
+      <button phx-click="remove_slot" class="btn btn-sm btn-soft">
         <.icon name="hero-minus" class="size-4" /> Team entfernen
       </button>
-      <button id="copy-join-link" phx-hook="CopyLink" data-url={@join_url} class="btn btn-sm">
+      <button
+        id="copy-join-link"
+        phx-hook="CopyLink"
+        data-url={@join_url}
+        class="btn btn-sm btn-soft"
+      >
         <.icon name="hero-clipboard" class="size-3" /> Link kopieren
       </button>
       <span class="flex-1"></span>
       <button
-        phx-click="ask_start"
+        phx-click="do_start"
         class="btn btn-primary btn-lg text-xl px-10"
         disabled={!@all_teams_connected}
       >
@@ -128,7 +123,7 @@
               <button
                 phx-click="remove_team"
                 phx-value-team_id={team.id}
-                class="btn btn-sm text-error"
+                class="btn btn-sm btn-danger-soft"
                 title="Team entfernen"
               >
                 <.icon name="hero-x-mark" class="size-4" />

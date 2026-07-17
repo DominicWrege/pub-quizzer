@@ -1,7 +1,7 @@
 <Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
   <.header>
     <:back>
-      <.link navigate={~p"/admin/events"} class="btn btn-sm">
+      <.link navigate={~p"/admin/events"} class="btn btn-sm btn-soft">
         ← Zurück
       </.link>
     </:back>
@@ -15,7 +15,6 @@
         field={@form[:name]}
         type="text"
         label="Name (optional)"
-        placeholder="z.B. Weihnachtsfeier 2026"
       />
       <.input
         field={@form[:team_count]}

@@ -174,10 +174,6 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     end
   end
 
-  def handle_event("ask_start", _params, socket) do
-    {:noreply, assign(socket, :confirm_action, :start)}
-  end
-
   def handle_event("do_start", _params, socket) do
     event = socket.assigns.event
 
@@ -317,14 +313,14 @@ defmodule PubQuizzerWeb.Admin.EventLive do
             <% @event.status in ["topic_selection", "question", "round_reveal"] -> %>
               <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator</.link>
             <% @event.status == "lobby" -> %>
-              <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm">Verwalten</.link>
+              <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm btn-soft">Verwalten</.link>
             <% true -> %>
               <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-primary">Ergebnisse</.link>
           <% end %>
           <button
             phx-click="ask_delete"
             phx-value-id={@event.id}
-            class="btn btn-sm text-error"
+            class="btn btn-sm btn-danger-soft"
           >
             Löschen
           </button>

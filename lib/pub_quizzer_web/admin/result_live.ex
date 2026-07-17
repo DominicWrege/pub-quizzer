@@ -42,7 +42,7 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
         <:back>
           <.link
             navigate={~p"/admin/events"}
-            class="btn btn-sm btn-outline border-2 border-base-content/60"
+            class="btn btn-sm btn-soft"
           >
             <.icon name="hero-chevron-left" class="size-4" /> Zurück
           </.link>
@@ -80,18 +80,21 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
           <h3 class="text-lg font-semibold mb-3">
             Runde {r_idx + 1}: {round_data.round.topic.name}
           </h3>
-          <div class="overflow-x-auto rounded-lg border border-base-300">
+          <div class="overflow-x-auto rounded-lg border-2 border-base-300">
             <table class="table table-sm">
               <thead>
-                <tr class="border-b-2 border-base-300 bg-base-200">
+                <tr class="border-b-2 border-base-300 bg-base-300">
                   <th class="min-w-[200px]">Frage</th>
                   <th :for={team <- @results.teams} class="text-center min-w-[80px]">
                     {team.name}
                   </th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-base-200">
-                <tr :for={{question, q_idx} <- Enum.with_index(round_data.questions)}>
+              <tbody class="divide-y divide-base-300">
+                <tr
+                  :for={{question, q_idx} <- Enum.with_index(round_data.questions)}
+                  class="bg-base-200"
+                >
                   <td>
                     <div class="font-medium">
                       <span class="text-base-content/60 font-mono text-xs mr-1">Q{q_idx + 1}</span>

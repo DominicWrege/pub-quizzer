@@ -47,7 +47,8 @@ html {
 }
 
 *:focus-visible {
-  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
   box-shadow: none !important;
 }
 
@@ -80,7 +81,70 @@ body.presentation-mode header.bg-base-200 {
   display: none;
 }
 
+@layer components {
+  .btn-soft {
+    background-color: var(--color-base-200);
+    border-color: var(--color-base-300);
+    color: var(--color-base-content);
+    outline: none;
+  }
+  .btn-soft:hover {
+    background-color: var(--color-base-300);
+    border-color: var(--color-base-300);
+    outline: none;
+  }
+
+  .btn-danger-soft {
+    background-color: color-mix(in oklch, var(--color-error) 10%, transparent);
+    border-color: color-mix(in oklch, var(--color-error) 20%, transparent);
+    color: var(--color-error);
+    outline: none;
+  }
+  .btn-danger-soft:hover {
+    background-color: color-mix(in oklch, var(--color-error) 20%, transparent);
+    border-color: color-mix(in oklch, var(--color-error) 30%, transparent);
+    outline: none;
+  }
+}
+
+/* Suppress daisyUI focus rings on soft/danger-soft buttons */
+.btn.btn-soft:focus-visible,
+.btn.btn-soft:focus,
+.btn.btn-soft:active,
+.btn.btn-danger-soft:focus-visible,
+.btn.btn-danger-soft:focus,
+.btn.btn-danger-soft:active {
+  outline-width: 0 !important;
+  outline-style: none !important;
+  box-shadow: none !important;
+}
+
 /* Native <dialog> backdrop styling */
 dialog::backdrop {
   background-color: oklch(0 0 0 / 0.5);
 }
+
+/* Drag-and-drop option row transitions */
+.opt-row {
+  transition: transform 200ms ease, color 200ms ease, background-color 200ms ease, border-color 200ms ease;
+}
+
+/* Quiz font size adjustment — only affects Q&A area */
+#quiz-qa-area .card-title,
+#quiz-qa-area .qa-option {
+  font-size: var(--quiz-fs);
+}
+body[data-quiz-font-size="-2"] #quiz-qa-area .card-title,
+body[data-quiz-font-size="-2"] #quiz-qa-area .qa-option { --quiz-fs: 1.25rem; }
+body[data-quiz-font-size="-1"] #quiz-qa-area .card-title,
+body[data-quiz-font-size="-1"] #quiz-qa-area .qa-option { --quiz-fs: 1.5rem; }
+body:not([data-quiz-font-size]) #quiz-qa-area .card-title,
+body[data-quiz-font-size="0"] #quiz-qa-area .card-title,
+body:not([data-quiz-font-size]) #quiz-qa-area .qa-option,
+body[data-quiz-font-size="0"] #quiz-qa-area .qa-option { --quiz-fs: 1.875rem; }
+body[data-quiz-font-size="1"] #quiz-qa-area .card-title,
+body[data-quiz-font-size="1"] #quiz-qa-area .qa-option { --quiz-fs: 2.5rem; }
+body[data-quiz-font-size="2"] #quiz-qa-area .card-title,
+body[data-quiz-font-size="2"] #quiz-qa-area .qa-option { --quiz-fs: 3.25rem; }
+body[data-quiz-font-size="3"] #quiz-qa-area .card-title,
+body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }

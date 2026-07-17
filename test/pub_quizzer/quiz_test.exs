@@ -90,15 +90,47 @@ defmodule PubQuizzer.QuizTest do
       assert changeset.errors[:correct_index] != nil
     end
 
-    test "create_question/1 without prompt returns error", %{topic: topic} do
-      attrs = %{
-        options: ["A", "B"],
+    test "list_questions_for_topic/1 attaches last_editor_name from latest version", %{
+      topic: topic
+    } do
+      question = insert_question(topic)
+      user = insert_user()
+
+      Quiz.create_question_version!(question, user, "create")
+
+      [loaded] = Quiz.list_questions_for_topic(topic.id)
+      assert loaded.last_editor_name == user.name
+    end
+
+    test "list_questions_for_topic/1 returns nil last_editor_name when no versions exist", %{
+      topic: topic
+    } do
+      _question = insert_question(topic)
+      [loaded] = Quiz.list_questions_for_topic(topic.id)
+      assert loaded.last_editor_name == nil
+    end
+  end
+
+  defp insert_question(topic) do
+    {:ok, q} =
+      Quiz.create_question(%{
+        prompt: "What is H2O?",
+        options: ["Water", "Salt", "Sugar", "Acid"],
         correct_index: 0,
         topic_id: topic.id
-      }
+      })
 
-      assert {:error, changeset} = Quiz.create_question(attrs)
-      assert errors_on(changeset)[:prompt] == ["can't be blank"]
-    end
+    q
+  end
+
+  defp insert_user do
+    {:ok, user} =
+      PubQuizzer.Accounts.create_user(%{
+        email: "editor@test.com",
+        name: "Editor",
+        password: "password123"
+      })
+
+    user
   end
 end

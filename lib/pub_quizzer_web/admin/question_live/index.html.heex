@@ -6,7 +6,7 @@
 >
   <.header>
     <:back>
-      <.link navigate={~p"/admin/topics"} class="btn btn-sm">
+      <.link navigate={~p"/admin/topics"} class="btn btn-sm btn-soft">
         ← Zurück zu Themen
       </.link>
     </:back>
@@ -23,7 +23,10 @@
             class="input input-sm"
           />
         </form>
-        <.link navigate={~p"/admin/topics/#{@topic}/questions/new"} class="btn btn-primary btn-sm">
+        <.link
+          navigate={~p"/admin/topics/#{@topic.id}/questions/new"}
+          class="btn btn-primary btn-sm"
+        >
           <.icon name="hero-plus" class="size-4" /> Neue Frage
         </.link>
       </div>
@@ -33,16 +36,34 @@
   <.table id="questions" rows={@streams.questions} row_id={fn {id, _} -> id end}>
     <:col :let={{_id, q}} label="#"><span class="opacity-60">{q.position + 1}</span></:col>
     <:col :let={{_id, q}} label="Frage">{q.prompt}</:col>
-    <:col :let={{_id, q}} label="Optionen">{length(q.options)}</:col>
-    <:col :let={{_id, q}} label="Korrekt">Option {q.correct_index + 1}</:col>
+    <:col :let={{_id, q}} label="Korrekt">
+      <span class="whitespace-nowrap">Option {q.correct_index + 1}</span>
+    </:col>
+    <:col :let={{_id, q}} label="Zuletzt">
+      <div class="flex items-center gap-1.5 whitespace-nowrap text-sm">
+        <span class="text-base-content/70">{Calendar.strftime(q.updated_at, "%d.%m.%y %H:%M")}</span>
+        <%= if q.last_editor_name do %>
+          <span class="text-base-content/40">·</span>
+          <span class="text-base-content/50">{q.last_editor_name}</span>
+        <% end %>
+        <%= if q.image do %>
+          <span class="badge badge-ghost badge-xs gap-1">
+            <.icon name="hero-eye" class="size-3" /> Bild
+          </span>
+        <% end %>
+      </div>
+    </:col>
     <:action :let={{_id, q}}>
-      <.link navigate={~p"/admin/topics/#{@topic}/questions/#{q}/edit"} class="btn btn-sm">
+      <.link
+        navigate={~p"/admin/topics/#{@topic.id}/questions/#{q}/edit"}
+        class="btn btn-primary btn-sm"
+      >
         <.icon name="hero-pencil" class="size-4" /> Bearbeiten
       </.link>
       <button
         phx-click="ask_delete"
         phx-value-id={q.id}
-        class="btn btn-sm text-error"
+        class="btn btn-sm btn-danger-soft"
       >
         <.icon name="hero-trash" class="size-4" /> Löschen
       </button>

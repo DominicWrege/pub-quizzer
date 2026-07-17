@@ -6,7 +6,7 @@ defmodule PubQuizzer.Quiz do
   import Ecto.Query
   alias PubQuizzer.Repo
   alias PubQuizzer.Names
-  alias PubQuizzer.Quiz.{Topic, Question, QuizEvent, Team, Round, Answer}
+  alias PubQuizzer.Quiz.{Topic, Question, QuestionVersion, QuizEvent, Team, Round, Answer}
 
   @pubsub PubQuizzer.PubSub
 
@@ -70,6 +70,7 @@ defmodule PubQuizzer.Quiz do
     |> where(topic_id: ^topic_id)
     |> order_by(asc: :position)
     |> Repo.all()
+    |> attach_last_editor()
   end
 
   def search_questions_for_topic(topic_id, query) when is_binary(query) do
@@ -80,6 +81,34 @@ defmodule PubQuizzer.Quiz do
     |> where([q], like(q.prompt, ^pattern))
     |> order_by(asc: :position)
     |> Repo.all()
+    |> attach_last_editor()
+  end
+
+  defp attach_last_editor([]), do: []
+
+  defp attach_last_editor(questions) do
+    question_ids = Enum.map(questions, & &1.id)
+
+    latest_ids =
+      from v in QuestionVersion,
+        where: v.question_id in ^question_ids,
+        group_by: v.question_id,
+        select: %{id: max(v.id)}
+
+    version_user =
+      from(v in QuestionVersion,
+        join: u in assoc(v, :user),
+        join: lv in subquery(latest_ids),
+        on: v.id == lv.id,
+        select: %{question_id: v.question_id, name: u.name}
+      )
+      |> Repo.all()
+
+    editor_map = Map.new(version_user, &{&1.question_id, &1.name})
+
+    Enum.map(questions, fn q ->
+      Map.put(q, :last_editor_name, Map.get(editor_map, q.id))
+    end)
   end
 
   def get_question!(id) do
@@ -109,6 +138,30 @@ defmodule PubQuizzer.Quiz do
 
   def change_question(question, attrs \\ %{}) do
     Question.changeset(question, attrs)
+  end
+
+  # --- Question Versions (edit history) ---
+
+  def create_question_version!(question, user, action) do
+    %QuestionVersion{}
+    |> QuestionVersion.changeset(%{
+      question_id: question.id,
+      user_id: user && user.id,
+      prompt: question.prompt,
+      options: question.options,
+      correct_index: question.correct_index,
+      image: question.image,
+      action: action
+    })
+    |> Repo.insert!()
+  end
+
+  def list_question_versions(question_id) do
+    QuestionVersion
+    |> where(question_id: ^question_id)
+    |> order_by(desc: :inserted_at)
+    |> preload(:user)
+    |> Repo.all()
   end
 
   # --- Quiz Events ---
