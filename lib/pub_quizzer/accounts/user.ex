@@ -25,7 +25,7 @@ defmodule PubQuizzer.Accounts.User do
       :magic_link_sent_at,
       :last_signed_in_at
     ])
-    |> validate_required([:email, :role])
+    |> validate_required([:email, :name, :role])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
     |> validate_inclusion(:role, ["superadmin", "moderator"])
     |> normalize_email()

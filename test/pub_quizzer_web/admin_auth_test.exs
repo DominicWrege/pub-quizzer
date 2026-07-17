@@ -6,7 +6,8 @@ defmodule PubQuizzerWeb.AdminAuthTest do
   describe "admin session controller" do
     test "GET /admin/login renders the login form", %{conn: conn} do
       # Create a user so we don't get redirected to /setup
-      {:ok, _} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
+      {:ok, _} =
+        Accounts.create_user(%{email: "admin@test.com", name: "Admin", role: "superadmin"})
 
       conn = get(conn, ~p"/admin/login")
       assert html_response(conn, 200) =~ "Login"
@@ -19,7 +20,8 @@ defmodule PubQuizzerWeb.AdminAuthTest do
     end
 
     test "GET /admin/login when already authed redirects to events", %{conn: conn} do
-      {:ok, _} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
+      {:ok, _} =
+        Accounts.create_user(%{email: "admin@test.com", name: "Admin", role: "superadmin"})
 
       conn =
         conn
@@ -31,7 +33,12 @@ defmodule PubQuizzerWeb.AdminAuthTest do
 
     test "POST /admin/login with known email renders link sent page", %{conn: conn} do
       {:ok, user} =
-        Accounts.create_user(%{email: "admin@test.com", role: "superadmin", active: true})
+        Accounts.create_user(%{
+          email: "admin@test.com",
+          name: "Admin",
+          role: "superadmin",
+          active: true
+        })
 
       conn = post(conn, ~p"/admin/login", %{"email" => user.email})
       assert html_response(conn, 200) =~ "Link gesendet"
@@ -39,7 +46,8 @@ defmodule PubQuizzerWeb.AdminAuthTest do
     end
 
     test "POST /admin/login with unknown email shows error", %{conn: conn} do
-      {:ok, _} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
+      {:ok, _} =
+        Accounts.create_user(%{email: "admin@test.com", name: "Admin", role: "superadmin"})
 
       conn = post(conn, ~p"/admin/login", %{"email" => "nobody@test.com"})
       assert redirected_to(conn) == "/admin/login"
@@ -59,7 +67,9 @@ defmodule PubQuizzerWeb.AdminAuthTest do
 
   describe "magic link" do
     test "valid token creates session and redirects", %{conn: conn} do
-      {:ok, user} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
+      {:ok, user} =
+        Accounts.create_user(%{email: "admin@test.com", name: "Admin", role: "superadmin"})
+
       {:ok, raw_token} = Accounts.generate_invite_link(user)
 
       conn = get(conn, ~p"/admin/magic?token=#{raw_token}")
@@ -76,7 +86,9 @@ defmodule PubQuizzerWeb.AdminAuthTest do
     end
 
     test "expired token shows error", %{conn: conn} do
-      {:ok, user} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
+      {:ok, user} =
+        Accounts.create_user(%{email: "admin@test.com", name: "Admin", role: "superadmin"})
+
       {:ok, raw_token} = Accounts.generate_invite_link(user)
 
       eleven_min_ago =
@@ -96,7 +108,9 @@ defmodule PubQuizzerWeb.AdminAuthTest do
     end
 
     test "token is single-use", %{conn: conn} do
-      {:ok, user} = Accounts.create_user(%{email: "admin@test.com", role: "superadmin"})
+      {:ok, user} =
+        Accounts.create_user(%{email: "admin@test.com", name: "Admin", role: "superadmin"})
+
       {:ok, raw_token} = Accounts.generate_invite_link(user)
 
       conn1 = get(conn, ~p"/admin/magic?token=#{raw_token}")

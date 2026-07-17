@@ -11,16 +11,20 @@ defmodule PubQuizzerWeb.SetupLive do
       base_url = connect_base_url(socket)
 
       {:ok,
-       assign(socket, form: to_form(%{"email" => ""}), magic_link_url: nil, base_url: base_url)}
+       assign(socket,
+         form: to_form(%{"email" => "", "name" => ""}),
+         magic_link_url: nil,
+         base_url: base_url
+       )}
     end
   end
 
   @impl true
-  def handle_event("save", %{"email" => email}, socket) do
+  def handle_event("save", %{"email" => email, "name" => name}, socket) do
     if Accounts.has_users?() do
       {:noreply, push_navigate(socket, to: ~p"/admin/login")}
     else
-      case Accounts.create_user(%{email: email, role: "superadmin"}) do
+      case Accounts.create_user(%{email: email, name: name, role: "superadmin"}) do
         {:ok, user} ->
           {:ok, raw_token} = Accounts.generate_invite_link(user)
           url = "#{socket.assigns.base_url}/admin/magic?token=#{raw_token}"
@@ -70,6 +74,13 @@ defmodule PubQuizzerWeb.SetupLive do
               Erstelle das erste Superadmin-Konto für Kneipenquiz.
             </p>
             <.form for={@form} id="setup-form" phx-submit="save">
+              <.input
+                field={@form[:name]}
+                type="text"
+                placeholder="Name"
+                required
+                autocomplete="name"
+              />
               <.input
                 field={@form[:email]}
                 type="email"

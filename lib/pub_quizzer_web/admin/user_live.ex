@@ -174,8 +174,9 @@ defmodule PubQuizzerWeb.Admin.UserLive do
         <input
           type="text"
           name="name"
-          placeholder="Name (optional)"
+          placeholder="Name"
           class="input input-sm w-60"
+          required
           autocomplete="name"
         />
         <button type="submit" class="btn btn-primary btn-sm shrink-0">

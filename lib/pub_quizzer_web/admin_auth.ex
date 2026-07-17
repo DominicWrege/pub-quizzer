@@ -86,8 +86,8 @@ defmodule PubQuizzerWeb.AdminAuth do
           socket
           |> Phoenix.Component.assign(:current_scope, %{user: user})
           |> Phoenix.LiveView.attach_hook(:set_current_path, :handle_params, fn _params,
-                                                                                 url,
-                                                                                 socket ->
+                                                                                url,
+                                                                                socket ->
             {:cont, Phoenix.Component.assign(socket, :current_path, URI.parse(url).path)}
           end)
 

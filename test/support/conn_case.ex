@@ -46,6 +46,7 @@ defmodule PubQuizzerWeb.ConnCase do
       user ||
         case PubQuizzer.Accounts.create_user(%{
                email: "test@example.com",
+               name: "Test User",
                role: "moderator",
                active: true
              }) do
@@ -63,6 +64,7 @@ defmodule PubQuizzerWeb.ConnCase do
     user =
       case PubQuizzer.Accounts.create_user(%{
              email: "admin@example.com",
+             name: "Admin User",
              role: "superadmin",
              active: true
            }) do

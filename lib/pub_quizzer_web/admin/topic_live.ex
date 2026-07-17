@@ -70,14 +70,14 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
     {:ok, _} = Quiz.delete_topic(topic)
 
     {:noreply,
-      socket
-      |> assign(:confirm_action, nil)
-      |> assign(:pending_delete_id, nil)
-      |> assign(:editing_topic_id, nil)
-      |> assign(:topic, nil)
-      |> assign(:form, nil)
-      |> assign(:topics, Quiz.list_topics())
-      |> put_flash(:info, "Thema gelöscht.")}
+     socket
+     |> assign(:confirm_action, nil)
+     |> assign(:pending_delete_id, nil)
+     |> assign(:editing_topic_id, nil)
+     |> assign(:topic, nil)
+     |> assign(:form, nil)
+     |> assign(:topics, Quiz.list_topics())
+     |> put_flash(:info, "Thema gelöscht.")}
   end
 
   def handle_event("cancel_confirm", _params, socket) do
