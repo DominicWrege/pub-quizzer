@@ -28,7 +28,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       |> allow_upload(:image,
         accept: ~w(.jpg .jpeg .png .gif .webp),
         max_entries: 1,
-        max_file_size: 5_000_000
+        max_file_size: 20_000_000
       )
 
     socket =
@@ -36,7 +36,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         allow_upload(acc, :"option_image_#{i}",
           accept: ~w(.jpg .jpeg .png .gif .webp),
           max_entries: 1,
-          max_file_size: 5_000_000
+          max_file_size: 20_000_000
         )
       end)
 
@@ -130,15 +130,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     question_params = normalize_params(params)
 
     question_params =
-      consume_uploaded_entries(socket, :image, fn %{path: tmp_path}, entry ->
-        ext = extname(entry.client_name)
-        filename = "#{System.unique_integer([:positive, :monotonic])}#{ext}"
-        dest = Path.join(@upload_dir, filename)
-
-        File.mkdir_p!(@upload_dir)
-        File.cp!(tmp_path, dest)
-
-        {:ok, "/uploads/#{filename}"}
+      consume_uploaded_entries(socket, :image, fn %{path: tmp_path}, _entry ->
+        store_compressed(tmp_path)
       end)
       |> List.first()
       |> then(fn image_path ->
@@ -309,15 +302,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   defp consume_option_images(socket) do
     for i <- 0..(@option_count - 1) do
       path =
-        consume_uploaded_entries(socket, :"option_image_#{i}", fn %{path: tmp_path}, entry ->
-          ext = extname(entry.client_name)
-          filename = "#{System.unique_integer([:positive, :monotonic])}#{ext}"
-          dest = Path.join(@upload_dir, filename)
-
-          File.mkdir_p!(@upload_dir)
-          File.cp!(tmp_path, dest)
-
-          {:ok, "/uploads/#{filename}"}
+        consume_uploaded_entries(socket, :"option_image_#{i}", fn %{path: tmp_path}, _entry ->
+          store_compressed(tmp_path)
         end)
         |> List.first()
 
@@ -341,8 +327,33 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     end
   end
 
-  defp extname(filename) do
-    filename |> Path.extname() |> String.downcase()
+  defp store_compressed(tmp_path) do
+    filename = "#{System.unique_integer([:positive, :monotonic])}.jpg"
+    dest = Path.join(@upload_dir, filename)
+    File.mkdir_p!(@upload_dir)
+
+    args = [
+      "-y",
+      "-i",
+      tmp_path,
+      "-vf",
+      "scale=w=1280:h=1280:force_original_aspect_ratio=decrease",
+      "-q:v",
+      "5",
+      dest
+    ]
+
+    case System.cmd("ffmpeg", args, stderr_to_stdout: true) do
+      {_output, 0} ->
+        {:ok, "/uploads/#{filename}"}
+
+      {output, _exit_code} ->
+        # Fallback: copy the original if ffmpeg fails
+        require Logger
+        Logger.warning("ffmpeg compression failed, using original: #{output}")
+        File.cp!(tmp_path, dest)
+        {:ok, "/uploads/#{filename}"}
+    end
   end
 
   defp restream_questions(socket) do

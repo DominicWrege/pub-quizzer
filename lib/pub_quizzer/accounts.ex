@@ -69,7 +69,8 @@ defmodule PubQuizzer.Accounts do
   def generate_magic_link(email) do
     case get_user_by_email(email) do
       %User{active: true} = user ->
-        do_generate_magic_link(user)
+        {:ok, raw_token} = do_generate_magic_link(user)
+        {:ok, raw_token, user}
 
       _ ->
         {:error, :not_found}
@@ -152,9 +153,9 @@ defmodule PubQuizzer.Accounts do
 
   def deliver_magic_link(email, base_url) do
     case generate_magic_link(email) do
-      {:ok, raw_token} ->
+      {:ok, raw_token, user} ->
         url = "#{base_url}/admin/magic?token=#{raw_token}"
-        AuthEmail.deliver_magic_link(email, url)
+        AuthEmail.deliver_magic_link(user, url)
         {:ok, url}
 
       {:error, :not_found} ->
@@ -165,7 +166,7 @@ defmodule PubQuizzer.Accounts do
   def deliver_invite_link(%User{} = user, base_url) do
     {:ok, raw_token} = generate_invite_link(user)
     url = "#{base_url}/admin/magic?token=#{raw_token}"
-    AuthEmail.deliver_magic_link(user.email, url)
+    AuthEmail.deliver_magic_link(user, url)
     {:ok, url}
   end
 end

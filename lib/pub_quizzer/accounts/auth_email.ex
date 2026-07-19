@@ -5,17 +5,18 @@ defmodule PubQuizzer.Accounts.AuthEmail do
 
   import Swoosh.Email
 
+  alias PubQuizzer.Accounts.User
   alias PubQuizzer.Mailer
 
-  def deliver_magic_link(to_email, url) do
+  def deliver_magic_link(%User{} = user, url) do
     {name, email} = from_email()
 
     new()
-    |> to(to_email)
+    |> to({user.name, user.email})
     |> from({name, email})
     |> subject("Dein Kneipenquiz Login-Link")
-    |> html_body(html_body(url))
-    |> text_body("Login-Link: #{url}\nDer Link ist 10 Minuten gültig.")
+    |> html_body(rendered_html(user.name, url))
+    |> text_body(plain_text(user.name, url))
     |> Mailer.deliver()
   end
 
@@ -24,12 +25,12 @@ defmodule PubQuizzer.Accounts.AuthEmail do
     {"Kneipenquiz", email}
   end
 
-  defp html_body(url) do
+  defp rendered_html(name, url) do
     """
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #333;">
       <h2 style="font-size: 22px; margin-bottom: 8px;">🍺 Kneipenquiz</h2>
       <p style="font-size: 16px; line-height: 1.5;">
-        Moin! Schön, dass du da bist!<br>
+        Moin #{name}! Schön, dass du da bist!<br>
         Klicke auf den Link, um dich anzumelden:
       </p>
       <p style="margin: 28px 0;">
@@ -47,5 +48,9 @@ defmodule PubQuizzer.Accounts.AuthEmail do
       </p>
     </div>
     """
+  end
+
+  defp plain_text(name, url) do
+    "Moin #{name}!\n\nLogin-Link: #{url}\nDer Link ist 10 Minuten gültig."
   end
 end

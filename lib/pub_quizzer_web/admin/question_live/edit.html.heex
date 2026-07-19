@@ -204,12 +204,12 @@
                 data-option-index={i}
                 phx-hook="OptionImagePreview"
                 phx-drop-target={@option_uploads[i].ref}
-                class="mt-2 ml-12"
+                class="mt-2 ml-16"
               >
                 <%= cond do %>
                   <% preview = @option_image_previews[i] -> %>
-                    <div class="relative inline-block">
-                      <img src={preview} class="h-20 rounded border border-base-300" />
+                    <div class="relative inline-block pt-2">
+                      <img src={preview} class="h-40 rounded border border-base-300" />
                       <button
                         type="button"
                         phx-click="cancel_option_upload"
@@ -218,8 +218,8 @@
                       >×</button>
                     </div>
                   <% img = opt_img -> %>
-                    <div class="relative inline-block group">
-                      <img src={img} class="h-20 rounded border border-base-300" />
+                    <div class="relative inline-block pt-2 group">
+                      <img src={img} class="h-40 rounded border border-base-300" />
                       <button
                         type="button"
                         phx-click="remove_option_image"
@@ -228,7 +228,7 @@
                       >×</button>
                     </div>
                   <% true -> %>
-                    <label class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-dashed border-base-300 text-xs text-base-content/50 hover:text-base-content/70 hover:border-base-content/30 cursor-pointer transition-colors">
+                    <label class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-base-300 text-xs text-base-content/70 bg-base-200 hover:bg-base-300 hover:border-base-content/40 cursor-pointer transition-colors">
                       <.icon name="hero-photo" class="size-3.5" />
                       <span>Bild</span>
                       <.live_file_input upload={@option_uploads[i]} class="sr-only" />
