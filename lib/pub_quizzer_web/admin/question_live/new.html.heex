@@ -69,32 +69,28 @@
             @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30"
           ]}
         >
-          <%= cond do %>
-            <% entry = List.first(@uploads.image.entries) -> %>
-              <div class="p-3 flex items-center gap-3">
-                <span class="text-sm font-medium truncate flex-1">{entry.client_name}</span>
-                <button
-                  type="button"
-                  phx-click="cancel_upload"
-                  phx-value-ref={entry.ref}
-                  class="btn btn-xs btn-ghost"
-                >×</button>
-              </div>
-            <% @image_preview_url -> %>
-              <div class="relative">
-                <img src={@image_preview_url} class="rounded-lg max-h-48 w-full object-cover" />
-              </div>
-            <% true -> %>
-              <label class="p-4 flex flex-col items-center gap-1 cursor-pointer text-base-content/50 hover:text-base-content/70">
-                <.icon name="hero-photo" class="size-6" />
-                <span class="text-xs">Bild zur Frage (optional)</span>
-                <span class="text-[10px]">Klicken oder Datei hierher ziehen</span>
-                <.live_file_input
-                  upload={@uploads.image}
-                  class="sr-only"
-                />
-              </label>
-          <% end %>
+          <div class="p-3">
+            <%= cond do %>
+              <% @image_preview_url -> %>
+                <div class="relative">
+                  <img
+                    src={@image_preview_url}
+                    data-main-image-preview
+                    class="rounded-lg max-h-56 w-full object-contain"
+                  />
+                </div>
+              <% true -> %>
+                <div class="flex flex-col items-center gap-1 py-6 text-base-content/40">
+                  <.icon name="hero-photo" class="size-8" />
+                  <span class="text-xs">Kein Bild ausgewählt</span>
+                </div>
+            <% end %>
+          </div>
+          <label class="flex items-center justify-center gap-2 p-3 cursor-pointer text-xs text-base-content/50 hover:text-base-content/70 hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300">
+            <.icon name="hero-photo" class="size-4" />
+            <span>Bild auswählen</span>
+            <.live_file_input upload={@uploads.image} class="sr-only" />
+          </label>
         </div>
       </div>
     </div>

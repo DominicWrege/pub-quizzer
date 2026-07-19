@@ -173,10 +173,14 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   end
 
   def handle_event("cancel_upload", %{"ref" => ref}, socket) do
-    {:noreply,
-     socket
-     |> cancel_upload(:image, ref)
-     |> assign(:image_preview_url, nil)}
+    socket =
+      if ref do
+        cancel_upload(socket, :image, ref)
+      else
+        socket
+      end
+
+    {:noreply, assign(socket, :image_preview_url, nil)}
   end
 
   def handle_event("image_preview", %{"data_url" => data_url}, socket) do

@@ -8790,23 +8790,31 @@ removing illegal node: "${("outerHTML" in childNode && childNode.outerHTML || ch
   };
   var ImagePreview = {
     mounted() {
+      this.img = null;
+      this.currentUrl = null;
+      const showPreview = (file) => {
+        if (!file) return;
+        if (this.currentUrl) URL.revokeObjectURL(this.currentUrl);
+        const url = URL.createObjectURL(file);
+        this.currentUrl = url;
+        if (this.img) {
+          this.img.src = url;
+          this.img.classList.remove("hidden");
+        }
+        this.pushEvent("image_preview", { data_url: url });
+      };
       this.el.addEventListener("change", (e) => {
         if (e.target.type !== "file") return;
-        this.previewFile(e.target.files[0]);
+        showPreview(e.target.files[0]);
       });
       this.el.addEventListener("drop", (e) => {
         var _a, _b;
         const file = (_b = (_a = e.dataTransfer) == null ? void 0 : _a.files) == null ? void 0 : _b[0];
-        if (file) this.previewFile(file);
+        if (file) showPreview(file);
       });
     },
-    previewFile(file) {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        this.pushEvent("image_preview", { data_url: ev.target.result });
-      };
-      reader.readAsDataURL(file);
+    updated() {
+      this.img = this.el.querySelector("[data-main-image-preview]");
     }
   };
   var OptionImagePreview = {
