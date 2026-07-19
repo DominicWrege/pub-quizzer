@@ -82,7 +82,7 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
       html =
         view
         |> form("#topic-form", topic: %{name: ""})
-        |> render_change()
+        |> render_submit()
 
       assert html =~ "can&#39;t be blank"
     end
@@ -133,7 +133,7 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
   end
 
   describe "toggle enabled" do
-    test "shows active badge and toggle button", %{conn: conn} do
+    test "shows active badge", %{conn: conn} do
       {:ok, topic} = Quiz.create_topic(%{name: "Active"})
 
       {:ok, view, _html} =
@@ -142,10 +142,9 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
         |> live(~p"/admin/topics")
 
       assert has_element?(view, "div#topics-#{topic.id} .badge-success", "Aktiv")
-      assert has_element?(view, "button[phx-click='toggle_enabled'][phx-value-id='#{topic.id}']")
     end
 
-    test "toggles topic to disabled", %{conn: conn} do
+    test "disables topic through edit form", %{conn: conn} do
       {:ok, topic} = Quiz.create_topic(%{name: "Toggle Me"})
 
       {:ok, view, _html} =
@@ -154,8 +153,12 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
         |> live(~p"/admin/topics")
 
       view
-      |> element("button[phx-click='toggle_enabled'][phx-value-id='#{topic.id}']")
+      |> element("div#topics-#{topic.id} a", "Bearbeiten")
       |> render_click()
+
+      view
+      |> form("#topic-form", topic: %{enabled: false})
+      |> render_submit()
 
       assert has_element?(view, "div#topics-#{topic.id} .badge-ghost", "Deaktiviert")
 
@@ -163,9 +166,8 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
       assert reloaded.enabled == false
     end
 
-    test "toggles disabled topic back to enabled", %{conn: conn} do
-      {:ok, topic} = Quiz.create_topic(%{name: "Off"})
-      {:ok, _} = Quiz.toggle_topic_enabled(topic)
+    test "enables topic through edit form", %{conn: conn} do
+      {:ok, topic} = Quiz.create_topic(%{name: "Off", enabled: false})
 
       {:ok, view, _html} =
         conn
@@ -173,8 +175,12 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
         |> live(~p"/admin/topics")
 
       view
-      |> element("button[phx-click='toggle_enabled'][phx-value-id='#{topic.id}']")
+      |> element("div#topics-#{topic.id} a", "Bearbeiten")
       |> render_click()
+
+      view
+      |> form("#topic-form", topic: %{enabled: true})
+      |> render_submit()
 
       assert has_element?(view, "div#topics-#{topic.id} .badge-success", "Aktiv")
 

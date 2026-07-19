@@ -55,12 +55,6 @@ defmodule PubQuizzer.Quiz do
     Repo.delete(topic)
   end
 
-  def toggle_topic_enabled(topic) do
-    topic
-    |> Topic.changeset(%{enabled: !topic.enabled})
-    |> Repo.update()
-  end
-
   def change_topic(topic, attrs \\ %{}) do
     Topic.changeset(topic, attrs)
   end

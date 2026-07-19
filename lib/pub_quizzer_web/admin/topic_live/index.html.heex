@@ -24,7 +24,7 @@
       <h3 class="text-lg font-bold">
         {if @editing_topic_id == :new, do: "Neues Thema", else: "Thema bearbeiten"}
       </h3>
-      <.form for={@form} id="topic-form" phx-change="validate" phx-submit="save">
+      <.form for={@form} id="topic-form" phx-submit="save">
         <.input
           field={@form[:name]}
           type="text"
@@ -36,7 +36,20 @@
           label="Beschreibung"
           placeholder="Optional"
         />
-        <div class="flex justify-between items-center mt-6">
+        <div class="mt-4">
+          <label class="flex items-center cursor-pointer gap-2">
+            <span class="text-sm font-medium">Aktiv</span>
+            <input type="hidden" name="topic[enabled]" value="false" />
+            <input
+              type="checkbox"
+              name="topic[enabled]"
+              value="true"
+              class="toggle toggle-primary"
+              checked={@form[:enabled].value}
+            />
+          </label>
+        </div>
+        <div class="flex justify-between items-center mt-4">
           <div>
             <%= if @editing_topic_id != :new do %>
               <button
@@ -91,19 +104,6 @@
             >
               <.icon name="hero-list-bullet" class="size-4" /> Fragen
             </.link>
-            <button
-              type="button"
-              phx-click="toggle_enabled"
-              phx-value-id={topic.id}
-              class="btn btn-sm btn-soft"
-              title={if topic.enabled, do: "Deaktivieren", else: "Aktivieren"}
-            >
-              <.icon
-                name={if topic.enabled, do: "hero-check-circle", else: "hero-x-circle"}
-                class="size-4"
-              />
-              {if topic.enabled, do: "Sperren", else: "Freigeben"}
-            </button>
             <.link
               phx-click="start_edit"
               phx-value-id={topic.id}
