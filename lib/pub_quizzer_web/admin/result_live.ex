@@ -7,19 +7,35 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
   def mount(%{"id" => id}, _session, socket) do
     event = Quiz.get_event!(id)
 
-    if event.status != "finished" do
-      {:ok,
-       socket
-       |> put_flash(:error, "Ergebnisse sind nur für beendete Quizzes verfügbar.")
-       |> push_navigate(to: ~p"/admin/events")}
-    else
-      results = Quiz.get_event_results(id)
-
-      {:ok,
-       socket
-       |> assign(:page_title, "Ergebnisse")
-       |> assign(:results, results)}
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
     end
+
+    results = Quiz.get_event_results(id)
+
+    {:ok,
+     socket
+     |> assign(:page_title, "Ergebnisse")
+     |> assign(:event, event)
+     |> assign(:results, results)}
+  end
+
+  @impl true
+  def handle_info({:engine_state, _state}, socket) do
+    {:noreply, refresh(socket)}
+  end
+
+  def handle_info({:team_update, _event_id}, socket) do
+    {:noreply, refresh(socket)}
+  end
+
+  defp refresh(socket) do
+    event = Quiz.get_event!(socket.assigns.event.id)
+    results = Quiz.get_event_results(event.id)
+
+    socket
+    |> assign(:event, event)
+    |> assign(:results, results)
   end
 
   @impl true
@@ -34,6 +50,11 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
       <.header>
         <div class="flex items-baseline gap-3">
           <span>Ergebnisse</span>
+          <%= if @event.status != "finished" do %>
+            <span class="badge badge-sm badge-primary gap-1">
+              <span class="size-1.5 rounded-full bg-current animate-pulse"></span> Live
+            </span>
+          <% end %>
           <span class="text-sm text-base-content/70 whitespace-nowrap">
             {@results.event.name || "Quiz"} · Code
             <span class="font-mono font-bold">{@results.event.code}</span>

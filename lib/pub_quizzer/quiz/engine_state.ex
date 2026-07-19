@@ -20,6 +20,7 @@ defmodule PubQuizzer.Quiz.EngineState do
     current_winner_team_id: nil,
     reveal_answer_index: 0,
     standings_revealed: false,
+    final_results_revealed: false,
     # answers: %{question_index => %{team_id => selected_index}}
     answers: %{},
     # standings: %{team_id => total_points}
@@ -243,6 +244,16 @@ defmodule PubQuizzer.Quiz.EngineState do
 
   def finish_quiz(%__MODULE__{status: :finished}), do: {:error, :already_finished}
   def finish_quiz(%__MODULE__{status: :lobby}), do: {:error, :not_started}
+
+  @doc """
+  Reveal the final results on the finished screen (host trigger).
+  Sets final_results_revealed so all lobbies show the winner/podium.
+  """
+  def reveal_final_results(%__MODULE__{status: :finished} = state) do
+    {:ok, Map.put(state, :final_results_revealed, true)}
+  end
+
+  def reveal_final_results(%__MODULE__{}), do: {:error, :not_finished}
 
   # --- Queries ---
 

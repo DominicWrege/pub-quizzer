@@ -20,12 +20,15 @@ defmodule PubQuizzer.Quiz do
   end
 
   @doc """
-  Returns all topics as lightweight `%{id, name}` maps, without preloading questions.
-  Used by the engine to build available_topics lists.
+  Returns all topics that have at least one question, as lightweight
+  `%{id, name}` maps. Used by the engine to build available_topics lists.
   """
   def list_topic_names do
     Topic
-    |> order_by(asc: :name)
+    |> where(enabled: true)
+    |> join(:inner, [t], q in assoc(t, :questions))
+    |> group_by([t], t.id)
+    |> order_by([t], asc: t.name)
     |> select([t], %{id: t.id, name: t.name})
     |> Repo.all()
   end
@@ -52,11 +55,35 @@ defmodule PubQuizzer.Quiz do
     Repo.delete(topic)
   end
 
+  def toggle_topic_enabled(topic) do
+    topic
+    |> Topic.changeset(%{enabled: !topic.enabled})
+    |> Repo.update()
+  end
+
   def change_topic(topic, attrs \\ %{}) do
     Topic.changeset(topic, attrs)
   end
 
-  # --- Questions ---
+  @doc """
+  Filters a list of `%{id, name}` topic maps to those that are enabled and
+  have at least one question.
+  """
+  def filter_topics_with_questions(topics) when is_list(topics) do
+    topic_ids = Enum.map(topics, & &1.id)
+
+    ids_active =
+      from(t in Topic,
+        where: t.id in ^topic_ids and t.enabled == true,
+        join: q in assoc(t, :questions),
+        group_by: t.id,
+        select: t.id
+      )
+      |> Repo.all()
+      |> MapSet.new()
+
+    Enum.filter(topics, &MapSet.member?(ids_active, &1.id))
+  end
 
   def list_questions do
     Question

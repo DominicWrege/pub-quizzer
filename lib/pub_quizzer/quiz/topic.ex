@@ -5,6 +5,7 @@ defmodule PubQuizzer.Quiz.Topic do
   schema "topics" do
     field :name, :string
     field :description, :string
+    field :enabled, :boolean, default: true
 
     has_many :questions, PubQuizzer.Quiz.Question
 
@@ -13,7 +14,7 @@ defmodule PubQuizzer.Quiz.Topic do
 
   def changeset(topic, attrs) do
     topic
-    |> cast(attrs, [:name, :description])
+    |> cast(attrs, [:name, :description, :enabled])
     |> validate_required([:name])
     |> validate_length(:name, min: 1, max: 100)
     |> unique_constraint(:name)

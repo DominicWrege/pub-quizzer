@@ -131,4 +131,55 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
       refute has_element?(view, "div#topics-#{topic.id}")
     end
   end
+
+  describe "toggle enabled" do
+    test "shows active badge and toggle button", %{conn: conn} do
+      {:ok, topic} = Quiz.create_topic(%{name: "Active"})
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics")
+
+      assert has_element?(view, "div#topics-#{topic.id} .badge-success", "Aktiv")
+      assert has_element?(view, "button[phx-click='toggle_enabled'][phx-value-id='#{topic.id}']")
+    end
+
+    test "toggles topic to disabled", %{conn: conn} do
+      {:ok, topic} = Quiz.create_topic(%{name: "Toggle Me"})
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics")
+
+      view
+      |> element("button[phx-click='toggle_enabled'][phx-value-id='#{topic.id}']")
+      |> render_click()
+
+      assert has_element?(view, "div#topics-#{topic.id} .badge-ghost", "Deaktiviert")
+
+      reloaded = Quiz.get_topic!(topic.id)
+      assert reloaded.enabled == false
+    end
+
+    test "toggles disabled topic back to enabled", %{conn: conn} do
+      {:ok, topic} = Quiz.create_topic(%{name: "Off"})
+      {:ok, _} = Quiz.toggle_topic_enabled(topic)
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics")
+
+      view
+      |> element("button[phx-click='toggle_enabled'][phx-value-id='#{topic.id}']")
+      |> render_click()
+
+      assert has_element?(view, "div#topics-#{topic.id} .badge-success", "Aktiv")
+
+      reloaded = Quiz.get_topic!(topic.id)
+      assert reloaded.enabled == true
+    end
+  end
 end

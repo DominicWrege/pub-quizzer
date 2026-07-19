@@ -160,6 +160,15 @@ defmodule PubQuizzer.Quiz.Engine do
     :exit, _ -> {:error, :not_found}
   end
 
+  @doc """
+  Reveal the final results (host trigger). Broadcasts to all lobbies.
+  """
+  def reveal_final_results(event_id) do
+    GenServer.call(via_tuple(event_id), :reveal_final_results)
+  catch
+    :exit, _ -> {:error, :not_found}
+  end
+
   # --- Server callbacks ---
 
   @impl true
@@ -318,6 +327,19 @@ defmodule PubQuizzer.Quiz.Engine do
     case EngineState.finish_quiz(state.engine_state) do
       {:ok, new_es} ->
         persist_event_status(new_es)
+        broadcast(new_es)
+        {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call(:reveal_final_results, _from, state) do
+    {:ok, state} = ensure_loaded(state)
+
+    case EngineState.reveal_final_results(state.engine_state) do
+      {:ok, new_es} ->
         broadcast(new_es)
         {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
 

@@ -49,8 +49,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
   end
 
   defp host_reveal_round(view) do
-    view |> element("button[phx-click='ask_reveal_round']") |> render_click()
-    view |> element("button[phx-click='confirm_reveal_round']") |> render_click()
+    view |> element("button[phx-click='reveal_round']") |> render_click()
   end
 
   defp host_reveal_all_answers(view) do
@@ -185,7 +184,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view |> element("button[phx-click='next_question']") |> render_click()
 
       refute has_element?(view, "button[phx-click='next_question']")
-      assert has_element?(view, "button[phx-click='ask_reveal_round']")
+      assert has_element?(view, "button[phx-click='reveal_round']")
     end
 
     test "next question advances to second question", %{
@@ -277,6 +276,9 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
 
       html = render(view)
       assert html =~ "Quiz beendet!"
+      assert has_element?(view, "button[phx-click='reveal_final_results']")
+
+      view |> element("button[phx-click='reveal_final_results']") |> render_click()
       assert has_element?(view, ~s|[id^="final-"]|)
     end
 
@@ -324,6 +326,11 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
 
       html = render(view)
       assert html =~ "Quiz beendet!"
+      assert has_element?(view, "button[phx-click='reveal_final_results']")
+
+      view |> element("button[phx-click='reveal_final_results']") |> render_click()
+
+      html = render(view)
       assert html =~ "Punkten!"
       assert has_element?(view, ~s|[id^="final-"]|)
     end

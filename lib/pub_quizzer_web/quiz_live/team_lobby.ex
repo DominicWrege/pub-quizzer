@@ -34,7 +34,10 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
               |> assign(:engine_state, state)
               |> assign(:page_title, "Quiz — #{code}")
               |> assign(:standings, EngineState.standings_sorted(state))
-              |> assign(:available_topics, EngineState.available_topics(state))
+              |> assign(
+                :available_topics,
+                Quiz.filter_topics_with_questions(EngineState.available_topics(state))
+              )
               |> assign(:current_topic_name, EngineState.current_topic_name(state, state))
               |> assign(:shuffle_map, shuffle_map)
               |> assign(:shuffled_options, shuffled_options)
@@ -86,7 +89,10 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
      socket
      |> assign(:engine_state, state)
      |> assign(:standings, EngineState.standings_sorted(state))
-     |> assign(:available_topics, EngineState.available_topics(state))
+     |> assign(
+       :available_topics,
+       Quiz.filter_topics_with_questions(EngineState.available_topics(state))
+     )
      |> assign(:current_topic_name, EngineState.current_topic_name(state, state))
      |> assign(:shuffle_map, shuffle_map)
      |> assign(:shuffled_options, shuffled_options)

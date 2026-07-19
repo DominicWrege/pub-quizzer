@@ -106,49 +106,64 @@
     <% end %>
   <% end %>
 
-  <%!-- Round reveal: show scores --%>
+  <%!-- Round reveal: winner auto-shown after all answers revealed,
+       standings still gated behind moderator trigger --%>
   <%= if @engine_state.status == :round_reveal do %>
-    <div class="mb-3">
-      <%= if @engine_state.current_winner_team_id == @team.id do %>
-        <div class="alert alert-success text-sm px-3 py-2">
-          <.icon name="hero-trophy" class="size-4" />
-          <span><strong>Dein Team hat Runde {(@engine_state.round_number || 0) + 1} gewonnen!</strong></span>
-        </div>
-      <% else %>
-        <% winner =
-          Enum.find(@engine_state.teams, fn t -> t.id == @engine_state.current_winner_team_id end) %>
-        <%= if winner do %>
-          <div class="alert alert-info text-sm px-3 py-2">
+    <% all_revealed =
+      @engine_state.reveal_answer_index >= length(@engine_state.current_questions) %>
+
+    <%= if all_revealed do %>
+      <div class="mb-3">
+        <%= if @engine_state.current_winner_team_id == @team.id do %>
+          <div class="alert alert-success text-sm px-3 py-2">
             <.icon name="hero-trophy" class="size-4" />
-            <span>{winner.name} hat Runde {(@engine_state.round_number || 0) + 1} gewonnen</span>
+            <span><strong>Dein Team hat Runde {(@engine_state.round_number || 0) + 1} gewonnen!</strong></span>
           </div>
         <% else %>
-          <div class="alert alert-info text-sm px-3 py-2">
-            <.icon name="hero-hand-raised" class="size-4" />
-            <span>Remis! Kein eindeutiger Gewinner.</span>
-          </div>
+          <% winner =
+            Enum.find(@engine_state.teams, fn t ->
+              t.id == @engine_state.current_winner_team_id
+            end) %>
+          <%= if winner do %>
+            <div class="alert alert-info text-sm px-3 py-2">
+              <.icon name="hero-trophy" class="size-4" />
+              <span>{winner.name} hat Runde {(@engine_state.round_number || 0) + 1} gewonnen</span>
+            </div>
+          <% else %>
+            <div class="alert alert-info text-sm px-3 py-2">
+              <.icon name="hero-hand-raised" class="size-4" />
+              <span>Remis! Kein eindeutiger Gewinner.</span>
+            </div>
+          <% end %>
         <% end %>
-      <% end %>
-    </div>
-
-    <%= if @engine_state.standings_revealed do %>
-      <div class="text-center mb-4">
-        <span class="text-lg font-bold">Platzierung</span>
       </div>
-      <div class="space-y-2">
-        <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-          <.podium_row
-            id={"team-standing-#{id}"}
-            rank={rank}
-            name={name}
-            score={score}
-            size="sm"
-          >
-            <%= if @team.id == id do %>
-              <span class="text-xs font-normal">(du)</span>
-            <% end %>
-          </.podium_row>
-        <% end %>
+
+      <%= if @engine_state.standings_revealed do %>
+        <div class="text-center mb-4">
+          <span class="text-lg font-bold">Platzierung</span>
+        </div>
+        <div class="space-y-2">
+          <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
+            <.podium_row
+              id={"team-standing-#{id}"}
+              rank={rank}
+              name={name}
+              score={score}
+              size="sm"
+            >
+              <%= if @team.id == id do %>
+                <span class="text-xs font-normal">(du)</span>
+              <% end %>
+            </.podium_row>
+          <% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center max-w-xs mx-auto mt-8">
+        <div class="alert shadow-md text-base border border-base-300 px-4 py-3">
+          <.icon name="hero-eye" class="size-4" />
+          <span class="font-semibold">Antworten werden aufgelöst</span>
+        </div>
       </div>
     <% end %>
   <% end %>
@@ -160,37 +175,46 @@
       <h2 class="text-lg font-bold mt-2">Quiz beendet!</h2>
     </div>
 
-    <%= if @standings != [] do %>
-      <% [first | _rest] = @standings %>
-      <% {_, winner_name, winner_score} = first %>
-      <div class="alert alert-success mb-3 text-sm px-3 py-2">
-        <.icon name="hero-star" class="size-4" />
-        <span><strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!</span>
-      </div>
+    <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
+      <%= if @standings != [] do %>
+        <% [first | _rest] = @standings %>
+        <% {_, winner_name, winner_score} = first %>
+        <div class="alert alert-success mb-3 text-sm px-3 py-2">
+          <.icon name="hero-star" class="size-4" />
+          <span><strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!</span>
+        </div>
 
-      <div class="text-center mb-4">
-        <span class="text-lg font-bold">Endplatzierung</span>
-      </div>
-      <div class="space-y-2">
-        <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-          <.podium_row
-            id={"team-final-#{id}"}
-            rank={rank}
-            name={name}
-            score={score}
-            size="sm"
-            class={if @team.id == id, do: "font-bold"}
-          >
-            <%= if @team.id == id do %>
-              <span class="text-xs font-normal">(du)</span>
-            <% end %>
-          </.podium_row>
-        <% end %>
-      </div>
+        <div class="text-center mb-4">
+          <span class="text-lg font-bold">Endplatzierung</span>
+        </div>
+        <div class="space-y-2">
+          <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
+            <.podium_row
+              id={"team-final-#{id}"}
+              rank={rank}
+              name={name}
+              score={score}
+              size="sm"
+              class={if @team.id == id, do: "font-bold"}
+            >
+              <%= if @team.id == id do %>
+                <span class="text-xs font-normal">(du)</span>
+              <% end %>
+            </.podium_row>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="alert alert-warning text-sm px-3 py-2">
+          <.icon name="hero-exclamation-triangle" class="size-4" />
+          <span>Keine Teams vorhanden.</span>
+        </div>
+      <% end %>
     <% else %>
-      <div class="alert alert-warning text-sm px-3 py-2">
-        <.icon name="hero-exclamation-triangle" class="size-4" />
-        <span>Keine Teams vorhanden.</span>
+      <div class="text-center max-w-xs mx-auto mt-8">
+        <div class="alert shadow-md text-base border border-base-300 px-4 py-3">
+          <.icon name="hero-eye" class="size-4" />
+          <span class="font-semibold">Moderator hat das Quiz beendet, gleich gibt es die Ergebnisse</span>
+        </div>
       </div>
     <% end %>
   <% end %>

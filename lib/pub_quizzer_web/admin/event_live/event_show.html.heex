@@ -17,11 +17,13 @@
     <% end %>
     <span class="badge badge-sm">{status_label(@event.status)}</span>
     <:actions>
-      <%= if @event.status == "finished" do %>
-        <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-primary btn-sm">
+      <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-soft">
+        <%= if @event.status == "finished" do %>
           <.icon name="hero-clipboard" class="size-4" /> Ergebnisse
-        </.link>
-      <% end %>
+        <% else %>
+          <.icon name="hero-eye" class="size-4" /> Live-Ergebnisse
+        <% end %>
+      </.link>
       <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator-Konsole</.link>
       <button
         phx-click="ask_delete_event"

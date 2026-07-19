@@ -67,16 +67,12 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
   end
 
   @impl true
-  def handle_event("ask_reveal_round", _params, socket) do
-    {:noreply, assign(socket, :confirm_action, :reveal_round)}
-  end
-
-  def handle_event("confirm_reveal_round", _params, socket) do
+  def handle_event("reveal_round", _params, socket) do
     event_id = socket.assigns.event.id
 
     case Engine.reveal_round(event_id) do
       {:ok, _state} ->
-        {:noreply, assign(socket, :confirm_action, nil)}
+        {:noreply, socket}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Fehler: #{reason}")}
@@ -151,6 +147,16 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
     end
   end
 
+  def handle_event("reveal_final_results", _params, socket) do
+    case Engine.reveal_final_results(socket.assigns.event.id) do
+      {:ok, _state} ->
+        {:noreply, socket}
+
+      {:error, reason} ->
+        {:noreply, put_flash(socket, :error, "Fehler: #{reason}")}
+    end
+  end
+
   def handle_event("next_round", _params, socket) do
     event_id = socket.assigns.event.id
 
@@ -182,7 +188,10 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
   defp apply_engine_state(socket, state) do
     socket
     |> assign(:engine_state, state)
-    |> assign(:available_topics, EngineState.available_topics(state))
+    |> assign(
+      :available_topics,
+      Quiz.filter_topics_with_questions(EngineState.available_topics(state))
+    )
     |> assign(:standings, EngineState.standings_sorted(state))
     |> assign(:current_topic_name, EngineState.current_topic_name(state, state))
   end

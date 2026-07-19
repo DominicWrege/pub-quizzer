@@ -247,6 +247,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       Engine.choose_topic(event.id, topic.id, nil)
       Engine.submit_answer(event.id, team.id, 1)
       Engine.reveal_round(event.id)
+      Engine.reveal_next_answer(event.id)
       Engine.reveal_standings(event.id)
 
       {:ok, view, _html} =
@@ -265,6 +266,8 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       Engine.choose_topic(event.id, topic.id, nil)
       Engine.submit_answer(event.id, team.id, 1)
       Engine.reveal_round(event.id)
+      # Reveal remaining answers so winner auto-shows without standings trigger
+      Engine.reveal_next_answer(event.id)
 
       {:ok, _view, html} =
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
@@ -285,6 +288,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       Engine.submit_answer(event.id, team.id, 1)
       Engine.reveal_round(event.id)
       Engine.next_round(event.id)
+      Engine.reveal_final_results(event.id)
 
       {:ok, view, html} =
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")

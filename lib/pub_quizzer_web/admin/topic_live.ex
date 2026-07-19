@@ -99,6 +99,24 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
     {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
   end
 
+  def handle_event("toggle_enabled", %{"id" => id}, socket) do
+    topic = Quiz.get_topic!(id)
+
+    case Quiz.toggle_topic_enabled(topic) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(:topics, Quiz.list_topics())
+         |> put_flash(
+           :info,
+           if(!topic.enabled, do: "Thema aktiviert.", else: "Thema deaktiviert.")
+         )}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Status konnte nicht geändert werden.")}
+    end
+  end
+
   defp save_topic(socket, :new, topic_params) do
     case Quiz.create_topic(topic_params) do
       {:ok, _topic} ->

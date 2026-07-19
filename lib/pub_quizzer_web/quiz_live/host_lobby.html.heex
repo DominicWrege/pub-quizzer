@@ -172,7 +172,7 @@
           </button>
         <% else %>
           <button
-            phx-click="ask_reveal_round"
+            phx-click="reveal_round"
             class="btn btn-primary btn-lg text-xl"
             disabled={!all_answered}
           >
@@ -263,6 +263,25 @@
             </button>
           </div>
         <% else %>
+          <% winner =
+            Enum.find(@engine_state.teams, fn t ->
+              t.id == @engine_state.current_winner_team_id
+            end) %>
+          <div class="mb-6">
+            <%= if winner do %>
+              <div class="alert alert-success text-2xl font-semibold justify-center">
+                <.icon name="hero-trophy" class="size-8 text-warning" />
+                <span><strong>{winner.name}</strong>
+                gewinnt Runde {(@engine_state.round_number || 0) + 1}</span>
+              </div>
+            <% else %>
+              <div class="alert alert-info text-xl justify-center">
+                <.icon name="hero-hand-raised" class="size-6" />
+                <span>Remis! Kein eindeutiger Gewinner.</span>
+              </div>
+            <% end %>
+          </div>
+
           <div class="mb-6 flex flex-wrap items-center justify-center gap-3">
             <button phx-click="show_standings" class="btn btn-lg text-xl px-12 py-4 btn-soft">
               <.icon name="hero-clipboard" class="size-7" /> Team-Ergebnisse anzeigen
@@ -282,59 +301,59 @@
         <h2 class="text-4xl font-bold mt-4">Quiz beendet!</h2>
       </div>
 
-      <%!-- Winner --%>
-      <%= if @standings != [] do %>
-        <% [first | _rest] = @standings %>
-        <% {_, winner_name, winner_score} = first %>
-        <div class="alert alert-success mb-4 text-2xl">
-          <.icon name="hero-star" class="size-8" />
-          <span><strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!</span>
-        </div>
+      <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
+        <%!-- Winner --%>
+        <%= if @standings != [] do %>
+          <% [first | _rest] = @standings %>
+          <% {_, winner_name, winner_score} = first %>
+          <div class="alert alert-success mb-4 text-2xl">
+            <.icon name="hero-star" class="size-8" />
+            <span><strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!</span>
+          </div>
 
-        <div class="space-y-4">
-          <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-            <.podium_row
-              id={"final-#{id}"}
-              rank={rank}
-              name={name}
-              score={score}
-            />
-          <% end %>
+          <div class="space-y-4">
+            <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
+              <.podium_row
+                id={"final-#{id}"}
+                rank={rank}
+                name={name}
+                score={score}
+              />
+            <% end %>
+          </div>
+        <% else %>
+          <div class="alert alert-warning text-xl">
+            <.icon name="hero-exclamation-triangle" class="size-6" />
+            <span>Keine Teams vorhanden.</span>
+          </div>
+        <% end %>
+
+        <div class="mt-6 flex justify-between">
+          <.link
+            navigate={~p"/admin/events"}
+            class="btn btn-lg btn-soft"
+          >
+            <.icon name="hero-chevron-left" class="size-6" /> Zurück zum Quiz
+          </.link>
+          <.link
+            navigate={~p"/admin/events/#{@event.id}/results"}
+            class="btn btn-lg btn-primary"
+          >
+            <.icon name="hero-clipboard" class="size-6" /> Antworten ansehen
+          </.link>
         </div>
       <% else %>
-        <div class="alert alert-warning text-xl">
-          <.icon name="hero-exclamation-triangle" class="size-6" />
-          <span>Keine Teams vorhanden.</span>
+        <div class="text-center mt-8">
+          <button
+            phx-click="reveal_final_results"
+            class="btn btn-primary btn-lg text-2xl px-12 py-6"
+          >
+            <.icon name="hero-trophy" class="size-8" /> Ergebnisse anzeigen
+          </button>
         </div>
       <% end %>
-
-      <div class="mt-6 flex justify-between">
-        <.link
-          navigate={~p"/admin/events"}
-          class="btn btn-lg btn-soft"
-        >
-          <.icon name="hero-chevron-left" class="size-6" /> Zurück zum Quiz
-        </.link>
-        <.link
-          navigate={~p"/admin/events/#{@event.id}/results"}
-          class="btn btn-lg btn-primary"
-        >
-          <.icon name="hero-clipboard" class="size-6" /> Antworten ansehen
-        </.link>
-      </div>
     <% end %>
   </div>
-
-  <.confirm_modal
-    id="reveal-round-modal"
-    show={@confirm_action == :reveal_round}
-    title="Runde auflösen?"
-    message="Rundenergebnisse jetzt anzeigen?"
-    confirm_label="Auflösen"
-    confirm_event="confirm_reveal_round"
-    confirm_class="btn-warning"
-    cancel_event="cancel_confirm"
-  />
 
   <.confirm_modal
     id="finish-quiz-modal"

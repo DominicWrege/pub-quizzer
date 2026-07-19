@@ -312,6 +312,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
           <%= cond do %>
             <% @event.status in ["topic_selection", "question", "round_reveal"] -> %>
               <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator</.link>
+              <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-soft">Live-Ergebnisse</.link>
             <% @event.status == "lobby" -> %>
               <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm btn-soft">Verwalten</.link>
             <% true -> %>
