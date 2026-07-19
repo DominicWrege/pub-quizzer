@@ -176,6 +176,7 @@
                   id={"question_options_#{i}"}
                   data-option-text
                   phx-hook="AutoResize"
+                  onclick="event.stopPropagation()"
                   class="flex-1 bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none text-lg leading-relaxed placeholder:text-base-content/30 focus:outline-none px-2 py-1.5 min-h-[3.75rem] whitespace-pre-wrap"
                   placeholder={"Option #{String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(i))}"}
                   rows="2"
