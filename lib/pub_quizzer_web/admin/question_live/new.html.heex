@@ -179,13 +179,13 @@
             >
               <%= cond do %>
                 <% preview = @option_image_previews[i] -> %>
-                  <div class="relative inline-block pt-2">
+                  <div class="relative inline-block pt-4">
                     <img src={preview} class="h-40 rounded border border-base-300" />
                     <button
                       type="button"
                       phx-click="cancel_option_upload"
                       phx-value-index={i}
-                      class="btn btn-xs btn-circle absolute -top-2 -right-2"
+                      class="btn btn-xs btn-circle absolute top-2 -right-2"
                     >×</button>
                   </div>
                 <% true -> %>
@@ -204,7 +204,7 @@
       </div>
     </div>
 
-    <%= if @form[:options].errors != [] or @form[:prompt].errors != [] do %>
+    <%= if @form_submitted and (@form[:options].errors != [] or @form[:prompt].errors != []) do %>
       <div class="alert alert-error py-2 px-3 text-sm">
         <.icon name="hero-exclamation-circle" class="size-4" />
         <span>

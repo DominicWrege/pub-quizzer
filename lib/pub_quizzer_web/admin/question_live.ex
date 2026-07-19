@@ -66,6 +66,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:topic, topic)
     |> assign(:page_title, "Neue Frage")
     |> assign(:form, to_form(changeset))
+    |> assign(:form_submitted, false)
     |> assign(:image_preview_url, nil)
     |> assign(:option_image_previews, %{})
     |> assign_option_uploads()
@@ -82,6 +83,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:question, question)
     |> assign(:page_title, "Frage bearbeiten")
     |> assign(:form, to_form(changeset))
+    |> assign(:form_submitted, false)
     |> assign(:image_preview_url, nil)
     |> assign(:option_image_previews, %{})
     |> assign(:versions, compute_version_diffs(versions))
@@ -420,7 +422,10 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
          |> push_navigate(to: ~p"/admin/topics/#{topic_id}/questions")}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, :form, to_form(changeset, action: action))}
+        {:noreply,
+         socket
+         |> assign(:form_submitted, true)
+         |> assign(:form, to_form(changeset, action: action))}
     end
   end
 end
