@@ -39,7 +39,11 @@ let OptionImagePreview = {
     // Stop clicks on the image zone from bubbling to the parent option card's
     // phx-click="select_correct" handler — clicking the photo icon should
     // only open the file dialog, not change the correct answer.
-    this.el.addEventListener("click", (e) => e.stopPropagation())
+    // Only stop on the label/trigger, not on child buttons so phx-click works.
+    this.el.addEventListener("click", (e) => {
+      if (e.target.closest("button")) return
+      e.stopPropagation()
+    })
 
     this.el.addEventListener("change", (e) => {
       if (e.target.type !== "file") return
