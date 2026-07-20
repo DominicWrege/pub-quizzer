@@ -22,7 +22,7 @@ defmodule PubQuizzer.Accounts.AuthEmail do
 
   defp from_email do
     email = Application.get_env(:pub_quizzer, :mailer, [])[:from_email]
-      {"Quiz for a better life", email}
+    {"Quiz for a better life", email}
   end
 
   defp rendered_html(name, url) do

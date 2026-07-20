@@ -40,7 +40,6 @@ defmodule PubQuizzerWeb.Router do
 
     # Public quiz live session (team lobby only)
     live_session :team_quiz do
-      live "/join", QuizLive.Join, :index
       live "/quiz/:code/lobby", QuizLive.TeamLobby, :index
     end
   end

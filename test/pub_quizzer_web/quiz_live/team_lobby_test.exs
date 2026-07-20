@@ -303,7 +303,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       assert {:error, {:live_redirect, %{to: to}}} =
                live(conn, ~p"/quiz/#{event.code}/lobby")
 
-      assert to == "/join"
+      assert to == "/"
     end
   end
 end

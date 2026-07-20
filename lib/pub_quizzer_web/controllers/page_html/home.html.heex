@@ -1,4 +1,9 @@
-<Layouts.app flash={@flash} current_scope={@current_scope} max_width="max-w-full" main_class="px-4 sm:px-6 lg:px-8">
+<Layouts.app
+  flash={@flash}
+  current_scope={@current_scope}
+  max_width="max-w-full"
+  main_class="px-4 sm:px-6 lg:px-8"
+>
   <div class="flex items-start sm:items-center justify-center min-h-[calc(100vh-4rem)] pt-32 sm:pt-0">
     <div class="text-center max-w-sm">
       <.icon name="hero-trophy" class="size-[5rem] mx-auto text-warning" />
@@ -7,24 +12,20 @@
         Gib den Code ein, der vom Moderator angezeigt wird.
       </p>
 
-      <form action="/quiz/join" method="post" class="join gap-2 mt-2">
+      <form action="/quiz/join" method="post">
         <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
-        <div class="join">
-          <input
-            type="text"
-            name="code"
-            id="home-quiz-code"
-            class="input input-bordered input-lg font-mono text-center tracking-widest join-item"
-            placeholder="0000"
-            maxlength="4"
-            pattern="[0-9]{4}"
-            inputmode="numeric"
-            required
-          />
-          <button type="submit" class="btn btn-primary btn-lg join-item">
-            Beitreten
-          </button>
-        </div>
+        <.input
+          name="code"
+          id="home-quiz-code"
+          type="text"
+          placeholder="z.B. 4827"
+          maxlength="4"
+          pattern="[0-9]{4}"
+          inputmode="numeric"
+          value=""
+          required
+        />
+        <button type="submit" class="btn btn-primary btn-block mt-4">Beitreten</button>
       </form>
     </div>
   </div>

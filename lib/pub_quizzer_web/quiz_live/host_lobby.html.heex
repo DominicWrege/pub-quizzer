@@ -29,7 +29,10 @@
               class="btn btn-sm btn-soft btn-square"
               title="Kleine Schrift"
             >A−</button>
-            <span id="qfz-label" class="text-xs w-10 text-center tabular-nums text-base-content/70">100%</span>
+            <span
+              id="qfz-label"
+              class="text-xs w-10 text-center tabular-nums text-base-content/70"
+            >100%</span>
             <button
               onclick="var s=parseInt(localStorage.getItem('qfz')||'0')+1;s=Math.max(-2,Math.min(3,s));localStorage.setItem('qfz',s);document.body.dataset.quizFontSize=s;document.getElementById('qfz-label').textContent=['80%','90%','100%','125%','150%','200%'][s+2]"
               class="btn btn-sm btn-soft btn-square"

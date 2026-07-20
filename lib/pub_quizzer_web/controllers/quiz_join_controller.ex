@@ -21,13 +21,13 @@ defmodule PubQuizzerWeb.QuizJoinController do
       nil ->
         conn
         |> put_flash(:error, "Kein Quiz mit diesem Code gefunden.")
-        |> redirect(to: "/join")
+        |> redirect(to: "/")
 
       event ->
         if event.status != "lobby" do
           conn
           |> put_flash(:error, "Dieses Quiz hat bereits begonnen.")
-          |> redirect(to: "/join")
+          |> redirect(to: "/")
         else
           maybe_reclaim_or_claim(conn, event)
         end
@@ -53,7 +53,7 @@ defmodule PubQuizzerWeb.QuizJoinController do
         {:error, :full} ->
           conn
           |> put_flash(:error, "Sorry, dieses Quiz ist voll.")
-          |> redirect(to: "/join")
+          |> redirect(to: "/")
       end
     end
   end

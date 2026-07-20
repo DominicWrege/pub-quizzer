@@ -121,9 +121,11 @@ defmodule PubQuizzerWeb.Layouts do
         <%= unless @hide_nav_actions do %>
           <div class="flex-none hidden sm:flex">
             <ul class="flex px-1 space-x-4 items-center">
-              <li>
-                <.link navigate={~p"/join"} class="btn btn-sm btn-soft">Quiz beitreten</.link>
-              </li>
+              <%= unless @current_scope && @current_scope[:user] do %>
+                <li>
+                  <.link navigate={~p"/"} class="btn btn-sm btn-soft">Quiz beitreten</.link>
+                </li>
+              <% end %>
               <%= if @current_scope && @current_scope[:user] do %>
                 <li>
                   <.link navigate={~p"/admin/events"} class="btn btn-primary btn-sm">
@@ -142,9 +144,11 @@ defmodule PubQuizzerWeb.Layouts do
                 tabindex="0"
                 class="dropdown-content menu bg-base-200 rounded-box w-52 shadow-lg z-50 mt-2"
               >
-                <li>
-                  <.link navigate={~p"/join"} class="font-semibold">Quiz beitreten</.link>
-                </li>
+                <%= unless @current_scope && @current_scope[:user] do %>
+                  <li>
+                    <.link navigate={~p"/"} class="font-semibold">Quiz beitreten</.link>
+                  </li>
+                <% end %>
                 <%= if @current_scope && @current_scope[:user] do %>
                   <li>
                     <.link navigate={~p"/admin/events"}>Verwaltung &rarr;</.link>

@@ -52,14 +52,14 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
                :error,
                "Quiz-Engine konnte nicht geladen werden. Bitte später erneut versuchen."
              )
-             |> push_navigate(to: ~p"/join")}
+             |> push_navigate(to: ~p"/")}
         end
 
       {:error, reason} ->
         {:ok,
          socket
          |> put_flash(:error, reason)
-         |> push_navigate(to: ~p"/join")}
+         |> push_navigate(to: ~p"/")}
     end
   end
 
@@ -112,7 +112,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
       {:noreply,
        socket
        |> put_flash(:info, "Du wurdest vom Moderator aus dem Team entfernt.")
-       |> push_navigate(to: ~p"/join")}
+       |> push_navigate(to: ~p"/")}
     else
       {:noreply, socket}
     end

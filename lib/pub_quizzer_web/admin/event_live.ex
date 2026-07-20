@@ -48,6 +48,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     base = URI.parse(url) |> then(&"#{&1.scheme}://#{&1.host}:#{&1.port}")
     join_url = base <> ~p"/quiz/join/#{event.code}"
     qr_svg = EQRCode.encode(join_url) |> EQRCode.svg(color: "#1e40af", background: "#ffffff")
+
     qr_svg_large =
       join_url
       |> EQRCode.encode()

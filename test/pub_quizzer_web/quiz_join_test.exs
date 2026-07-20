@@ -16,7 +16,7 @@ defmodule PubQuizzerWeb.QuizJoinTest do
 
     test "with invalid code redirects back with error", %{conn: conn} do
       conn = post(conn, "/quiz/join", %{"code" => "9999"})
-      assert redirected_to(conn) == "/join"
+      assert redirected_to(conn) == "/"
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Kein Quiz mit diesem Code gefunden"
     end
 
@@ -25,7 +25,7 @@ defmodule PubQuizzerWeb.QuizJoinTest do
       {:ok, _} = Quiz.start_event(event)
 
       conn = post(conn, "/quiz/join", %{"code" => event.code})
-      assert redirected_to(conn) == "/join"
+      assert redirected_to(conn) == "/"
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "bereits begonnen"
     end
 
@@ -34,7 +34,7 @@ defmodule PubQuizzerWeb.QuizJoinTest do
       {:ok, _} = Quiz.claim_next_team_slot(event)
 
       conn = post(conn, "/quiz/join", %{"code" => event.code})
-      assert redirected_to(conn) == "/join"
+      assert redirected_to(conn) == "/"
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "voll"
     end
 
@@ -51,11 +51,4 @@ defmodule PubQuizzerWeb.QuizJoinTest do
     end
   end
 
-  describe "GET /join" do
-    test "renders the join form", %{conn: conn} do
-      conn = get(conn, "/join")
-      assert html_response(conn, 200) =~ "Quiz beitreten"
-      assert html_response(conn, 200) =~ "join-form"
-    end
-  end
 end
