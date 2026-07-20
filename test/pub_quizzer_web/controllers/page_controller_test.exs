@@ -3,6 +3,6 @@ defmodule PubQuizzerWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Quiz for a better life"
+    assert html_response(conn, 200) =~ "Beitreten"
   end
 end
