@@ -124,11 +124,13 @@ defmodule PubQuizzerWeb.Layouts do
               <li>
                 <.link navigate={~p"/join"} class="btn btn-sm btn-soft">Quiz beitreten</.link>
               </li>
-              <li>
-                <.link navigate={~p"/admin/login"} class="btn btn-primary btn-sm">
-                  Verwaltung <span aria-hidden="true">&rarr;</span>
-                </.link>
-              </li>
+              <%= if @current_scope && @current_scope[:user] do %>
+                <li>
+                  <.link navigate={~p"/admin/events"} class="btn btn-primary btn-sm">
+                    Verwaltung <span aria-hidden="true">&rarr;</span>
+                  </.link>
+                </li>
+              <% end %>
             </ul>
           </div>
           <div class="flex-none sm:hidden">
@@ -143,9 +145,11 @@ defmodule PubQuizzerWeb.Layouts do
                 <li>
                   <.link navigate={~p"/join"} class="font-semibold">Quiz beitreten</.link>
                 </li>
-                <li>
-                  <.link navigate={~p"/admin/login"}>Verwaltung &rarr;</.link>
-                </li>
+                <%= if @current_scope && @current_scope[:user] do %>
+                  <li>
+                    <.link navigate={~p"/admin/events"}>Verwaltung &rarr;</.link>
+                  </li>
+                <% end %>
               </ul>
             </div>
           </div>
