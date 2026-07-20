@@ -406,7 +406,7 @@ defmodule PubQuizzerWeb.CoreComponents do
         >
           <tr
             :for={row <- @rows}
-            class="bg-base-200 hover:bg-base-300 transition-colors duration-150"
+            class="bg-base-200"
             id={@row_id && @row_id.(row)}
           >
             <td

@@ -385,6 +385,23 @@ defmodule PubQuizzer.Quiz do
     team != nil and team.quiz_event_id == event_id
   end
 
+  @doc """
+  Unclaims a team slot: clears claimed_at and resets the name.
+  The slot becomes available for a new team to claim.
+  """
+  def unclaim_team(team_id) do
+    team = get_team!(team_id)
+    default_name = Names.generate(existing_team_names(team.quiz_event_id))
+
+    result =
+      team
+      |> Team.changeset(%{claimed_at: nil, name: default_name})
+      |> Repo.update()
+
+    broadcast_team_update(team.quiz_event_id)
+    result
+  end
+
   defp existing_team_names(event_id) do
     list_teams_for_event(event_id)
     |> Enum.map(& &1.name)

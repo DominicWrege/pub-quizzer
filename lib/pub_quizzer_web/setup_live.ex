@@ -71,7 +71,7 @@ defmodule PubQuizzerWeb.SetupLive do
             <.icon name="hero-wrench-screwdriver" class="size-[4rem] mx-auto text-primary" />
             <h1 class="text-3xl font-bold mt-4">Ersteinrichtung</h1>
             <p class="py-4 text-base-content/70">
-              Erstelle das erste Superadmin-Konto für Kneipenquiz.
+              Erstelle das erste Superadmin-Konto für Quiz for a better life.
             </p>
             <.form for={@form} id="setup-form" phx-submit="save">
               <.input

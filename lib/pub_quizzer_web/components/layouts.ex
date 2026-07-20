@@ -54,7 +54,7 @@ defmodule PubQuizzerWeb.Layouts do
         <div class="flex items-center justify-between mb-1.5">
           <a href="/" class="flex items-center gap-2">
             <img src={~p"/images/logo.svg"} width="28" />
-            <span class="text-sm sm:text-xl font-semibold">Kneipenquiz</span>
+            <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
           </a>
           <div class="flex-none flex items-center gap-4">
             <details class="dropdown dropdown-end">
@@ -115,7 +115,7 @@ defmodule PubQuizzerWeb.Layouts do
         <div class="flex-1">
           <a href="/" class="flex-1 flex w-fit items-center gap-2">
             <img src={~p"/images/logo.svg"} width="36" />
-            <span class="text-sm sm:text-xl font-semibold">Kneipenquiz</span>
+            <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
           </a>
         </div>
         <%= unless @hide_nav_actions do %>

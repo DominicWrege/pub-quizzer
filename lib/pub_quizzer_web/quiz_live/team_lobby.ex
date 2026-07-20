@@ -107,6 +107,17 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
     {:noreply, socket}
   end
 
+  def handle_info({:kick_team, team_id}, socket) do
+    if team_id == socket.assigns.team.id do
+      {:noreply,
+       socket
+       |> put_flash(:info, "Du wurdest vom Moderator aus dem Team entfernt.")
+       |> push_navigate(to: ~p"/join")}
+    else
+      {:noreply, socket}
+    end
+  end
+
   def handle_info({:team_update, _event_id}, socket) do
     {:noreply, socket}
   end

@@ -6,37 +6,49 @@
 >
   <div class="border-b border-base-300 host-header">
     <.header>
+      <:back>
+        <%= if @engine_state.status == :finished do %>
+          <.link
+            navigate={~p"/admin/events"}
+            class="btn btn-sm btn-soft"
+          >
+            <.icon name="hero-chevron-left" class="size-4" /> Zurück
+          </.link>
+        <% end %>
+      </:back>
       Moderatoren-Konsole
       <:subtitle>
         Quiz-Code: <span class="font-mono font-bold">{@event.code}</span>
         · Runde {(@engine_state.round_number || 0) + 1}
       </:subtitle>
       <:actions>
-        <div class="flex items-center gap-1">
+        <%= if @engine_state.status != :finished do %>
+          <div class="flex items-center gap-1">
+            <button
+              onclick="var s=parseInt(localStorage.getItem('qfz')||'0')-1;s=Math.max(-2,Math.min(3,s));localStorage.setItem('qfz',s);document.body.dataset.quizFontSize=s;document.getElementById('qfz-label').textContent=['80%','90%','100%','125%','150%','200%'][s+2]"
+              class="btn btn-sm btn-soft btn-square"
+              title="Kleine Schrift"
+            >A−</button>
+            <span id="qfz-label" class="text-xs w-10 text-center tabular-nums text-base-content/70">100%</span>
+            <button
+              onclick="var s=parseInt(localStorage.getItem('qfz')||'0')+1;s=Math.max(-2,Math.min(3,s));localStorage.setItem('qfz',s);document.body.dataset.quizFontSize=s;document.getElementById('qfz-label').textContent=['80%','90%','100%','125%','150%','200%'][s+2]"
+              class="btn btn-sm btn-soft btn-square"
+              title="Große Schrift"
+            >A+</button>
+          </div>
           <button
-            onclick="var s=parseInt(localStorage.getItem('qfz')||'0')-1;s=Math.max(-2,Math.min(3,s));localStorage.setItem('qfz',s);document.body.dataset.quizFontSize=s;document.getElementById('qfz-label').textContent=['80%','90%','100%','125%','150%','200%'][s+2]"
-            class="btn btn-sm btn-soft btn-square"
-            title="Kleine Schrift"
-          >A−</button>
-          <span id="qfz-label" class="text-xs w-10 text-center tabular-nums text-base-content/70">100%</span>
+            onclick="var b=document.body,c=b.classList.toggle('presentation-mode');localStorage.setItem('pm',c)"
+            class="btn btn-sm btn-primary"
+          >
+            Präsentationsmodus <kbd class="kbd kbd-xs">P</kbd>
+          </button>
           <button
-            onclick="var s=parseInt(localStorage.getItem('qfz')||'0')+1;s=Math.max(-2,Math.min(3,s));localStorage.setItem('qfz',s);document.body.dataset.quizFontSize=s;document.getElementById('qfz-label').textContent=['80%','90%','100%','125%','150%','200%'][s+2]"
-            class="btn btn-sm btn-soft btn-square"
-            title="Große Schrift"
-          >A+</button>
-        </div>
-        <button
-          onclick="var b=document.body,c=b.classList.toggle('presentation-mode');localStorage.setItem('pm',c)"
-          class="btn btn-sm btn-primary"
-        >
-          Präsentationsmodus <kbd class="kbd kbd-xs">P</kbd>
-        </button>
-        <button
-          phx-click="ask_finish_quiz"
-          class="btn btn-sm btn-soft"
-        >
-          <.icon name="hero-flag" class="size-4" /> Quiz beenden
-        </button>
+            phx-click="ask_finish_quiz"
+            class="btn btn-sm btn-soft"
+          >
+            <.icon name="hero-flag" class="size-4" /> Quiz beenden
+          </button>
+        <% end %>
       </:actions>
     </.header>
   </div>
@@ -296,9 +308,9 @@
 
     <%!-- Finished phase --%>
     <%= if @engine_state.status == :finished do %>
-      <div class="text-center mb-6">
+      <div class="text-center mt-28 mb-6">
         <.icon name="hero-trophy" class="size-[6rem] mx-auto text-warning" />
-        <h2 class="text-4xl font-bold mt-4">Quiz beendet!</h2>
+        <h2 class="text-4xl font-bold mt-2">Quiz beendet!</h2>
       </div>
 
       <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
@@ -348,7 +360,7 @@
             phx-click="reveal_final_results"
             class="btn btn-primary btn-lg text-2xl px-12 py-6"
           >
-            <.icon name="hero-trophy" class="size-8" /> Ergebnisse anzeigen
+            Ergebnisse anzeigen
           </button>
         </div>
       <% end %>

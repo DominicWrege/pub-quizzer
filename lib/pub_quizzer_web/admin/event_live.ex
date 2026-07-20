@@ -48,6 +48,10 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     base = URI.parse(url) |> then(&"#{&1.scheme}://#{&1.host}:#{&1.port}")
     join_url = base <> ~p"/quiz/join/#{event.code}"
     qr_svg = EQRCode.encode(join_url) |> EQRCode.svg(color: "#1e40af", background: "#ffffff")
+    qr_svg_large =
+      join_url
+      |> EQRCode.encode()
+      |> EQRCode.svg(color: "#1e40af", background: "#ffffff", width: 700)
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
@@ -58,8 +62,10 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     |> assign(:event, event)
     |> assign(:join_url, join_url)
     |> assign(:qr_svg, qr_svg)
+    |> assign(:qr_svg_large, qr_svg_large)
     |> assign(:connected_team_ids, MapSet.new())
     |> assign(:all_teams_connected, false)
+    |> assign(:show_large_qr, false)
   end
 
   @impl true
@@ -153,7 +159,46 @@ defmodule PubQuizzerWeb.Admin.EventLive do
      |> assign(:all_teams_connected, false)}
   end
 
+  def handle_event("kick_team", %{"team_id" => team_id}, socket) do
+    team_id = String.to_integer(team_id)
+    event_id = socket.assigns.event.id
+
+    # Broadcast kick to all team lobby clients for this team
+    Phoenix.PubSub.broadcast(
+      PubQuizzer.PubSub,
+      "quiz:event:#{event_id}",
+      {:kick_team, team_id}
+    )
+
+    # Unclaim the team slot so it becomes available again
+    Quiz.unclaim_team(team_id)
+
+    event = Quiz.get_event_with_teams!(event_id)
+
+    claimed_ids =
+      event.teams
+      |> Enum.filter(& &1.claimed_at)
+      |> Enum.map(& &1.id)
+      |> MapSet.new()
+
+    connected_ids = MapSet.intersection(socket.assigns.connected_team_ids, claimed_ids)
+
+    {:noreply,
+     socket
+     |> assign(:event, event)
+     |> assign(:connected_team_ids, connected_ids)
+     |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))}
+  end
+
   # Show page confirmations
+  def handle_event("show_large_qr", _params, socket) do
+    {:noreply, assign(socket, :show_large_qr, true)}
+  end
+
+  def handle_event("hide_large_qr", _params, socket) do
+    {:noreply, assign(socket, :show_large_qr, false)}
+  end
+
   def handle_event("ask_delete_event", _params, socket) do
     {:noreply, assign(socket, :confirm_action, :delete)}
   end

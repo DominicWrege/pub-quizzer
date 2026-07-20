@@ -17,14 +17,18 @@
     <% end %>
     <span class="badge badge-sm">{status_label(@event.status)}</span>
     <:actions>
-      <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-soft">
-        <%= if @event.status == "finished" do %>
-          <.icon name="hero-clipboard" class="size-4" /> Ergebnisse
-        <% else %>
-          <.icon name="hero-eye" class="size-4" /> Live-Ergebnisse
-        <% end %>
-      </.link>
-      <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator-Konsole</.link>
+      <%= if @event.status != "lobby" do %>
+        <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-soft">
+          <%= if @event.status == "finished" do %>
+            <.icon name="hero-clipboard" class="size-4" /> Ergebnisse
+          <% else %>
+            <.icon name="hero-play" class="size-4" /> Live
+          <% end %>
+        </.link>
+      <% end %>
+      <%= if @event.status != "lobby" do %>
+        <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator-Konsole</.link>
+      <% end %>
       <button
         phx-click="ask_delete_event"
         class="btn btn-sm btn-danger-soft"
@@ -54,14 +58,18 @@
           <div class="text-sm text-base-content/70 text-center">
             Code an Teams weitergeben
           </div>
+          <code class="text-sm text-base-content break-all max-w-xs">{String.replace(@join_url, ~r"^https?://", "")}</code>
         </div>
         <div class="flex flex-col items-center gap-2">
-          <div class="bg-white p-3 rounded-box shadow-md">
+          <button phx-click="show_large_qr" class="bg-white p-3 rounded-box shadow-md hover:shadow-lg transition-shadow cursor-pointer">
             {raw(@qr_svg)}
-          </div>
+          </button>
           <div class="text-sm text-base-content/70 text-center">
             QR-Code scannen zum Beitreten
           </div>
+          <button phx-click="show_large_qr" class="btn btn-xs btn-soft">
+            <.icon name="hero-plus" class="size-3" /> Vergrößern
+          </button>
         </div>
       </div>
     </div>
@@ -122,19 +130,58 @@
               <% end %>
             </:col>
             <:action :let={team}>
-              <button
-                phx-click="remove_team"
-                phx-value-team_id={team.id}
-                class="btn btn-sm btn-danger-soft"
-                title="Team entfernen"
-              >
-                <.icon name="hero-x-mark" class="size-4" />
-              </button>
+              <div class="flex gap-1">
+                <%= if team.claimed_at do %>
+                  <button
+                    phx-click="kick_team"
+                    phx-value-team_id={team.id}
+                    class="btn btn-sm btn-soft"
+                    title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
+                  >
+                    <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
+                  </button>
+                <% end %>
+                <button
+                  phx-click="remove_team"
+                  phx-value-team_id={team.id}
+                  class="btn btn-sm btn-danger-soft"
+                  title="Team entfernen"
+                >
+                  <.icon name="hero-x-mark" class="size-4" />
+                </button>
+              </div>
             </:action>
           </.table>
         </div>
       </div>
     </div>
+
+    <%= if @show_large_qr do %>
+      <dialog
+        id="large-qr-modal"
+        phx-hook="Dialog"
+        data-cancel-event="hide_large_qr"
+        class="m-auto rounded-box bg-white p-8 shadow-xl"
+        style="max-width: min(90vw, 800px);"
+      >
+        <div class="flex flex-col items-center gap-4">
+          <div class="bg-white p-4 rounded-box">
+            {raw(@qr_svg_large)}
+          </div>
+          <div class="text-center">
+            <div class="text-4xl font-mono font-bold tracking-widest text-base-content">
+              {@event.code}
+            </div>
+            <code class="text-sm text-base-content/70 break-all max-w-xs inline-block mt-2">
+              {String.replace(@join_url, ~r"^https?://", "")}
+            </code>
+          </div>
+          <button phx-click="hide_large_qr" class="btn btn-sm btn-soft mt-2">
+            Schließen
+          </button>
+        </div>
+      </dialog>
+    <% end %>
   <% else %>
     <div class="alert alert-info text-base py-4">
       <.icon name="hero-information-circle" class="size-6" />

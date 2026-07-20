@@ -14,7 +14,7 @@ defmodule PubQuizzer.Accounts.AuthEmail do
     new()
     |> to({user.name, user.email})
     |> from({name, email})
-    |> subject("Dein Kneipenquiz Login-Link")
+    |> subject("Dein Quiz for a better life Login-Link")
     |> html_body(rendered_html(user.name, url))
     |> text_body(plain_text(user.name, url))
     |> Mailer.deliver()
@@ -22,13 +22,13 @@ defmodule PubQuizzer.Accounts.AuthEmail do
 
   defp from_email do
     email = Application.get_env(:pub_quizzer, :mailer, [])[:from_email]
-    {"Kneipenquiz", email}
+      {"Quiz for a better life", email}
   end
 
   defp rendered_html(name, url) do
     """
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #333;">
-      <h2 style="font-size: 22px; margin-bottom: 8px;">🍺 Kneipenquiz</h2>
+      <h2 style="font-size: 22px; margin-bottom: 8px;">🏆 Quiz for a better life</h2>
       <p style="font-size: 16px; line-height: 1.5;">
         Moin #{name}! Schön, dass du da bist!<br>
         Klicke auf den Link, um dich anzumelden:
