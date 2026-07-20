@@ -2174,31 +2174,6 @@
       }
     }
   }
-  .join-item {
-    @layer daisyui.l1.l2.l3.l4 {
-      > * {
-        --join-ss: initial;
-        --join-se: initial;
-        --join-es: initial;
-        --join-ee: initial;
-      }
-    }
-    border-style: solid;
-    border-width: var(--border, 1px);
-    border-start-start-radius: var(--join-ss);
-    border-start-end-radius: var(--join-se);
-    border-end-start-radius: var(--join-es);
-    border-end-end-radius: var(--join-ee);
-    &:not(:first-child, :disabled, [disabled], .btn-disabled) {
-      margin-inline-start: calc(var(--border, 1px) * -1 * var(--join-h));
-      margin-block-start: calc(var(--border, 1px) * -1 * var(--join-v));
-    }
-    &:is(:disabled, [disabled], .btn-disabled) {
-      border-width: var(--border, 1px);
-      border-inline-end-width: calc(var(--border, 1px) * var(--join-v));
-      border-block-end-width: calc(var(--border, 1px) * var(--join-h));
-    }
-  }
   .mt-0\.5 {
     margin-top: calc(var(--spacing) * 0.5);
   }
@@ -2222,12 +2197,6 @@
   }
   .mt-8 {
     margin-top: calc(var(--spacing) * 8);
-  }
-  .mt-12 {
-    margin-top: calc(var(--spacing) * 12);
-  }
-  .mt-20 {
-    margin-top: calc(var(--spacing) * 20);
   }
   .mt-28 {
     margin-top: calc(var(--spacing) * 28);
@@ -2546,10 +2515,6 @@
   .size-\[4rem\] {
     width: 4rem;
     height: 4rem;
-  }
-  .size-\[5rem\] {
-    width: 5rem;
-    height: 5rem;
   }
   .size-\[6rem\] {
     width: 6rem;
@@ -3296,9 +3261,6 @@
   .py-12 {
     padding-block: calc(var(--spacing) * 12);
   }
-  .pt-0 {
-    padding-top: calc(var(--spacing) * 0);
-  }
   .pt-1 {
     padding-top: calc(var(--spacing) * 1);
   }
@@ -3311,14 +3273,8 @@
   .pt-10 {
     padding-top: calc(var(--spacing) * 10);
   }
-  .pt-20 {
-    padding-top: calc(var(--spacing) * 20);
-  }
   .pt-24 {
     padding-top: calc(var(--spacing) * 24);
-  }
-  .pt-32 {
-    padding-top: calc(var(--spacing) * 32);
   }
   .pb-0 {
     padding-bottom: calc(var(--spacing) * 0);
@@ -3714,17 +3670,6 @@
   .ease-out {
     --tw-ease: var(--ease-out);
     transition-timing-function: var(--ease-out);
-  }
-  .input-lg {
-    @layer daisyui.l1.l2 {
-      --in-size-mul: 12;
-      --font-size-min: 1.125rem;
-      --spin-my: -3;
-      .floating-label:has(&) {
-        --top-mul: 6;
-        --font-size: 1.125rem;
-      }
-    }
   }
   .input-sm {
     @layer daisyui.l1.l2 {

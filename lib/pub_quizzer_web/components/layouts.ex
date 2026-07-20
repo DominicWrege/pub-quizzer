@@ -127,6 +127,10 @@ defmodule PubQuizzerWeb.Layouts do
                     Verwaltung <span aria-hidden="true">&rarr;</span>
                   </.link>
                 </li>
+              <% else %>
+                <li>
+                  <.link navigate={~p"/admin/login"} class="btn btn-soft btn-sm">Moderator?</.link>
+                </li>
               <% end %>
             </ul>
           </div>
