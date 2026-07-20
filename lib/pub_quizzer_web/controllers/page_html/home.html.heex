@@ -6,26 +6,32 @@
 >
   <div class="flex items-start sm:items-center justify-center min-h-[calc(100vh-4rem)] pt-32 sm:pt-0">
     <div class="text-center max-w-sm">
-      <.icon name="hero-trophy" class="size-[5rem] mx-auto text-warning" />
-      <h1 class="text-4xl font-bold mt-4">Quiz for a better life</h1>
-      <p class="pt-4 pb-2 text-base-content/70">
+      <p class="pb-2 text-base-content/70">
         Gib den Code ein, der vom Moderator angezeigt wird.
       </p>
 
       <form action="/quiz/join" method="post">
         <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
-        <.input
+        <input
+          type="text"
           name="code"
           id="home-quiz-code"
-          type="text"
           placeholder="z.B. 4827"
           maxlength="4"
           pattern="[0-9]{4}"
           inputmode="numeric"
-          value=""
           required
+          class="w-full input font-mono text-center tracking-widest"
+          oninput="document.getElementById('home-join-btn').disabled=this.value.replace(/\D/g,'').length!==4"
         />
-        <button type="submit" class="btn btn-primary btn-block mt-4">Beitreten</button>
+        <button
+          type="submit"
+          class="btn btn-primary btn-block mt-4"
+          id="home-join-btn"
+          disabled
+        >
+          Beitreten
+        </button>
       </form>
     </div>
   </div>
