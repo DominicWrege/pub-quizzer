@@ -129,7 +129,7 @@ defmodule PubQuizzerWeb.Layouts do
                 </li>
               <% else %>
                 <li>
-                  <.link navigate={~p"/admin/login"} class="btn btn-soft btn-sm">Moderator?</.link>
+                  <.link navigate={~p"/admin/login"} class="btn btn-soft btn-sm">Moderator</.link>
                 </li>
               <% end %>
             </ul>

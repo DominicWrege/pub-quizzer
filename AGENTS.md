@@ -20,6 +20,7 @@ When you need to search docs for Elixir, Phoenix, Ecto, LiveView, or Tailwind, u
 
 ## Project guidelines
 
+- **NEVER commit or push without asking the user first** — always wait for explicit confirmation. This is a hard rule. Breaking it causes major frustration.
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
 - **Never** commit or push without asking the user first — always wait for explicit confirmation
