@@ -81,11 +81,11 @@ defmodule PubQuizzerWeb.CoreComponents do
         <div class="flex-1" />
         <button
           type="button"
-          class="btn btn-sm"
+          class="btn btn-sm btn-ghost px-1 text-white"
           aria-label="close"
           phx-click={JS.hide(to: "##{@id}")}
         >
-          <.icon name="hero-x-mark" class="size-5 opacity-40 group-hover:opacity-70" />
+          <.icon name="hero-x-mark" class="size-5" />
         </button>
       </div>
     </div>
