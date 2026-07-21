@@ -15,6 +15,7 @@ defmodule PubQuizzer.Application do
       {DNSCluster, query: Application.get_env(:pub_quizzer, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: PubQuizzer.PubSub},
       {Registry, keys: :unique, name: PubQuizzer.Quiz.EngineRegistry},
+      {Registry, keys: :unique, name: PubQuizzer.TeamPresence},
       {DynamicSupervisor, strategy: :one_for_one, name: PubQuizzer.Quiz.EngineSupervisor},
       PubQuizzerWeb.Endpoint
     ]

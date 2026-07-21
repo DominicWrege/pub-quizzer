@@ -33,6 +33,29 @@ defmodule PubQuizzer.Quiz.EngineState do
   @type t :: %__MODULE__{}
   @type command_result :: {:ok, t()} | {:error, atom()}
 
+  @doc """
+  Returns a copy of the state safe for team clients.
+
+  During the `:question` phase, teams see only A/B/C/D buttons — they never need
+  `correct_index`, the question `prompt`, or option `text`/`image`. Stripping
+  these prevents leaks via dev tools and shrinks the assigns.
+
+  During `:round_reveal` the host shows the answers, so the full question set
+  must be preserved.
+  """
+  def strip_for_team(%__MODULE__{status: :question} = state) do
+    slim_questions =
+      Enum.map(state.current_questions, fn q ->
+        # Preserve option count (shuffle relies on list length); drop text/image/correct_index.
+        blank_options = Enum.map(q.options, fn _ -> %{} end)
+        %{id: q.id, position: q.position, options: blank_options}
+      end)
+
+    %{state | current_questions: slim_questions}
+  end
+
+  def strip_for_team(%__MODULE__{} = state), do: state
+
   # --- Initialization ---
 
   def new(event, teams, topics, opts \\ []) do

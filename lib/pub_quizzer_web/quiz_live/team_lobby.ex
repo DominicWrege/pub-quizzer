@@ -16,6 +16,10 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
         if connected?(socket) do
           Phoenix.PubSub.subscribe(PubQuizzer.PubSub, Engine.topic(event.id))
 
+          # Track presence so disconnect debounce works on flaky 4G.
+          # Registry auto-removes entry when this LV process dies.
+          Registry.register(PubQuizzer.TeamPresence, team.id, nil)
+
           Phoenix.PubSub.broadcast(
             PubQuizzer.PubSub,
             "quiz:event:#{event.id}",
@@ -25,19 +29,19 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
 
         case Engine.get_state(event.id) do
           {:ok, state} ->
-            {shuffled_options, shuffle_map} = compute_shuffle(state, team)
+            team_state = EngineState.strip_for_team(state)
+            {shuffled_options, shuffle_map} = compute_shuffle(team_state, team)
 
             socket =
               socket
               |> assign(:event, event)
               |> assign(:team, team)
-              |> assign(:engine_state, state)
+              |> assign(:engine_state, team_state)
               |> assign(:page_title, "Quiz — #{code}")
-              |> assign(:standings, EngineState.standings_sorted(state))
-              |> assign(
-                :available_topics,
-                Quiz.filter_topics_with_questions(EngineState.available_topics(state))
-              )
+              |> assign(:standings, [])
+              |> assign(:available_topics, [])
+              |> assign_standings(state)
+              |> assign_available_topics(state)
               |> assign(:current_topic_name, EngineState.current_topic_name(state, state))
               |> assign(:shuffle_map, shuffle_map)
               |> assign(:shuffled_options, shuffled_options)
@@ -65,10 +69,11 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
 
   @impl true
   def handle_info({:engine_state, state}, socket) do
-    current_q = EngineState.current_question(state)
+    team_state = EngineState.strip_for_team(state)
+    current_q = EngineState.current_question(team_state)
     prev_q = EngineState.current_question(socket.assigns.engine_state)
 
-    {shuffled_options, shuffle_map} = compute_shuffle(state, socket.assigns.team)
+    {shuffled_options, shuffle_map} = compute_shuffle(team_state, socket.assigns.team)
 
     selected_index =
       cond do
@@ -87,12 +92,9 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
 
     {:noreply,
      socket
-     |> assign(:engine_state, state)
-     |> assign(:standings, EngineState.standings_sorted(state))
-     |> assign(
-       :available_topics,
-       Quiz.filter_topics_with_questions(EngineState.available_topics(state))
-     )
+     |> assign(:engine_state, team_state)
+     |> assign_standings(state)
+     |> assign_available_topics(state)
      |> assign(:current_topic_name, EngineState.current_topic_name(state, state))
      |> assign(:shuffle_map, shuffle_map)
      |> assign(:shuffled_options, shuffled_options)
@@ -157,11 +159,26 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
     event_id = socket.assigns.event.id
     team_id = socket.assigns.team.id
 
-    Phoenix.PubSub.broadcast(
-      PubQuizzer.PubSub,
-      "quiz:event:#{event_id}",
-      {:team_disconnected, team_id}
-    )
+    # Debounce the disconnect broadcast: on flaky 4G the WS drops briefly and
+    # the LV remounts within seconds. Wait 3s, then check presence — if the
+    # team is still gone, broadcast; otherwise they reconnected, do nothing.
+    spawn(fn ->
+      Process.sleep(3_000)
+
+      case Registry.lookup(PubQuizzer.TeamPresence, team_id) do
+        [] ->
+          Phoenix.PubSub.broadcast(
+            PubQuizzer.PubSub,
+            "quiz:event:#{event_id}",
+            {:team_disconnected, team_id}
+          )
+
+        _ ->
+          :ok
+      end
+    end)
+
+    :ok
   end
 
   defp load_event_and_team(code, team_id) do
@@ -191,6 +208,28 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
       )
     else
       {[], %{}}
+    end
+  end
+
+  # Only compute standings when teams need them (reveal phases).
+  defp assign_standings(socket, state) do
+    if state.status in [:round_reveal, :finished] do
+      assign(socket, :standings, EngineState.standings_sorted(state))
+    else
+      socket
+    end
+  end
+
+  # Only hit the DB for available topics when teams need them (topic selection).
+  defp assign_available_topics(socket, state) do
+    if state.status == :topic_selection do
+      assign(
+        socket,
+        :available_topics,
+        Quiz.filter_topics_with_questions(EngineState.available_topics(state))
+      )
+    else
+      socket
     end
   end
 end

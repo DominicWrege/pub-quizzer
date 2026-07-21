@@ -53,7 +53,6 @@ defmodule PubQuizzerWeb.Layouts do
       <header class="bg-base-200 border-b border-base-300 px-4 sm:px-6 pt-2 pb-0">
         <div class="flex items-center justify-between mb-1.5">
           <a href="/" class="flex items-center gap-2">
-            <img src={~p"/images/logo.svg"} width="28" />
             <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
           </a>
           <div class="flex-none flex items-center gap-4">
@@ -114,7 +113,6 @@ defmodule PubQuizzerWeb.Layouts do
       <header class="navbar px-4 sm:px-6 lg:px-8 border-b border-base-300">
         <div class="flex-1">
           <a href="/" class="flex-1 flex w-fit items-center gap-2">
-            <img src={~p"/images/logo.svg"} width="36" />
             <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
           </a>
         </div>

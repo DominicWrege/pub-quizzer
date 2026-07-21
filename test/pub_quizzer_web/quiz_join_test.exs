@@ -50,5 +50,4 @@ defmodule PubQuizzerWeb.QuizJoinTest do
       assert redirected_to(conn) == "/quiz/#{event.code}/lobby"
     end
   end
-
 end

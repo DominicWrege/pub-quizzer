@@ -36,7 +36,7 @@ defmodule PubQuizzerWeb.Endpoint do
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options], max_frame_size: 50_000_000],
+    websocket: [connect_info: [session: @session_options], max_frame_size: 1_000_000],
     longpoll: [connect_info: [session: @session_options]]
 
   # Serve at "/" the static files from "priv/static" directory.
@@ -49,6 +49,8 @@ defmodule PubQuizzerWeb.Endpoint do
     from: :pub_quizzer,
     gzip: not code_reloading?,
     only: PubQuizzerWeb.static_paths(),
+    cache_control_for_etags: "public, max-age=31536000, immutable",
+    cache_control_for_vsn_requests: "public, max-age=31536000, immutable",
     raise_on_missing_only: code_reloading?
 
   # Code reloading can be explicitly enabled under the

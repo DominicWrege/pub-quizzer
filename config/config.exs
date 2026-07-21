@@ -46,7 +46,7 @@ config :esbuild,
   version: "0.25.4",
   pub_quizzer: [
     args:
-      ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets/js --entry-names=app),
+      ~w(js/app.ts --bundle --minify --target=es2017 --outdir=../priv/static/assets/js --entry-names=app),
     cd: Path.expand("../assets", __DIR__),
     env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
   ]

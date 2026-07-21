@@ -10,7 +10,7 @@ defmodule PubQuizzerWeb.PageController do
         redirect(conn, to: "/admin/events")
 
       nil ->
-        render(conn, :home, current_scope: nil)
+        render(conn, :home, current_scope: nil, load_live_socket?: false)
     end
   end
 

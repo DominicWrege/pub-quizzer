@@ -148,13 +148,25 @@
                     <span class="font-mono font-bold shrink-0">{letter_for_index(idx)}.</span>
                     <span class="break-words flex-1">{option["text"]}</span>
                     <%= if opt_img = option["image"] do %>
-                      <img src={opt_img} alt="" class="h-20 w-20 object-cover rounded shrink-0" />
+                      <img
+                        src={thumbnail_url(opt_img)}
+                        srcset="{thumbnail_url(opt_img)} 480w, {opt_img} 1280w"
+                        sizes="80px"
+                        alt=""
+                        class="h-20 w-20 object-cover rounded shrink-0"
+                      />
                     <% end %>
                   </div>
                 <% end %>
               </div>
               <div class="flex items-start">
-                <img src={question.image} alt="Fragebild" class="rounded-lg max-h-72 w-auto" />
+                <img
+                  src={question.image}
+                  srcset="{thumbnail_url(question.image)} 480w, {question.image} 1280w"
+                  sizes="(max-width: 640px) 100vw, 288px"
+                  alt="Fragebild"
+                  class="rounded-lg max-h-72 w-auto"
+                />
               </div>
             </div>
           <% else %>
@@ -165,7 +177,13 @@
                   <span class="font-mono font-bold shrink-0">{letter_for_index(idx)}.</span>
                   <span class="break-words flex-1">{option["text"]}</span>
                   <%= if opt_img = option["image"] do %>
-                    <img src={opt_img} alt="" class="h-20 w-20 object-cover rounded shrink-0" />
+                    <img
+                      src={thumbnail_url(opt_img)}
+                      srcset="{thumbnail_url(opt_img)} 480w, {opt_img} 1280w"
+                      sizes="80px"
+                      alt=""
+                      class="h-20 w-20 object-cover rounded shrink-0"
+                    />
                   <% end %>
                 </div>
               <% end %>
@@ -216,7 +234,10 @@
                 <%= if question[:image] do %>
                   <img
                     src={question.image}
+                    srcset="{thumbnail_url(question.image)} 480w, {question.image} 1280w"
+                    sizes="(max-width: 640px) 100vw, 256px"
                     alt="Fragebild"
+                    loading="lazy"
                     class="rounded-lg max-h-64 mx-auto mb-2"
                   />
                 <% end %>
@@ -230,7 +251,14 @@
                       <span class="font-mono shrink-0">{letter_for_index(idx)}.</span>
                       <span class="break-words flex-1">{option["text"]}</span>
                       <%= if opt_img = option["image"] do %>
-                        <img src={opt_img} alt="" class="h-16 w-16 object-cover rounded shrink-0" />
+                        <img
+                          src={thumbnail_url(opt_img)}
+                          srcset="{thumbnail_url(opt_img)} 480w, {opt_img} 1280w"
+                          sizes="64px"
+                          alt=""
+                          loading="lazy"
+                          class="h-16 w-16 object-cover rounded shrink-0"
+                        />
                       <% end %>
                       <%= if idx == question.correct_index do %>
                         <.icon

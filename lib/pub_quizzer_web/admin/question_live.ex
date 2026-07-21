@@ -25,6 +25,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       |> assign(:pending_delete_id, nil)
       |> assign(:search, "")
       |> assign(:option_image_previews, %{})
+      |> assign(:show_preview, false)
       |> allow_upload(:image,
         accept: ~w(.jpg .jpeg .png .gif .webp),
         max_entries: 1,
@@ -64,11 +65,13 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
     socket
     |> assign(:topic, topic)
+    |> assign(:question, nil)
     |> assign(:page_title, "Neue Frage")
     |> assign(:form, to_form(changeset))
     |> assign(:form_submitted, false)
     |> assign(:image_preview_url, nil)
     |> assign(:option_image_previews, %{})
+    |> assign(:show_preview, false)
     |> assign_option_uploads()
   end
 
@@ -86,6 +89,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:form_submitted, false)
     |> assign(:image_preview_url, nil)
     |> assign(:option_image_previews, %{})
+    |> assign(:show_preview, false)
     |> assign(:versions, compute_version_diffs(versions))
     |> assign_option_uploads()
   end
@@ -110,6 +114,14 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
      socket
      |> assign(:confirm_action, :delete_question)
      |> assign(:pending_delete_id, String.to_integer(id))}
+  end
+
+  def handle_event("toggle_preview", _params, socket) do
+    {:noreply, assign(socket, :show_preview, !socket.assigns.show_preview)}
+  end
+
+  def handle_event("close_preview", _params, socket) do
+    {:noreply, assign(socket, :show_preview, false)}
   end
 
   def handle_event("confirm_delete", _params, socket) do
@@ -336,6 +348,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   defp store_compressed(tmp_path) do
     filename = "#{System.unique_integer([:positive, :monotonic])}.jpg"
     dest = Path.join(@upload_dir, filename)
+    thumb_dest = Path.join(@upload_dir, "thumb_#{filename}")
     File.mkdir_p!(@upload_dir)
 
     args = [
@@ -345,20 +358,47 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       "-vf",
       "scale=w=1280:h=1280:force_original_aspect_ratio=decrease",
       "-q:v",
-      "5",
+      "10",
       dest
+    ]
+
+    thumb_args = [
+      "-y",
+      "-i",
+      tmp_path,
+      "-vf",
+      "scale=w=480:h=480:force_original_aspect_ratio=decrease",
+      "-q:v",
+      "15",
+      thumb_dest
     ]
 
     case System.cmd("ffmpeg", args, stderr_to_stdout: true) do
       {_output, 0} ->
+        # Thumbnail is best-effort — not worth failing the upload if it can't be made.
+        case System.cmd("ffmpeg", thumb_args, stderr_to_stdout: true) do
+          {_thumb_output, 0} ->
+            :ok
+
+          {thumb_output, _} ->
+            require Logger
+            Logger.warning("thumbnail generation failed: #{thumb_output}")
+        end
+
         {:ok, "/uploads/#{filename}"}
 
       {output, _exit_code} ->
-        # Fallback: copy the original if ffmpeg fails
-        require Logger
-        Logger.warning("ffmpeg compression failed, using original: #{output}")
-        File.cp!(tmp_path, dest)
-        {:ok, "/uploads/#{filename}"}
+        # Reject large files rather than serving uncompressed originals
+        {:ok, size} = File.stat(tmp_path)
+
+        if size > 1_000_000 do
+          {:error, "image compression failed and original is too large: #{output}"}
+        else
+          require Logger
+          Logger.warning("ffmpeg compression failed, using original: #{output}")
+          File.cp!(tmp_path, dest)
+          {:ok, "/uploads/#{filename}"}
+        end
     end
   end
 

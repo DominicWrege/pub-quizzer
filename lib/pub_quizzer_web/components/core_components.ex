@@ -590,6 +590,15 @@ defmodule PubQuizzerWeb.CoreComponents do
 
       "photo" ->
         ~s(<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>)
+
+      "beer-mug" ->
+        ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M17 11h1a3 3 0 0 1 0 6h-1"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M13 12v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 7.5c-1 0-1.44.5-3 .5s-2-.5-3-.5-1.72.5-2.5.5a2.5 2.5 0 0 1 0-5c.78 0 1.57.5 2.5.5C9.44 3.5 10 3 11 3s1.56.5 3 .5c.78 0 1.5-.5 2.5-.5a2.5 2.5 0 0 1 0 5c-.78 0-1.5-.5-2.5-.5Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 8v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/>)
+
+      "question-mark-circle" ->
+        ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>)
+
+      "light-bulb" ->
+        ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.439a4.5 4.5 0 0 0 6.75-3.75V12a7.5 7.5 0 0 0-15 0v4.5a4.5 4.5 0 0 0 6.75 3.75M9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008H13.5V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>)
     end
   end
 
@@ -689,6 +698,18 @@ defmodule PubQuizzerWeb.CoreComponents do
   def letter_for_index(index) do
     Enum.at(~w(A B C D E F), index, "?")
   end
+
+  @doc """
+  Derives the thumbnail URL for a given upload path.
+
+  `/uploads/foo.jpg` → `/uploads/thumb_foo.jpg`. Returns `nil` for `nil`.
+  Used in `srcset` to serve smaller images to small displays.
+  """
+  def thumbnail_url(nil), do: nil
+
+  def thumbnail_url("/uploads/" <> rest), do: "/uploads/thumb_#{rest}"
+
+  def thumbnail_url(other), do: other
 
   attr :rank, :integer, required: true
   attr :id, :any, required: true
