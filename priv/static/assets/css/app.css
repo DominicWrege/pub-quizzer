@@ -278,6 +278,69 @@
       }
     }
   }
+  .modal {
+    @layer daisyui.l1.l2.l3 {
+      pointer-events: none;
+      visibility: hidden;
+      position: fixed;
+      inset: 0;
+      margin: 0;
+      display: grid;
+      height: 100%;
+      max-height: none;
+      width: 100%;
+      max-width: none;
+      align-items: center;
+      justify-items: center;
+      background-color: transparent;
+      padding: 0;
+      color: inherit;
+      transition: overlay 0.3s allow-discrete, visibility 0.3s allow-discrete, background-color 0.3s ease-out, opacity 0.1s ease-out;
+      overflow: clip;
+      overscroll-behavior: contain;
+      z-index: 999;
+      scrollbar-gutter: auto;
+      &::backdrop {
+        display: none;
+      }
+      &[popover] {
+        inset: 0;
+        margin: 0;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: inherit;
+        max-width: none;
+        max-height: none;
+        &::backdrop {
+          background-color: oklch(0% 0 0/ 0.4);
+          transition: background-color 0.3s ease-out;
+        }
+      }
+    }
+    @layer daisyui.l1.l2 {
+      &.modal-open, &[open], &:popover-open, &:target, .modal-toggle:checked + & {
+        pointer-events: auto;
+        visibility: visible;
+        opacity: 100%;
+        transition: visibility 0s allow-discrete, background-color 0.3s ease-out, opacity 0.1s ease-out;
+        background-color: oklch(0% 0 0/ 0.4);
+        .modal-box {
+          translate: 0 0;
+          scale: 1;
+          opacity: 1;
+        }
+        :root:has(&) {
+          --page-scroll-lock:  ;
+        }
+      }
+      @starting-style {
+        &.modal-open, &[open], &:popover-open, &:target, .modal-toggle:checked + & {
+          opacity: 0%;
+        }
+      }
+    }
+  }
   .menu {
     @layer daisyui.l1.l2.l3 {
       display: flex;
@@ -3598,9 +3661,6 @@
   .opacity-15 {
     opacity: 15%;
   }
-  .opacity-40 {
-    opacity: 40%;
-  }
   .opacity-60 {
     opacity: 60%;
   }
@@ -3833,13 +3893,6 @@
     &:is(:where(.group):hover *) {
       @media (hover: hover) {
         opacity: 30%;
-      }
-    }
-  }
-  .group-hover\:opacity-70 {
-    &:is(:where(.group):hover *) {
-      @media (hover: hover) {
-        opacity: 70%;
       }
     }
   }

@@ -150,7 +150,7 @@
                     <%= if opt_img = option["image"] do %>
                       <img
                         src={thumbnail_url(opt_img)}
-                        srcset="{thumbnail_url(opt_img)} 480w, {opt_img} 1280w"
+                        srcset={thumbnail_url(opt_img) <> " 480w, " <> opt_img <> " 1280w"}
                         sizes="80px"
                         alt=""
                         class="h-20 w-20 object-cover rounded shrink-0"
@@ -162,7 +162,7 @@
               <div class="flex items-start">
                 <img
                   src={question.image}
-                  srcset="{thumbnail_url(question.image)} 480w, {question.image} 1280w"
+                  srcset={thumbnail_url(question.image) <> " 480w, " <> question.image <> " 1280w"}
                   sizes="(max-width: 640px) 100vw, 288px"
                   alt="Fragebild"
                   class="rounded-lg max-h-72 w-auto"
@@ -179,7 +179,7 @@
                   <%= if opt_img = option["image"] do %>
                     <img
                       src={thumbnail_url(opt_img)}
-                      srcset="{thumbnail_url(opt_img)} 480w, {opt_img} 1280w"
+                      srcset={thumbnail_url(opt_img) <> " 480w, " <> opt_img <> " 1280w"}
                       sizes="80px"
                       alt=""
                       class="h-20 w-20 object-cover rounded shrink-0"
@@ -234,7 +234,7 @@
                 <%= if question[:image] do %>
                   <img
                     src={question.image}
-                    srcset="{thumbnail_url(question.image)} 480w, {question.image} 1280w"
+                    srcset={thumbnail_url(question.image) <> " 480w, " <> question.image <> " 1280w"}
                     sizes="(max-width: 640px) 100vw, 256px"
                     alt="Fragebild"
                     loading="lazy"
@@ -253,7 +253,7 @@
                       <%= if opt_img = option["image"] do %>
                         <img
                           src={thumbnail_url(opt_img)}
-                          srcset="{thumbnail_url(opt_img)} 480w, {opt_img} 1280w"
+                          srcset={thumbnail_url(opt_img) <> " 480w, " <> opt_img <> " 1280w"}
                           sizes="64px"
                           alt=""
                           loading="lazy"

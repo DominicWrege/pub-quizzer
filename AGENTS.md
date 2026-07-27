@@ -1,22 +1,37 @@
 This is a web application written using the Phoenix web framework.
 
-## Session: Host/Team lobby UI polish (Jul 12, 2026)
+## Session: E2E test suite — Playwright (Jul 27, 2026)
 
-### Changes
-- **Reveal contrast**: `bg-success/20` → `bg-success/30 border-2 border-success` on correct answer in round reveal for better visibility on beamer.
-- **Team lobby width**: `max-w-sm` → `max-w-md` for more breathing room on larger phones.
-- **Question image layout**: Switched from `flex` to `grid grid-cols-1 sm:grid-cols-2` so the prompt spans both columns (`sm:col-span-2`) with options left, image right. Prompt font reduced from `text-5xl` to `text-4xl`.
-- **Host question button alignment**: "Nächste Frage" / "Runde auflösen" button always right-aligned (`flex justify-end`). Removed redundant "Warte auf alle Teams" text (badge already shows count).
-- **Scroll on reveal answer**: `ScrollToBottom` hook now uses `requestAnimationFrame` + `this.el.scrollIntoView({ block: "end" })` instead of `window.scrollTo(body.scrollHeight)`.
-- **"Team-Ergebnisse anzeigen" button**: Centered (`flex justify-center`).
-- **"Nächste Runde" button**: Right-aligned (`flex justify-end`).
-- **"Runde auflösen" button color**: `btn-warning` → `btn-primary` (matches "Nächste Frage" style).
-- **Topic/category name**: Added `current_topic_name` assign to both `TeamLobby` and `HostLobby` (looked up from `state.available_topics` via `current_topic_id`). Displayed under the question counter in both views.
-- **Presentation mode key shortcut**: `P` key toggles presentation mode via `keydown` listener in `ScrollToBottom` hook (with cleanup on `destroyed`). `P` badge shown in button text.
-- **Warning button text color**: Changed `--color-warning-content` from `oklch(0.28 0.04 60)` (dark) to `oklch(0.98 0 0)` (white) in the daisyUI theme — all `btn-warning` get white text now.
-- **Back button position**: Always place back buttons on the **left** side. Use the `<:back>` slot (not `<:actions>`) in `<.header>` components. In flex containers, put the back button first with `justify-between` to push other actions right.
+### Changes (from previous sessions, retained)
+(all UI polish from Jul 12 session — see git log for details)
+
+### E2E test suite changes
+- **Auth backdoor**: Created `/dev/login-as/:email` route + `DevAuthController` for E2E — sets `user_id` session directly, no real emails sent.
+- **`handle_info({:engine_state, _})` crash**: Added catch-all clause in `event_live.ex` to prevent GenServer crash when teams join (was resetting `connected_team_ids`).
+- **Toast close button**: `btn btn-sm` → `btn-ghost px-1 text-white` for proper contrast on any background.
+- **`srcset` string interpolation bug**: Fixed 6 occurrences in `host_lobby.html.heex` where `{...}` in HEEx string attributes was literal text — now uses `<>` concatenation.
+- **`completeRound` helper** (`fixtures.ts`): Robust loop that answers all questions, advances, reveals, and shows standings. Handles the quiz transition delay.
+- **Flaky-test fixes**: All answer/reveal loops use `for(;;)` + `revealBtn.count()` + `revealNext.count()` with proper waiting instead of non-blocking `locator.count()` in while conditions.
+- **Existing tests fixed**: `e2e/smoke.spec.ts` (3 tests), `e2e/quiz-flow.spec.ts` — selector and timing issues resolved.
+- **New test files**: `e2e/multi-round.spec.ts` (2 tests), `e2e/edge-cases.spec.ts` (2 tests) — multi-round flow, final results from early finish, round reveal→standings→next topic, answer-change.
+- **Full suite**: 8 E2E tests all passing consistently in sequential (`workers: 1`) mode. Run with `npm run test:e2e`.
 
 When you need to search docs for Elixir, Phoenix, Ecto, LiveView, or Tailwind, use the `context7` MCP server.
+
+## Work State
+All 8 E2E tests pass consistently. `npm run test:e2e`.
+
+- `e2e/fixtures.ts`: `loginAsHost`, `createEvent`, `joinTeam`, `completeRound` (optional `showStandings` param, default true).
+- `e2e/smoke.spec.ts`: 3 tests — home page, invalid code flash, dev backdoor login.
+- `e2e/quiz-flow.spec.ts`: full round: teams answer → host advances → reveal → standings.
+- `e2e/multi-round.spec.ts`: 2 tests — two rounds with accumulated standings, early-finish final reveal.
+- `e2e/edge-cases.spec.ts`: 2 tests — round→standings→next topic flow, answer-change within same question.
+
+Key details:
+- `completeRound` uses `for(;;)` with `revealBtn.count()` / `revealNext.count()` (never non-blocking `locator.count()` in while-conditions).
+- `revealRound` sets `reveal_answer_index: 1` — only 4 clicks needed for 5 questions. After 4th, button disappears, `all_revealed` true.
+- Team pages use isolated browser contexts (separate session cookies each).
+- Host page uses the typed `test` fixture with `reuseExistingServer: true`.
 
 ## Project guidelines
 

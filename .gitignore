@@ -35,3 +35,10 @@ node_modules
 
 # direnv (contains secrets)
 .envrc
+
+# Playwright E2E (root-level node project)
+/node_modules/
+/playwright-report/
+/test-results/
+/playwright/.cache/
+/blob-report/

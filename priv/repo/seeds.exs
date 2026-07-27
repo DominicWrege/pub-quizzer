@@ -1,5 +1,23 @@
 alias PubQuizzer.Repo
+alias PubQuizzer.Accounts
 alias PubQuizzer.Quiz.{Topic, Question}
+
+# E2E test user for Playwright (see e2e/ and playwright.config.ts).
+# Idempotent: only inserts if this email doesn't already exist.
+case Accounts.get_user_by_email("e2e@localhost.test") do
+  nil ->
+    Accounts.create_user!(%{
+      email: "e2e@localhost.test",
+      name: "E2E Host",
+      role: "superadmin",
+      active: true
+    })
+
+    IO.puts("Created E2E test user (e2e@localhost.test).")
+
+  _user ->
+    :ok
+end
 
 if Repo.aggregate(Topic, :count) == 0 do
   topics_data = [

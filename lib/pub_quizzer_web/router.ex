@@ -83,6 +83,12 @@ defmodule PubQuizzerWeb.Router do
   if Application.compile_env(:pub_quizzer, :dev_routes) do
     import Phoenix.LiveDashboard.Router
 
+    scope "/dev", PubQuizzerWeb do
+      pipe_through :browser
+
+      get "/login-as/:email", DevAuthController, :login_as
+    end
+
     scope "/dev" do
       pipe_through :browser
 
