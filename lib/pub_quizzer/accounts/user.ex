@@ -10,6 +10,7 @@ defmodule PubQuizzer.Accounts.User do
     field :magic_link_token, :string
     field :magic_link_sent_at, :utc_datetime
     field :last_signed_in_at, :utc_datetime
+    field :guide_seen, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
@@ -21,6 +22,7 @@ defmodule PubQuizzer.Accounts.User do
       :name,
       :role,
       :active,
+      :guide_seen,
       :magic_link_token,
       :magic_link_sent_at,
       :last_signed_in_at

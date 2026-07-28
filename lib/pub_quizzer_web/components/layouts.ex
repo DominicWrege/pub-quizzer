@@ -50,13 +50,19 @@ defmodule PubQuizzerWeb.Layouts do
   def app(assigns) do
     ~H"""
     <%= if @current_scope && @current_scope[:user] do %>
-      <header class="bg-base-200 border-b border-base-300 px-4 sm:px-6 pt-2 pb-0">
+      <header
+        class="bg-base-200 border-b border-base-300 px-4 sm:px-6 pt-2 pb-0"
+        data-guide-seen={"#{@current_scope.user.guide_seen}"}
+      >
         <div class="flex items-center justify-between mb-1.5">
           <a href="/" class="flex items-center gap-2">
             <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
           </a>
           <div class="flex-none flex items-center gap-4">
-            <details class="dropdown dropdown-end">
+            <details
+              class="dropdown dropdown-end"
+              phx-click-away={Phoenix.LiveView.JS.remove_attribute("open")}
+            >
               <summary class="btn btn-sm btn-soft rounded-full p-0 w-8 h-8">
                 <div class="avatar avatar-placeholder">
                   <div class="bg-primary text-primary-content rounded-full w-7 text-xs font-semibold flex items-center justify-center">

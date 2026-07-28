@@ -1,6 +1,18 @@
 import { driver, type Driver } from "driver.js"
 
-const GUIDE_KEY = "guide_seen"
+async function markGuideSeen(): Promise<void> {
+  const csrfMeta = document.querySelector("meta[name='csrf-token']")
+  const csrfToken = csrfMeta?.getAttribute("content") ?? ""
+  try {
+    await fetch("/admin/guide/seen", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "X-CSRF-Token": csrfToken }
+    })
+  } catch {
+    // Ignore network errors — guide_seen will be false, guide may reappear
+  }
+}
 
 function startGuide(): void {
   const driverObj: Driver = driver({
@@ -12,21 +24,19 @@ function startGuide(): void {
     doneBtnText: "Fertig",
     popoverClass: "pubquiz-guide",
     onDestroyed: () => {
-      localStorage.setItem(GUIDE_KEY, "true")
+      markGuideSeen()
     },
     onPopoverRender: (popover) => {
       const footer = popover.footerButtons.closest(".driver-popover-footer")
       if (!footer) return
-      // Avoid duplicates on re-render
       if (footer.querySelector(".pubquiz-skip-btn")) return
       const skipBtn = document.createElement("button")
       skipBtn.innerText = "Überspringen"
       skipBtn.classList.add("driver-popover-footer-btn", "pubquiz-skip-btn")
-      skipBtn.addEventListener("click", () => {
-        localStorage.setItem(GUIDE_KEY, "true")
+      skipBtn.addEventListener("click", async () => {
+        await markGuideSeen()
         driverObj.destroy()
       })
-      // Insert as first child of footer (before progress text + nav buttons)
       footer.insertBefore(skipBtn, footer.firstChild)
     },
     steps: [
@@ -77,10 +87,10 @@ function startGuide(): void {
 }
 
 function maybeStartGuide(): void {
-  if (localStorage.getItem(GUIDE_KEY) === "true") return
+  const header = document.querySelector("header[data-guide-seen]")
+  if (header?.getAttribute("data-guide-seen") === "true") return
   if (!window.location.pathname.startsWith("/admin/events")) return
 
-  // Wait for LiveView to render the nav elements before starting.
   const check = setInterval(() => {
     const navTab = document.querySelector('a[href="/admin/events"]')
     const newBtn = document.querySelector('a[href="/admin/events/new"]')
@@ -90,7 +100,6 @@ function maybeStartGuide(): void {
     }
   }, 200)
 
-  // Give up after 10s if elements never appear (e.g. user already navigated away).
   setTimeout(() => clearInterval(check), 10_000)
 }
 

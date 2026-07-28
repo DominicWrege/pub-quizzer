@@ -20,6 +20,13 @@ defmodule PubQuizzerWeb.DevAuthController do
       user ->
         {:ok, _} = Accounts.sign_in_user(user)
 
+        user =
+          if conn.params["reset_guide"] == "true" do
+            Accounts.reset_guide_seen(user)
+          else
+            user
+          end
+
         conn
         |> put_session(:user_id, user.id)
         |> redirect(to: "/admin/events")

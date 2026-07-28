@@ -54,6 +54,13 @@ defmodule PubQuizzerWeb.Router do
     end
   end
 
+  # Guide seen — marks the first-login tour as completed
+  scope "/admin", PubQuizzerWeb do
+    pipe_through [:browser, :moderator_auth]
+
+    post "/guide/seen", GuideController, :mark_seen
+  end
+
   # Admin panel — requires authenticated user (moderator+)
   # All admin routes share one live_session so navigation between
   # pages stays in the same LiveView process (no layout flicker).

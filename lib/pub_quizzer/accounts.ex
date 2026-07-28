@@ -146,6 +146,18 @@ defmodule PubQuizzer.Accounts do
     |> Repo.update()
   end
 
+  def mark_guide_seen(%User{} = user) do
+    user
+    |> User.changeset(%{guide_seen: true})
+    |> Repo.update()
+  end
+
+  def reset_guide_seen(%User{} = user) do
+    user
+    |> User.changeset(%{guide_seen: false})
+    |> Repo.update!()
+  end
+
   def can_manage_users?(%User{role: "superadmin"}), do: true
   def can_manage_users?(_), do: false
 
