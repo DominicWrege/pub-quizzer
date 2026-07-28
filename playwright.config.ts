@@ -45,4 +45,6 @@ export default defineConfig({
     stdout: "pipe",
     stderr: "pipe",
   },
+
+  globalTeardown: "e2e/teardown.ts",
 })

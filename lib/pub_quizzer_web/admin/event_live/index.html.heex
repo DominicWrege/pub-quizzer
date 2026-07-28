@@ -4,14 +4,7 @@
   current_path={@current_path}
   max_width="max-w-4xl"
 >
-  <.header>
-    Quiz
-    <:actions>
-      <.button navigate={~p"/admin/events/new"}>Neues Quiz</.button>
-    </:actions>
-  </.header>
-
-  <div class="mb-6">
+  <div class="flex items-center justify-between mb-6">
     <input
       type="text"
       placeholder="Nach Code oder Name suchen..."
@@ -19,8 +12,9 @@
       phx-keyup="search"
       phx-change="search"
       phx-value-query={@search_query}
-      class="input input-bordered w-full max-w-sm"
+      class="input input-bordered flex-1 max-w-sm"
     />
+    <.button navigate={~p"/admin/events/new"}>Neues Quiz</.button>
   </div>
 
   <%= cond do %>

@@ -96,6 +96,12 @@ defmodule PubQuizzerWeb.Router do
       get "/login-as/:email", DevAuthController, :login_as
     end
 
+    scope "/dev", PubQuizzerWeb do
+      pipe_through :api
+
+      delete "/cleanup-events", DevAuthController, :cleanup_events
+    end
+
     scope "/dev" do
       pipe_through :browser
 

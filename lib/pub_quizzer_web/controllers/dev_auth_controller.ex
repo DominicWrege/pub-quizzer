@@ -9,6 +9,7 @@ defmodule PubQuizzerWeb.DevAuthController do
   use PubQuizzerWeb, :controller
 
   alias PubQuizzer.Accounts
+  alias PubQuizzer.Quiz
 
   def login_as(conn, %{"email" => email}) do
     case Accounts.get_user_by_email(email) do
@@ -31,5 +32,12 @@ defmodule PubQuizzerWeb.DevAuthController do
         |> put_session(:user_id, user.id)
         |> redirect(to: "/admin/events")
     end
+  end
+
+  def cleanup_events(conn, _params) do
+    Quiz.list_events()
+    |> Enum.each(&Quiz.delete_event/1)
+
+    json(conn, %{ok: true})
   end
 end
