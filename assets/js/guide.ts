@@ -1,0 +1,101 @@
+import { driver, type Driver } from "driver.js"
+
+const GUIDE_KEY = "guide_seen"
+
+function startGuide(): void {
+  const driverObj: Driver = driver({
+    showProgress: true,
+    showButtons: ["next", "close"],
+    allowClose: true,
+    nextBtnText: "Weiter",
+    prevBtnText: "Zurück",
+    doneBtnText: "Fertig",
+    popoverClass: "pubquiz-guide",
+    onDestroyed: () => {
+      localStorage.setItem(GUIDE_KEY, "true")
+    },
+    onPopoverRender: (popover) => {
+      const footer = popover.footerButtons.closest(".driver-popover-footer")
+      if (!footer) return
+      // Avoid duplicates on re-render
+      if (footer.querySelector(".pubquiz-skip-btn")) return
+      const skipBtn = document.createElement("button")
+      skipBtn.innerText = "Überspringen"
+      skipBtn.classList.add("driver-popover-footer-btn", "pubquiz-skip-btn")
+      skipBtn.addEventListener("click", () => {
+        localStorage.setItem(GUIDE_KEY, "true")
+        driverObj.destroy()
+      })
+      // Insert as first child of footer (before progress text + nav buttons)
+      footer.insertBefore(skipBtn, footer.firstChild)
+    },
+    steps: [
+      {
+        popover: {
+          title: "Willkommen bei Quiz for a better life! 🏆",
+          description: "Hier ist eine kurze Einführung. Du kannst sie jederzeit überspringen.",
+        },
+      },
+      {
+        element: 'a[href="/admin/events"]',
+        popover: {
+          title: "Quiz-Events",
+          description: "Hier erstellst du neue Quiz-Events, startest sie und siehst die Ergebnisse.",
+          side: "bottom",
+          align: "start",
+        },
+      },
+      {
+        element: 'a[href="/admin/topics"]',
+        popover: {
+          title: "Themen & Fragen",
+          description: "Hier legst du Themen und die zugehörigen Fragen an, aus denen die Quiz-Runden bestehen.",
+          side: "bottom",
+          align: "start",
+        },
+      },
+      {
+        element: 'a[href="/admin/events/new"]',
+        popover: {
+          title: "Neues Quiz erstellen",
+          description: "Klicke hier, um ein neues Event zu erstellen. Teams treten dann mit dem 4-stelligen Code bei.",
+          side: "bottom",
+          align: "end",
+        },
+      },
+      {
+        popover: {
+          title: "So läuft ein Quiz ab",
+          description:
+            "Event erstellen → Teams beitreten mit Code → Quiz starten → Thema wählen → Teams antworten → Antworten auflösen → Ergebnisse anzeigen!",
+        },
+      },
+    ],
+  })
+
+  driverObj.drive()
+}
+
+function maybeStartGuide(): void {
+  if (localStorage.getItem(GUIDE_KEY) === "true") return
+  if (!window.location.pathname.startsWith("/admin/events")) return
+
+  // Wait for LiveView to render the nav elements before starting.
+  const check = setInterval(() => {
+    const navTab = document.querySelector('a[href="/admin/events"]')
+    const newBtn = document.querySelector('a[href="/admin/events/new"]')
+    if (navTab && newBtn) {
+      clearInterval(check)
+      startGuide()
+    }
+  }, 200)
+
+  // Give up after 10s if elements never appear (e.g. user already navigated away).
+  setTimeout(() => clearInterval(check), 10_000)
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", maybeStartGuide)
+} else {
+  maybeStartGuide()
+}

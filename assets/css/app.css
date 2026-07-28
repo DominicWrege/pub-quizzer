@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "driver.js/dist/driver.css";
 @plugin "daisyui" {
   themes: pub --default;
 }
@@ -148,3 +149,69 @@ body[data-quiz-font-size="2"] #quiz-qa-area .card-title,
 body[data-quiz-font-size="2"] #quiz-qa-area .qa-option { --quiz-fs: 3.25rem; }
 body[data-quiz-font-size="3"] #quiz-qa-area .card-title,
 body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
+
+/* Driver.js guide — match daisyUI theme */
+.driver-popover.pubquiz-guide {
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+  border: 1px solid var(--color-base-300);
+  min-width: 400px;
+  max-width: 560px;
+  padding: 1.25rem;
+}
+.driver-popover.pubquiz-guide .driver-popover-title {
+  color: var(--color-base-content);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.driver-popover.pubquiz-guide .driver-popover-description {
+  color: var(--color-base-content);
+  opacity: 0.85;
+  margin-bottom: 0.75rem;
+}
+.driver-popover.pubquiz-guide .driver-popover-progress-bar {
+  background-color: var(--color-primary);
+}
+.driver-popover.pubquiz-guide .driver-popover-close-btn {
+  color: var(--color-base-content);
+}
+.driver-popover.pubquiz-guide .driver-popover-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.driver-popover.pubquiz-guide .driver-popover-navigation-btns {
+  display: flex;
+  gap: 0.5rem;
+}
+.driver-popover.pubquiz-guide .driver-popover-footer-btn {
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.driver-popover.pubquiz-guide .pubquiz-skip-btn {
+  background-color: var(--color-error);
+  color: var(--color-error-content);
+  font-weight: 600;
+}
+.driver-popover.pubquiz-guide .pubquiz-skip-btn:hover {
+  background-color: color-mix(in oklch, var(--color-error) 80%, black);
+}
+.driver-popover.pubquiz-guide .driver-popover-prev-btn,
+.driver-popover.pubquiz-guide .driver-popover-next-btn {
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+}
+.driver-popover.pubquiz-guide .driver-popover-prev-btn:hover,
+.driver-popover.pubquiz-guide .driver-popover-next-btn:hover {
+  background-color: color-mix(in oklch, var(--color-primary) 85%, black);
+}
+.driver-popover.pubquiz-guide .driver-popover-prev-btn.driver-popover-btn-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
