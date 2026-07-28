@@ -3809,13 +3809,6 @@
       --btn-soft-bg: initial;
     }
   }
-  .btn-warning {
-    @layer daisyui.l1.l2 {
-      --btn-color: var(--color-warning);
-      --btn-fg: var(--color-warning-content);
-      --btn-soft-bg: initial;
-    }
-  }
   .btn-xs {
     @layer daisyui.l1.l2 {
       --fontsize: 0.6875rem;

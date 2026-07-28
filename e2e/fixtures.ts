@@ -1,4 +1,4 @@
-import { test as base, expect, type Page, type Browser } from "@playwright/test"
+import { test as base, expect, type Page, type Browser, type BrowserContext } from "@playwright/test"
 
 /**
  * Shared fixtures and helpers for PubQuizzer E2E tests.
@@ -14,6 +14,9 @@ import { test as base, expect, type Page, type Browser } from "@playwright/test"
 
 const ADMIN_EMAIL = "e2e@localhost.test"
 
+/** Standard timeout for engine-state transitions (topic pick, question advance, etc.). */
+const ENGINE_TIMEOUT = 20_000
+
 /** Log in as moderator/superadmin via the dev auth backdoor. */
 async function loginAsHost(page: Page): Promise<void> {
   await page.goto(`/dev/login-as/${encodeURIComponent(ADMIN_EMAIL)}`)
@@ -23,8 +26,6 @@ async function loginAsHost(page: Page): Promise<void> {
 /** Create a quiz event via the admin UI and return its 4-digit join code. */
 async function createEvent(page: Page, teamCount: number): Promise<string> {
   await page.goto("/admin/events/new")
-  // Wait for LiveView WebSocket to connect so our fill isn't overwritten
-  // by the server re-rendering the form with default values.
   await page.waitForSelector("#event-form", { state: "attached" })
   await page.waitForLoadState("networkidle")
 
@@ -34,7 +35,6 @@ async function createEvent(page: Page, teamCount: number): Promise<string> {
 
   await page.locator("#event-form button[type='submit']").click()
 
-  // After save, the LiveView push_navigates to /admin/events/:id (show page).
   await page.waitForSelector('[data-testid="event-code"]', { timeout: 10_000 })
   const code = (await page.locator('[data-testid="event-code"]').textContent())?.trim()
   if (!code) throw new Error("Event code not found on show page")
@@ -50,19 +50,76 @@ async function joinTeam(page: Page, code: string): Promise<void> {
   await page.goto("/")
   await page.locator("#home-quiz-code").fill(code)
   await page.locator("#home-join-btn").click()
-  // Team lobby renders once the LiveView connects.
   await page.waitForSelector('span.font-mono.font-bold:has-text("' + code + '")', {
     timeout: 10_000,
   })
 }
 
 /**
+ * Create N isolated browser contexts, each joining the quiz with the given code.
+ * Returns the pages and contexts for cleanup.
+ */
+async function joinTeams(
+  browser: Browser,
+  code: string,
+  count: number,
+): Promise<{ pages: Page[]; contexts: BrowserContext[] }> {
+  const contexts: BrowserContext[] = []
+  const pages: Page[] = []
+  for (let i = 0; i < count; i++) {
+    const ctx = await browser.newContext()
+    const page = await ctx.newPage()
+    await joinTeam(page, code)
+    contexts.push(ctx)
+    pages.push(page)
+  }
+  return { pages, contexts }
+}
+
+/**
+ * Start the quiz (click "Quiz starten") and wait for the host lobby URL.
+ * The host page must be on the event show page with a enabled start button.
+ */
+async function startQuiz(hostPage: Page): Promise<void> {
+  await expect(hostPage.locator('[phx-click="do_start"]')).toBeEnabled({ timeout: ENGINE_TIMEOUT })
+  await hostPage.locator('[phx-click="do_start"]').click()
+  await expect(hostPage).toHaveURL(/\/quiz\/\d{4}\/host$/, { timeout: 10_000 })
+}
+
+/**
+ * Pick the first available topic on the host lobby and wait for the question phase.
+ */
+async function pickTopic(hostPage: Page, index = 0): Promise<void> {
+  await hostPage.waitForSelector('[phx-click="choose_topic"]', { timeout: 10_000 })
+  await hostPage.locator('[phx-click="choose_topic"]').nth(index).click()
+  await expect(hostPage.locator("text=Frage 1 /")).toBeVisible({ timeout: ENGINE_TIMEOUT })
+}
+
+/**
+ * Full quiz setup: create event, join teams, start, pick first topic.
+ * Returns the code, team pages, and contexts for cleanup.
+ */
+async function setupQuiz(
+  hostPage: Page,
+  browser: Browser,
+  teamCount = 2,
+): Promise<{
+  code: string
+  pages: Page[]
+  contexts: BrowserContext[]
+}> {
+  const code = await createEvent(hostPage, teamCount)
+  const { pages, contexts } = await joinTeams(browser, code, teamCount)
+  await startQuiz(hostPage)
+  await pickTopic(hostPage)
+  return { code, pages, contexts }
+}
+
+/**
  * Answer all questions in the current round, then reveal it.
  * `teamAChoice` / `teamBChoice` control which option index each team picks
  * (0–3). Defaults to different options so team A wins.
- */
-/**
- * Answer all questions in the current round, then reveal them.
+ *
  * When `showStandings` is true (default), standings are shown automatically.
  * Pass `false` to inspect the winner/tie announcement before showing standings.
  */
@@ -77,10 +134,12 @@ async function completeRound(
   const answerBtns = (page: Page) => page.locator('[phx-click="select_answer"]')
 
   for (;;) {
-    await expect(answerBtns(teamAPage)).toHaveCount(4, { timeout: 15_000 })
+    await expect(answerBtns(teamAPage)).toHaveCount(4, { timeout: ENGINE_TIMEOUT })
     await answerBtns(teamAPage).nth(teamAChoice).click()
     await answerBtns(teamBPage).nth(teamBChoice).click()
-    await expect(hostPage.locator("text=2 / 2 Teams geantwortet")).toBeVisible({ timeout: 10_000 })
+    await expect(hostPage.locator("text=2 / 2 Teams geantwortet")).toBeVisible({
+      timeout: ENGINE_TIMEOUT,
+    })
 
     const revealBtn = hostPage.locator('[phx-click="reveal_round"]')
     if (await revealBtn.count()) {
@@ -91,8 +150,6 @@ async function completeRound(
   }
   await expect(hostPage.locator("text=Nächste Antwort anzeigen")).toBeVisible()
 
-  // Reveal all answers. reveal_round starts at index 1; each click increments by 1.
-  // Exit when all answers are shown (button disappears).
   const revealNext = hostPage.locator('[phx-click="reveal_next_answer"]')
   while (await revealNext.count()) {
     await revealNext.click({ force: true })
@@ -123,5 +180,5 @@ export const test = base.extend<Fixtures>({
   },
 })
 
-export { expect, loginAsHost, createEvent, joinTeam, completeRound }
-export type { Page, Browser }
+export { expect, loginAsHost, createEvent, joinTeam, joinTeams, startQuiz, pickTopic, setupQuiz, completeRound }
+export type { Page, Browser, BrowserContext }

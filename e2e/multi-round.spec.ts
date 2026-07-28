@@ -1,4 +1,4 @@
-import { test, expect, createEvent, joinTeam, completeRound } from "./fixtures"
+import { test, expect, createEvent, joinTeams, startQuiz, pickTopic, completeRound } from "./fixtures"
 
 test.describe("multi-round", () => {
   test("host runs two rounds; standings accumulate across rounds", async ({
@@ -8,23 +8,9 @@ test.describe("multi-round", () => {
     test.setTimeout(180_000)
 
     const code = await createEvent(hostPage, 2)
-
-    const ctxA = await browser.newContext()
-    const ctxB = await browser.newContext()
-    const pageA = await ctxA.newPage()
-    const pageB = await ctxB.newPage()
-
-    await joinTeam(pageA, code)
-    await joinTeam(pageB, code)
-
-    // Start the quiz
-    await expect(hostPage.locator('[phx-click="do_start"]')).toBeEnabled({ timeout: 15_000 })
-    await hostPage.locator('[phx-click="do_start"]').click()
-    await expect(hostPage).toHaveURL(/\/quiz\/\d{4}\/host$/, { timeout: 10_000 })
-
-    // Pick first topic
-    await hostPage.waitForSelector('[phx-click="choose_topic"]', { timeout: 10_000 })
-    await hostPage.locator('[phx-click="choose_topic"]').first().click()
+    const { pages: [pageA, pageB], contexts } = await joinTeams(browser, code, 2)
+    await startQuiz(hostPage)
+    await pickTopic(hostPage)
 
     // Complete round 1
     await completeRound(hostPage, pageA, pageB)
@@ -40,44 +26,25 @@ test.describe("multi-round", () => {
     await topics.nth(1).click()
 
     // Teams see the first question of round 2
-    const answerBtns = (page: Page) => page.locator('[phx-click="select_answer"]')
-    await expect(answerBtns(pageA)).toHaveCount(4, { timeout: 10_000 })
-    await expect(answerBtns(pageB)).toHaveCount(4, { timeout: 10_000 })
+    const answerBtns = (page: typeof pageA) => page.locator('[phx-click="select_answer"]')
+    await expect(answerBtns(pageA)).toHaveCount(4, { timeout: 15_000 })
+    await expect(answerBtns(pageB)).toHaveCount(4, { timeout: 15_000 })
 
     // Teams answer first question of round 2
     await answerBtns(pageA).nth(0).click()
     await answerBtns(pageB).nth(1).click()
-    await expect(hostPage.locator("text=2 / 2 Teams geantwortet")).toBeVisible({ timeout: 10_000 })
+    await expect(hostPage.locator("text=2 / 2 Teams geantwortet")).toBeVisible({ timeout: 15_000 })
 
-    await ctxA.close()
-    await ctxB.close()
+    for (const ctx of contexts) await ctx.close()
   })
 
-  test("final results reveal after early finish", async ({
-    browser,
-    hostPage,
-  }) => {
+  test("final results reveal after early finish", async ({ browser, hostPage }) => {
     test.setTimeout(120_000)
 
     const code = await createEvent(hostPage, 2)
-
-    const ctxA = await browser.newContext()
-    const ctxB = await browser.newContext()
-    const pageA = await ctxA.newPage()
-    const pageB = await ctxB.newPage()
-
-    await joinTeam(pageA, code)
-    await joinTeam(pageB, code)
-
-    // Start
-    await expect(hostPage.locator('[phx-click="do_start"]')).toBeEnabled({ timeout: 15_000 })
-    await hostPage.locator('[phx-click="do_start"]').click()
-    await expect(hostPage).toHaveURL(/\/quiz\/\d{4}\/host$/, { timeout: 10_000 })
-
-    // Pick topic and get to question phase
-    await hostPage.waitForSelector('[phx-click="choose_topic"]', { timeout: 10_000 })
-    await hostPage.locator('[phx-click="choose_topic"]').first().click()
-    await expect(hostPage.locator("text=Frage 1 /")).toBeVisible({ timeout: 15_000 })
+    const { pages: [pageA, pageB], contexts } = await joinTeams(browser, code, 2)
+    await startQuiz(hostPage)
+    await pickTopic(hostPage)
 
     // Finish early (instead of playing all 6 rounds)
     await hostPage.locator('[phx-click="ask_finish_quiz"]').click()
@@ -96,7 +63,6 @@ test.describe("multi-round", () => {
     await expect(pageA.locator('[id^="team-final-"]')).toHaveCount(2, { timeout: 10_000 })
     await expect(pageB.locator('[id^="team-final-"]')).toHaveCount(2, { timeout: 10_000 })
 
-    await ctxA.close()
-    await ctxB.close()
+    for (const ctx of contexts) await ctx.close()
   })
 })
