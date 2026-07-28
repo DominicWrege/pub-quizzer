@@ -24,13 +24,18 @@
             (writeShellScriptBin "dev" "exec mix phx.server $@")
           ];
 
-          # Playwright E2E testing (see e2e/ and playwright.config.ts).
-          # nixpkgs' playwright-driver bundles the driver; `.browsers` is a
-          # linkFarm with chromium/firefox/webkit/ffmpeg at the revisions
-          # matching the pinned @playwright/test version. We point the npm
-          # package at the Nix-managed browsers and skip its own download.
           PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
+
+          shellHook = ''
+            # Project-local venv for cicada-mcp (code indexer used by opencode).
+            # Pins mcp<2 (mcp 2.x broke the cicada-mcp API contract).
+            if [ ! -x .venv/bin/cicada-mcp ]; then
+              echo "Setting up cicada-mcp venv..."
+              uv venv .venv --quiet
+              uv pip install --python .venv/bin/python "cicada-mcp" "mcp<2" --quiet
+            fi
+          '';
         };
       });
 }

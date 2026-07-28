@@ -38,6 +38,10 @@ defmodule PubQuizzerWeb.DevAuthController do
     Quiz.list_events()
     |> Enum.each(&Quiz.delete_event/1)
 
+    Quiz.list_topics()
+    |> Enum.filter(fn t -> String.starts_with?(t.name, "E2E") end)
+    |> Enum.each(&Quiz.delete_topic/1)
+
     json(conn, %{ok: true})
   end
 end

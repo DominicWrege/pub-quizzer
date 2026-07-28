@@ -7,7 +7,7 @@
     },
     "cicada": {
       "type": "local",
-      "command": ["uvx", "cicada-mcp", "server", "--watch"],
+      "command": [".venv/bin/cicada-mcp", "server", "--watch"],
       "cwd": ".",
       "enabled": true
     }

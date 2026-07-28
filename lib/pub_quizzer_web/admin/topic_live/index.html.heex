@@ -4,15 +4,20 @@
   current_path={@current_path}
   max_width="max-w-4xl"
 >
-  <.header>
-    Themen
-    <:subtitle>Verwalte Quiz-Themen für die Runden.</:subtitle>
-    <:actions>
-      <.button phx-click="start_new">
-        <.icon name="hero-plus" class="size-4" /> Neues Thema
-      </.button>
-    </:actions>
-  </.header>
+  <div class="flex items-center justify-between mb-6">
+    <.form for={%{}} id="topic-search" phx-change="search" class="flex-1 max-w-sm">
+      <input
+        type="text"
+        name="query"
+        placeholder="Nach Name oder Beschreibung suchen..."
+        value={@search_query}
+        class="input input-bordered w-full"
+      />
+    </.form>
+    <.button phx-click="start_new">
+      <.icon name="hero-plus" class="size-4" /> Neues Thema
+    </.button>
+  </div>
 
   <%= if @editing_topic_id do %>
     <dialog
@@ -71,13 +76,17 @@
     </dialog>
   <% end %>
 
-  <%= if @topics == [] do %>
+  <%= if @filtered_topics == [] do %>
     <div class="text-center py-12 text-base-content/50">
-      Noch keine Themen erstellt.
+      <%= if @search_query != "" do %>
+        Keine Themen gefunden
+      <% else %>
+        Noch keine Themen erstellt.
+      <% end %>
     </div>
   <% else %>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <%= for topic <- @topics do %>
+      <%= for topic <- @filtered_topics do %>
         <div
           id={"topics-#{topic.id}"}
           class={[

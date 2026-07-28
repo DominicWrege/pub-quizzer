@@ -39,6 +39,7 @@ Key details:
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
 - **Never** commit or push without asking the user first — always wait for explicit confirmation
+- **Every time you add or update JavaScript** (including HEEx `phx-*` bindings that trigger JS), you **must** verify there are no browser console errors by running a Playwright check that captures `page.on("console")` and `page.on("pageerror")` events on the affected pages. A bare `<input>` with `phx-change` outside a `<form>` is a common source of "form events require the input to be inside a form" errors.
 
 ### Phoenix v1.8 guidelines
 

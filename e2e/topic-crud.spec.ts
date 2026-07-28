@@ -5,6 +5,7 @@ test.describe("topic CRUD", () => {
     test.setTimeout(60_000)
 
     await hostPage.goto("/admin/topics")
+    await hostPage.waitForSelector('[phx-click="start_new"]', { state: "visible" })
 
     // --- Create ---
     await hostPage.locator('[phx-click="start_new"]').click()

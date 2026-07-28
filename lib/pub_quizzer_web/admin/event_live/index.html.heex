@@ -5,16 +5,18 @@
   max_width="max-w-4xl"
 >
   <div class="flex items-center justify-between mb-6">
-    <input
-      type="text"
-      placeholder="Nach Code oder Name suchen..."
-      value={@search_query}
-      phx-keyup="search"
-      phx-change="search"
-      phx-value-query={@search_query}
-      class="input input-bordered flex-1 max-w-sm"
-    />
-    <.button navigate={~p"/admin/events/new"}>Neues Quiz</.button>
+    <.form for={%{}} id="event-search" phx-change="search" class="flex-1 max-w-sm">
+      <input
+        type="text"
+        name="query"
+        placeholder="Nach Code oder Name suchen..."
+        value={@search_query}
+        class="input input-bordered w-full"
+      />
+    </.form>
+    <.button navigate={~p"/admin/events/new"}>
+      <.icon name="hero-plus" class="size-4" /> Neues Quiz
+    </.button>
   </div>
 
   <%= cond do %>

@@ -13,9 +13,13 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    topics = Quiz.list_topics()
+
     {:ok,
      socket
-     |> assign(:topics, Quiz.list_topics())
+     |> assign(:topics, topics)
+     |> assign(:search_query, "")
+     |> assign(:filtered_topics, topics)
      |> assign(:editing_topic_id, nil)
      |> assign(:form, nil)
      |> assign(:topic, nil)
@@ -25,10 +29,25 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
 
   @impl true
   def handle_params(_params, _url, socket) do
-    {:noreply,
-     socket
-     |> assign(:page_title, "Themen")
-     |> assign(:topics, Quiz.list_topics())}
+    {:noreply, assign(socket, :page_title, "Themen")}
+  end
+
+  @impl true
+  def handle_event("search", %{"query" => query}, socket) do
+    topics = socket.assigns.topics
+    query = String.trim(query)
+
+    filtered =
+      if query == "" do
+        topics
+      else
+        Enum.filter(topics, fn t ->
+          String.contains?(String.downcase(t.name), String.downcase(query)) or
+            (t.description && String.contains?(String.downcase(t.description), String.downcase(query)))
+        end)
+      end
+
+    {:noreply, socket |> assign(:filtered_topics, filtered) |> assign(:search_query, query)}
   end
 
   @impl true
@@ -76,8 +95,8 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
      |> assign(:editing_topic_id, nil)
      |> assign(:topic, nil)
      |> assign(:form, nil)
-     |> assign(:topics, Quiz.list_topics())
-     |> put_flash(:info, "Thema gelöscht.")}
+      |> assign_topics()
+      |> put_flash(:info, "Thema gelöscht.")}
   end
 
   def handle_event("cancel_confirm", _params, socket) do
@@ -96,7 +115,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
          |> assign(:editing_topic_id, nil)
          |> assign(:topic, nil)
          |> assign(:form, nil)
-         |> assign(:topics, Quiz.list_topics())
+         |> assign_topics()
          |> put_flash(:info, "Thema erstellt.")}
 
       {:error, changeset} ->
@@ -112,11 +131,19 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
          |> assign(:editing_topic_id, nil)
          |> assign(:topic, nil)
          |> assign(:form, nil)
-         |> assign(:topics, Quiz.list_topics())
+         |> assign_topics()
          |> put_flash(:info, "Thema aktualisiert.")}
 
       {:error, changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset, action: :insert))}
     end
+  end
+
+  defp assign_topics(socket) do
+    topics = Quiz.list_topics()
+    socket
+    |> assign(:topics, topics)
+    |> assign(:filtered_topics, topics)
+    |> assign(:search_query, "")
   end
 end
