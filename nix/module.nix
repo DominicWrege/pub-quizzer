@@ -68,6 +68,7 @@ in
       wantedBy = [ "multi-user.target" ];
 
       environment = {
+        PHX_SERVER = "true";
         PORT = toString cfg.port;
       } // lib.optionalAttrs (cfg.domain != null) {
         PHX_HOST = cfg.domain;
