@@ -69,7 +69,7 @@ defmodule PubQuizzerWeb.Router do
     pipe_through [:browser, :moderator_auth]
 
     live_session :admin,
-      on_mount: [{PubQuizzerWeb.AdminAuth, :mount_current_scope}] do
+      on_mount: [{PubQuizzerWeb.AdminAuth, :ensure_authenticated}] do
       live "/topics", TopicLive, :index
 
       live "/topics/:topic_id/questions", QuestionLive, :index

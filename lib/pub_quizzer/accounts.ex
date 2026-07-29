@@ -69,11 +69,11 @@ defmodule PubQuizzer.Accounts do
 
   def generate_magic_link(email) do
     case get_user_by_email(email) do
-      %User{active: true} = user ->
+      %User{} = user ->
         {:ok, raw_token} = do_generate_magic_link(user)
         {:ok, raw_token, user}
 
-      _ ->
+      nil ->
         {:error, :not_found}
     end
   end

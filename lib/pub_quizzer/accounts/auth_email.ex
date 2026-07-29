@@ -9,11 +9,9 @@ defmodule PubQuizzer.Accounts.AuthEmail do
   alias PubQuizzer.Mailer
 
   def deliver_magic_link(%User{} = user, url) do
-    {name, email} = from_email()
-
     new()
     |> to({user.name, user.email})
-    |> from({name, email})
+    |> from(from_email())
     |> subject("Dein Quiz for a better life Login-Link")
     |> html_body(rendered_html(user.name, url))
     |> text_body(plain_text(user.name, url))
@@ -21,8 +19,8 @@ defmodule PubQuizzer.Accounts.AuthEmail do
   end
 
   defp from_email do
-    email = Application.get_env(:pub_quizzer, :mailer, [])[:from_email]
-    {"Quiz for a better life", email}
+    Application.get_env(:pub_quizzer, :mailer, [])[:from_email]
+    |> String.trim()
   end
 
   defp rendered_html(name, url) do
