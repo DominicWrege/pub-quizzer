@@ -2,7 +2,7 @@ defmodule PubQuizzer.Repo.Migrations.CreateQuizEventsAndTeams do
   use Ecto.Migration
 
   def change do
-    create table(:quiz_events, strict: true) do
+    create table(:quiz_events) do
       add :code, :string, null: false
       add :status, :string, null: false, default: "lobby"
       add :team_count, :integer, null: false, default: 6
@@ -16,7 +16,7 @@ defmodule PubQuizzer.Repo.Migrations.CreateQuizEventsAndTeams do
 
     create unique_index(:quiz_events, [:code])
 
-    create table(:teams, strict: true) do
+    create table(:teams) do
       add :name, :string, null: false
       add :slot_index, :integer, null: false
       add :claimed_at, :utc_datetime

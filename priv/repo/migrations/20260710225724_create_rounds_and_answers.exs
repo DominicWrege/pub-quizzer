@@ -2,7 +2,7 @@ defmodule PubQuizzer.Repo.Migrations.CreateRoundsAndAnswers do
   use Ecto.Migration
 
   def change do
-    create table(:rounds, strict: true) do
+    create table(:rounds) do
       add :round_number, :integer, null: false
       add :topic_id, references(:topics, on_delete: :nilify_all)
       add :quiz_event_id, references(:quiz_events, on_delete: :delete_all), null: false
@@ -15,7 +15,7 @@ defmodule PubQuizzer.Repo.Migrations.CreateRoundsAndAnswers do
     create index(:rounds, [:quiz_event_id])
     create index(:rounds, [:quiz_event_id, :round_number])
 
-    create table(:answers, strict: true) do
+    create table(:answers) do
       add :selected_index, :integer, null: false
       add :question_id, references(:questions, on_delete: :delete_all), null: false
       add :round_id, references(:rounds, on_delete: :delete_all), null: false

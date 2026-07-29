@@ -45,3 +45,4 @@ node_modules
 /test-results/
 /playwright/.cache/
 /blob-report/
+result

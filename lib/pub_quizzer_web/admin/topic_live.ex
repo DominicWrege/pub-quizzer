@@ -43,7 +43,8 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
       else
         Enum.filter(topics, fn t ->
           String.contains?(String.downcase(t.name), String.downcase(query)) or
-            (t.description && String.contains?(String.downcase(t.description), String.downcase(query)))
+            (t.description &&
+               String.contains?(String.downcase(t.description), String.downcase(query)))
         end)
       end
 
@@ -95,8 +96,8 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
      |> assign(:editing_topic_id, nil)
      |> assign(:topic, nil)
      |> assign(:form, nil)
-      |> assign_topics()
-      |> put_flash(:info, "Thema gelöscht.")}
+     |> assign_topics()
+     |> put_flash(:info, "Thema gelöscht.")}
   end
 
   def handle_event("cancel_confirm", _params, socket) do
@@ -141,6 +142,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
 
   defp assign_topics(socket) do
     topics = Quiz.list_topics()
+
     socket
     |> assign(:topics, topics)
     |> assign(:filtered_topics, topics)

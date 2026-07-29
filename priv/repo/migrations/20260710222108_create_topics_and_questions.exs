@@ -2,7 +2,7 @@ defmodule PubQuizzer.Repo.Migrations.CreateTopicsAndQuestions do
   use Ecto.Migration
 
   def change do
-    create table(:topics, strict: true) do
+    create table(:topics) do
       add :name, :string, null: false
       add :description, :string
 
@@ -11,7 +11,7 @@ defmodule PubQuizzer.Repo.Migrations.CreateTopicsAndQuestions do
 
     create unique_index(:topics, [:name])
 
-    create table(:questions, strict: true) do
+    create table(:questions) do
       add :prompt, :string, null: false
       add :options, {:array, :string}, null: false
       add :correct_index, :integer, null: false
