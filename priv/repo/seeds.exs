@@ -256,13 +256,12 @@ if Repo.aggregate(Topic, :count) == 0 do
 
     for {{prompt, options, correct}, q_idx} <- Enum.with_index(topic_data.questions) do
       {:ok, _question} =
-        %Question{}
+        %Question{topic_id: topic.id}
         |> Question.changeset(%{
           prompt: prompt,
-          options: options,
+          options: Enum.map(options, &%{"text" => &1}),
           correct_index: correct,
-          position: q_idx,
-          topic_id: topic.id
+          position: q_idx
         })
         |> Repo.insert()
     end
