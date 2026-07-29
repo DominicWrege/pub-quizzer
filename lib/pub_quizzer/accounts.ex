@@ -5,6 +5,7 @@ defmodule PubQuizzer.Accounts do
   """
 
   import Ecto.Query
+  require Logger
   alias PubQuizzer.Accounts.{User, AuthEmail}
   alias PubQuizzer.Repo
 
@@ -167,8 +168,15 @@ defmodule PubQuizzer.Accounts do
     case generate_magic_link(email) do
       {:ok, raw_token, user} ->
         url = "#{base_url}/admin/magic?token=#{raw_token}"
-        AuthEmail.deliver_magic_link(user, url)
-        {:ok, url}
+
+        case AuthEmail.deliver_magic_link(user, url) do
+          {:ok, _} ->
+            {:ok, url}
+
+          {:error, reason} ->
+            Logger.error("Failed to deliver magic link to #{email}: #{inspect(reason)}")
+            {:error, :delivery_failed}
+        end
 
       {:error, :not_found} ->
         {:error, :not_found}
@@ -178,7 +186,14 @@ defmodule PubQuizzer.Accounts do
   def deliver_invite_link(%User{} = user, base_url) do
     {:ok, raw_token} = generate_invite_link(user)
     url = "#{base_url}/admin/magic?token=#{raw_token}"
-    AuthEmail.deliver_magic_link(user, url)
-    {:ok, url}
+
+    case AuthEmail.deliver_magic_link(user, url) do
+      {:ok, _} ->
+        {:ok, url}
+
+      {:error, reason} ->
+        Logger.error("Failed to deliver invite link to #{user.email}: #{inspect(reason)}")
+        {:error, :delivery_failed}
+    end
   end
 end

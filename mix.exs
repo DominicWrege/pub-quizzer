@@ -76,6 +76,7 @@ defmodule PubQuizzer.MixProject do
       "assets.deploy": ["esbuild pub_quizzer --minify", "tailwind pub_quizzer --minify"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
+      "db.reset": ["ecto.drop --quiet", "ecto.create --quiet", "ecto.migrate"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
     ]

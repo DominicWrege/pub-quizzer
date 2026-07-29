@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+rm -f pub_quizzer_dev.db pub_quizzer_dev.db-shm pub_quizzer_dev.db-wal
+echo "DB files removed."

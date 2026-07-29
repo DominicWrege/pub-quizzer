@@ -29,6 +29,14 @@ defmodule PubQuizzerWeb.AdminSessionController do
         conn
         |> put_flash(:error, %{message: "E-Mail-Adresse nicht gefunden.", duration: 5000})
         |> redirect(to: "/admin/login")
+
+      {:error, :delivery_failed} ->
+        conn
+        |> put_flash(:error, %{
+          message: "E-Mail konnte nicht gesendet werden. Bitte später erneut versuchen.",
+          duration: 8000
+        })
+        |> redirect(to: "/admin/login")
     end
   end
 
