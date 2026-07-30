@@ -85,7 +85,7 @@ in
           migrate = pkgs.writeShellScript "pub-quizzer-migrate" ''
             ${cfg.package}/bin/pub_quizzer eval "PubQuizzer.Release.migrate()"
           '';
-        in "+${migrate}";
+        in "${migrate}";
 
         ExecStart = "${cfg.package}/bin/pub_quizzer start";
         EnvironmentFile = cfg.environmentFile;

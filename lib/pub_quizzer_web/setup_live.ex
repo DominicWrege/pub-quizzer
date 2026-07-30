@@ -41,7 +41,7 @@ defmodule PubQuizzerWeb.SetupLive do
 
   defp connect_base_url(socket) do
     case Phoenix.LiveView.get_connect_info(socket, :uri) do
-      nil -> "http://localhost:4000"
+      nil -> PubQuizzerWeb.Endpoint.url()
       uri -> "#{uri.scheme}://#{uri.host}:#{uri.port}"
     end
   end
@@ -60,7 +60,7 @@ defmodule PubQuizzerWeb.SetupLive do
             </p>
             <div class="alert alert-info mt-4 text-left">
               <div class="text-sm break-all">
-                <span class="font-semibold">Dev-Link:</span><br />
+                <span class="font-semibold">Login-Link:</span><br />
                 <a href={@magic_link_url} class="link link-primary">{@magic_link_url}</a>
               </div>
             </div>
