@@ -15,7 +15,7 @@
     enable = true;
 
     # Pull the release directly from the flake (no overlay needed)
-    package = inputs.pub-quizzer.packages.${pkgs.system}.default;
+    package = inputs.pub-quizzer.packages.${pkgs.stdenv.hostPlatform.system}.pub-quizzer;
 
     # Domain — module auto-configures Caddy reverse proxy + HTTPS
     domain = "quizforabetterlife.eu";

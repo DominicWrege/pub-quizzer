@@ -14,9 +14,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.pub-quizzer;
-      defaultText = lib.literalExpression "pkgs.pub-quizzer";
-      description = "The pub-quizzer release package to use.";
+      description = "The pub-quizzer release package to use. Pass from flake inputs: inputs.pub-quizzer.packages.\${pkgs.stdenv.hostPlatform.system}.pub-quizzer";
     };
 
     environmentFile = lib.mkOption {
