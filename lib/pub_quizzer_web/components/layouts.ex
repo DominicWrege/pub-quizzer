@@ -151,6 +151,10 @@ defmodule PubQuizzerWeb.Layouts do
                   <li>
                     <.link navigate={~p"/admin/events"}>Verwaltung &rarr;</.link>
                   </li>
+                <% else %>
+                  <li>
+                    <.link navigate={~p"/admin/login"}>Moderator</.link>
+                  </li>
                 <% end %>
               </ul>
             </div>
