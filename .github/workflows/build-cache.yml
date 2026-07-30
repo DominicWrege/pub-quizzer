@@ -1,5 +1,7 @@
 name: "Nix Cache"
 on:
+  push:
+    branches: [main]
   release:
     types: [published]
 
