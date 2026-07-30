@@ -95,6 +95,57 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
 
       assert q.correct_index == 0
     end
+
+    test "creates question with default correct_index=0 without clicking an option", %{
+      conn: conn
+    } do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/new")
+
+      view
+      |> form("#question-form", %{
+        "question" => %{
+          "prompt" => "Default answer?",
+          "options" => %{"0" => "A", "1" => "B", "2" => "C", "3" => "D"}
+        }
+      })
+      |> render_submit()
+
+      questions = Quiz.list_questions_for_topic(topic.id)
+      assert length(questions) == 1
+      assert hd(questions).correct_index == 0
+    end
+
+    test "shows validation errors when submitting empty form", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/new")
+
+      html =
+        view
+        |> form("#question-form", %{"question" => %{"prompt" => ""}})
+        |> render_submit()
+
+      assert html =~ "can&#39;t be blank" || html =~ "kann nicht leer"
+    end
+
+    test "does not show errors before form submission", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, _view, html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/new")
+
+      refute html =~ "alert alert-error"
+    end
   end
 
   describe "edit question" do
@@ -170,6 +221,69 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
 
       updated = PubQuizzer.Quiz.get_question!(question.id)
       assert updated.correct_index == 2
+    end
+
+    test "changing correct answer via select_correct then saving new values", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, question} =
+        Quiz.create_question(%{
+          prompt: "Original",
+          options: ["One", "Two", "Three", "Four"],
+          correct_index: 0,
+          topic_id: topic.id
+        })
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      # Click option D (index 3)
+      view
+      |> element("[phx-click='select_correct'][phx-value-index='3']")
+      |> render_click()
+
+      view
+      |> form("#question-form", %{
+        "question" => %{
+          "prompt" => "Changed",
+          "options" => %{"0" => "Uno", "1" => "Dos", "2" => "Tres", "3" => "Cuatro"}
+        }
+      })
+      |> render_submit()
+
+      updated = Quiz.get_question!(question.id)
+      assert updated.prompt == "Changed"
+      assert updated.options == [
+               %{"text" => "Uno"},
+               %{"text" => "Dos"},
+               %{"text" => "Tres"},
+               %{"text" => "Cuatro"}
+             ]
+
+      assert updated.correct_index == 3
+    end
+
+    test "preview does not crash on edit page", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, question} =
+        Quiz.create_question(%{
+          prompt: "Preview test",
+          options: ["A", "B", "C", "D"],
+          correct_index: 0,
+          topic_id: topic.id
+        })
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      html = render_click(view, "toggle_preview", %{})
+      assert html =~ "Vorschau"
+      refute html =~ "UndefinedFunctionError"
     end
 
     test "validate does not crash when OptionSorter leaves _unused_N keys in options", %{

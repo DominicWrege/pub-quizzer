@@ -21,7 +21,7 @@
     <% prompt_text = @form[:prompt].value || "" %>
     <% options = Phoenix.HTML.Form.input_value(@form, :options) || [] %>
     <% correct_index = @form[:correct_index].value %>
-    <% main_image = @image_preview_url || (@question && @question[:image]) %>
+    <% main_image = @image_preview_url || (@question && @question.image) %>
 
     <div class="card bg-base-200 overflow-hidden">
       <div class="card-body">
