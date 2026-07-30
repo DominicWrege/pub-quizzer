@@ -85,25 +85,25 @@ defmodule PubQuizzerWeb.Layouts do
             </details>
           </div>
         </div>
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-0 sm:gap-1 overflow-x-auto">
           <.link
             navigate={~p"/admin/events"}
             class={nav_tab_class(@current_path, "/admin/events")}
           >
-            <.icon name="hero-play" class="size-4" /> Quiz
+            <.icon name="hero-play" class="size-4 hidden sm:inline" /> Quiz
           </.link>
           <.link
             navigate={~p"/admin/topics"}
             class={nav_tab_class(@current_path, "/admin/topics")}
           >
-            <.icon name="hero-bookmark" class="size-4" /> Themen verwalten
+            <.icon name="hero-bookmark" class="size-4 hidden sm:inline" /> Themen verwalten
           </.link>
           <%= if @current_scope.user.role == "superadmin" do %>
             <.link
               navigate={~p"/admin/users"}
               class={nav_tab_class(@current_path, "/admin/users")}
             >
-              <.icon name="hero-key" class="size-4" /> Benutzer
+              <.icon name="hero-key" class="size-4 hidden sm:inline" /> Benutzer
             </.link>
           <% end %>
         </div>
@@ -172,7 +172,7 @@ defmodule PubQuizzerWeb.Layouts do
     active = String.starts_with?(current_path, prefix)
 
     base =
-      "inline-flex items-center gap-2 px-4 py-2 text-sm border-b-2 transition-colors duration-150"
+      "inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-sm border-b-2 transition-colors duration-150"
 
     active_styles =
       "border-primary text-base-content font-semibold border-b-[3px]"

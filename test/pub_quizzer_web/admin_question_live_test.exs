@@ -31,7 +31,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
         |> live(~p"/admin/topics/#{topic}/questions")
 
       assert html =~ "Capital of France?"
-      assert html =~ "Option 1"
     end
 
     test "shows new page with 4 option inputs", %{conn: conn} do

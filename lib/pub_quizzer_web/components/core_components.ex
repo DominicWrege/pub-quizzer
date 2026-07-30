@@ -334,7 +334,7 @@ defmodule PubQuizzerWeb.CoreComponents do
 
   def header(assigns) do
     ~H"""
-    <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-2"]}>
+      <header class={[@actions != [] && "flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 lg:gap-6", "pb-2"]}>
       <div class="flex items-center gap-4">
         <div :if={@back != []} class="flex-none">
           {render_slot(@back)}
@@ -348,7 +348,7 @@ defmodule PubQuizzerWeb.CoreComponents do
           </p>
         </div>
       </div>
-      <div class="flex-none flex items-center gap-3">{render_slot(@actions)}</div>
+      <div class="w-full lg:w-auto flex items-center gap-3">{render_slot(@actions)}</div>
     </header>
     """
   end
