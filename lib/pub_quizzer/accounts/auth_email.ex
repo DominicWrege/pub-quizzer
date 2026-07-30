@@ -24,6 +24,7 @@ defmodule PubQuizzer.Accounts.AuthEmail do
     email =
       Application.get_env(:pub_quizzer, :mailer, [])[:from_email]
       |> String.trim()
+      |> String.replace_prefix("MAIL_FROM=", "")
 
     {"Quiz for a better life", email}
   end
