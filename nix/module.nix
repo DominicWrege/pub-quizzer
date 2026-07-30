@@ -12,11 +12,6 @@ in
   options.services.pub-quizzer = {
     enable = lib.mkEnableOption "Pub-Quizzer realtime pub quiz app";
 
-    package = lib.mkOption {
-      type = lib.types.package;
-      description = "The pub-quizzer release package to use. Pass from flake inputs: inputs.pub-quizzer.packages.\${pkgs.stdenv.hostPlatform.system}.pub-quizzer";
-    };
-
     environmentFile = lib.mkOption {
       type = lib.types.path;
       description = ''
@@ -81,11 +76,11 @@ in
 
         ExecStartPre = let
           migrate = pkgs.writeShellScript "pub-quizzer-migrate" ''
-            ${cfg.package}/bin/pub_quizzer eval "PubQuizzer.Release.migrate()"
+            ${pkgs.pub-quizzer}/bin/pub_quizzer eval "PubQuizzer.Release.migrate()"
           '';
         in "${migrate}";
 
-        ExecStart = "${cfg.package}/bin/pub_quizzer start";
+        ExecStart = "${pkgs.pub-quizzer}/bin/pub_quizzer start";
         EnvironmentFile = cfg.environmentFile;
 
         # Hardening

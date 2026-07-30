@@ -17,7 +17,14 @@
     in
     {
       # --- NixOS module (consumed by a server configuration) ---
-      nixosModules.default = import ./nix/module.nix;
+      nixosModules.default = { pkgs, ... }: {
+        nixpkgs.overlays = [
+          (final: prev: {
+            pub-quizzer = self.packages.${pkgs.stdenv.hostPlatform.system}.pub-quizzer;
+          })
+        ];
+        imports = [ ./nix/module.nix ];
+      };
 
       # --- Release packages ---
       packages = forAllSystems (
