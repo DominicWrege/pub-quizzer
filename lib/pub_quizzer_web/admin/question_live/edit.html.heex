@@ -41,6 +41,23 @@
       <%!-- Hidden correct index — driven by click-to-select on option cards --%>
       <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
 
+      <%= if @form_submitted and @form.errors != [] do %>
+        <div class="alert alert-error py-2 px-3 text-sm">
+          <.icon name="hero-exclamation-circle" class="size-4" />
+          <span>
+            <%= for {msg, _} <- @form.errors do %>
+              <span>{msg}</span>
+            <% end %>
+            <%= for {msg, _} <- @form[:prompt].errors do %>
+              <span>{msg}</span>
+            <% end %>
+            <%= for {msg, _} <- @form[:options].errors do %>
+              <span>{msg}</span>
+            <% end %>
+          </span>
+        </div>
+      <% end %>
+
       <%!-- Prompt card --%>
       <div class="card bg-base-100 border border-base-300 shadow-md">
         <div class="card-body p-5 gap-4">
@@ -239,19 +256,6 @@
         </div>
       </div>
 
-      <%= if @form_submitted and (@form[:options].errors != [] or @form[:prompt].errors != []) do %>
-        <div class="alert alert-error py-2 px-3 text-sm">
-          <.icon name="hero-exclamation-circle" class="size-4" />
-          <span>
-            <%= for {msg, _} <- @form[:prompt].errors do %>
-              <span>{msg}</span>
-            <% end %>
-            <%= for {msg, _} <- @form[:options].errors do %>
-              <span>{msg}</span>
-            <% end %>
-          </span>
-        </div>
-      <% end %>
     </.form>
 
     <%!-- Edit history sidebar (visible on lg+) --%>

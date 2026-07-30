@@ -61,7 +61,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   defp apply_action(socket, :new, %{"topic_id" => topic_id}) do
     topic = Quiz.get_topic!(topic_id)
     empty_opts = [%{"text" => ""}, %{"text" => ""}, %{"text" => ""}, %{"text" => ""}]
-    changeset = Question.changeset(%Question{options: empty_opts}, %{})
+    changeset = Question.changeset(%Question{options: empty_opts}, %{correct_index: 0})
 
     socket
     |> assign(:topic, topic)
@@ -177,7 +177,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
     changeset =
       case question do
-        nil -> Question.changeset(%Question{options: empty_opts}, question_params)
+        nil -> Question.changeset(%Question{options: empty_opts}, Map.merge(%{"correct_index" => 0}, question_params))
         _ -> Question.changeset(question, question_params)
       end
 
