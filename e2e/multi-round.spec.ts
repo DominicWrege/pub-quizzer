@@ -22,7 +22,7 @@ test.describe("multi-round", () => {
     // Topic selection reappears for round 2 — pick a different topic
     await hostPage.waitForSelector('[phx-click="choose_topic"]', { timeout: 10_000 })
     const topics = hostPage.locator('[phx-click="choose_topic"]')
-    await expect(topics).toHaveCount(4, { timeout: 10_000 })
+    await expect(topics).toHaveCount(5, { timeout: 10_000 })
     await topics.nth(1).click()
 
     // Teams see the first question of round 2

@@ -23,13 +23,19 @@ config :pub_quizzer, PubQuizzerWeb.Endpoint,
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:pub_quizzer, ~w(--sourcemap=inline --watch)]},
     tailwindcss: {Tailwind, :install_and_run, [:pub_quizzer, ~w(--watch)]}
-  ],
-  live_reload: [
-    patterns: [
-      ~r{priv/static/(?!uploads/).+},
-      ~r{lib/pub_quizzer_web/(controllers|live|components|admin)/.*.(ex|heex)$}
-    ]
   ]
+
+# Live reload can cause full page reloads that race with E2E form submissions,
+# so it is disabled when Playwright boots the server (E2E=1).
+if System.get_env("E2E") != "1" do
+  config :pub_quizzer, PubQuizzerWeb.Endpoint,
+    live_reload: [
+      patterns: [
+        ~r{priv/static/(?!uploads/).+},
+        ~r{lib/pub_quizzer_web/(controllers|live|components|admin)/.*.(ex|heex)$}
+      ]
+    ]
+end
 
 # ## SSL Support
 #

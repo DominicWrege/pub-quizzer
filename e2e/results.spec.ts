@@ -1,4 +1,4 @@
-import { test, expect, createEvent, joinTeams, startQuiz, pickTopic, completeRound } from "./fixtures"
+import { test, expect, createEvent, joinTeams, startQuiz, pickTopic, completeRound, waitForLiveView } from "./fixtures"
 
 test.describe("results page", () => {
   test("results page shows per-round answer matrix after a round", async ({ browser, hostPage }) => {
@@ -19,9 +19,14 @@ test.describe("results page", () => {
 
     // Go to events index, find the event, and navigate to results
     await hostPage.goto("/admin/events")
+    await waitForLiveView(hostPage)
 
-    // The "Live" link on the event card goes to /admin/events/:id/results
-    // Find the card matching our code and click the results link
+    // Filter by our quiz code so the results link resolves to OUR event even
+    // when other tests run in parallel and add events to the shared list.
+    const search = hostPage.locator('[phx-change="search"] input')
+    await expect(search).toBeVisible({ timeout: 10_000 })
+    await search.fill(quizCode)
+
     const liveLink = hostPage.locator(`a[href*="/results"]`).first()
     await expect(liveLink).toBeVisible({ timeout: 10_000 })
     await liveLink.click()

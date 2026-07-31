@@ -7,11 +7,13 @@ test.describe("host actions", () => {
     const code = await createEvent(hostPage, 2)
     const { pages: [pageA], contexts } = await joinTeams(browser, code, 1)
 
-    // Team A is connected (shows "Beigetreten" badge)
-    await expect(hostPage.locator("text=Beigetreten")).toBeVisible({ timeout: 10_000 })
+    // Team A is connected (shows "Beigetreten" badge in the desktop table)
+    await expect(hostPage.locator("#event-teams >> text=Beigetreten")).toBeVisible({
+      timeout: 10_000,
+    })
 
     // Host kicks team A
-    await hostPage.locator('[phx-click="kick_team"]').first().click()
+    await hostPage.locator("#event-teams [phx-click='kick_team']").first().click()
 
     // Team A sees the kicked flash and is redirected to home
     await expect(pageA.locator("text=Du wurdest vom Moderator aus dem Team entfernt")).toBeVisible({
@@ -36,8 +38,13 @@ test.describe("host actions", () => {
     // Complete round WITHOUT showing standings
     await completeRound(hostPage, pageA, pageB, 0, 1, false)
 
-    // Winner banner is visible but standings are NOT shown
-    await expect(hostPage.locator("text=gewinnt Runde")).toBeVisible({ timeout: 10_000 })
+    // Winner or tie banner is visible (team-facing options are shuffled, so a
+    // clear winner is not guaranteed) but standings are NOT shown
+    await expect(
+      hostPage
+        .locator("text=gewinnt Runde")
+        .or(hostPage.locator("text=Remis! Kein eindeutiger Gewinner.")),
+    ).toBeVisible({ timeout: 10_000 })
     await expect(hostPage.locator('[id^="standing-"]')).toHaveCount(0)
 
     // Click "Weiter zur Kategorie" to skip standings

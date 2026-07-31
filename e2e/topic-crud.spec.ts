@@ -1,10 +1,11 @@
-import { test, expect } from "./fixtures"
+import { test, expect, waitForLiveView } from "./fixtures"
 
 test.describe("topic CRUD", () => {
   test("moderator can create, edit, and delete a topic", async ({ hostPage }) => {
     test.setTimeout(60_000)
 
     await hostPage.goto("/admin/topics")
+    await waitForLiveView(hostPage)
     await hostPage.waitForSelector('[phx-click="start_new"]', { state: "visible" })
 
     // --- Create ---

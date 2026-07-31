@@ -1,10 +1,11 @@
-import { test, expect } from "./fixtures"
+import { test, expect, waitForLiveView } from "./fixtures"
 
 test.describe("profile & auth", () => {
   test("user can edit their profile name", async ({ hostPage }) => {
     test.setTimeout(30_000)
 
     await hostPage.goto("/admin/profile")
+    await waitForLiveView(hostPage)
 
     const newName = `E2E Host ${Date.now()}`
     await hostPage.locator("#profile-form input[name='user[name]']").fill(newName)

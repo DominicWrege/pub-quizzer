@@ -1,4 +1,4 @@
-import { test, expect, createEvent, joinTeams, startQuiz, pickTopic } from "./fixtures"
+import { test, expect, createEvent, joinTeams, startQuiz, pickTopic, revealRound } from "./fixtures"
 import type { Page, BrowserContext } from "./fixtures"
 
 const ENGINE_TIMEOUT = 20_000
@@ -41,20 +41,16 @@ test.describe("four teams", () => {
 
       // Reveal answers
       await expect(hostPage.locator("text=Nächste Antwort anzeigen")).toBeVisible()
-      const revealNext = hostPage.locator('[phx-click="reveal_next_answer"]')
-      while (await revealNext.count()) {
-        await revealNext.click({ force: true })
-        await hostPage.waitForTimeout(1000)
-      }
+      await revealRound(hostPage)
 
       // Show standings — all 4 teams ranked
       await hostPage.locator('[phx-click="show_standings"]').click()
       await expect(hostPage.locator('[id^="standing-"]')).toHaveCount(4, { timeout: 10_000 })
       await expect(t0.locator('[id^="team-standing-"]')).toHaveCount(4, { timeout: 10_000 })
 
-      // Advance to next round (if not the last)
+      // Advance to next round (if not the last) — pickTopic waits for the
+      // topic-selection UI on the next iteration
       if (round < ROUNDS - 1) {
-        await hostPage.waitForTimeout(2000)
         await hostPage.locator('[phx-click="next_round"]').click()
       }
     }

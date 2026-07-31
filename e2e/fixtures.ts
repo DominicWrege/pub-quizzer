@@ -4,7 +4,8 @@ import { test as base, expect, type Page, type Browser, type BrowserContext } fr
  * Shared fixtures and helpers for PubQuizzer E2E tests.
  *
  * Server: tests assume `mix phx.server` is running on :4000 (the playwright
- * config's `webServer` boots it automatically). This uses the DEV database,
+ * config's `webServer` boots it automatically with `E2E=1`, which disables
+ * Phoenix live reload to avoid page-reload races). This uses the DEV database,
  * so seeded topics/questions (from `mix ecto.setup`) are available.
  *
  * Auth: E2E uses the dev-only backdoor at `/dev/login-as/:email` which sets
@@ -17,15 +18,31 @@ const ADMIN_EMAIL = "e2e@localhost.test"
 /** Standard timeout for engine-state transitions (topic pick, question advance, etc.). */
 const ENGINE_TIMEOUT = 20_000
 
+/**
+ * Wait until a LiveView page has connected its websocket. Clicks on `phx-click`
+ * elements and `phx-submit` forms are silently dropped if they happen before
+ * the socket is joined, so always wait for this after a full page load.
+ */
+async function waitForLiveView(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () =>
+      document.querySelector("[data-phx-main]")?.classList.contains("phx-connected") ??
+      false,
+    { timeout: 10_000 },
+  )
+}
+
 /** Log in as moderator/superadmin via the dev auth backdoor. */
 async function loginAsHost(page: Page): Promise<void> {
   await page.goto(`/dev/login-as/${encodeURIComponent(ADMIN_EMAIL)}`)
   await page.waitForURL("**/admin/events", { timeout: 10_000 })
+  await waitForLiveView(page)
 }
 
 /** Create a quiz event via the admin UI and return its 4-digit join code. */
 async function createEvent(page: Page, teamCount: number): Promise<string> {
   await page.goto("/admin/events/new")
+  await waitForLiveView(page)
   await page.waitForSelector("#event-form", { state: "attached" })
   await page.waitForLoadState("networkidle")
 
@@ -36,6 +53,7 @@ async function createEvent(page: Page, teamCount: number): Promise<string> {
   await page.locator("#event-form button[type='submit']").click()
 
   await page.waitForSelector('[data-testid="event-code"]', { timeout: 10_000 })
+  await waitForLiveView(page)
   const code = (await page.locator('[data-testid="event-code"]').textContent())?.trim()
   if (!code) throw new Error("Event code not found on show page")
   return code
@@ -84,12 +102,14 @@ async function startQuiz(hostPage: Page): Promise<void> {
   await expect(hostPage.locator('[phx-click="do_start"]')).toBeEnabled({ timeout: ENGINE_TIMEOUT })
   await hostPage.locator('[phx-click="do_start"]').click()
   await expect(hostPage).toHaveURL(/\/quiz\/\d{4}\/host$/, { timeout: 10_000 })
+  await waitForLiveView(hostPage)
 }
 
 /**
  * Pick the first available topic on the host lobby and wait for the question phase.
  */
 async function pickTopic(hostPage: Page, index = 0): Promise<void> {
+  await waitForLiveView(hostPage)
   await hostPage.waitForSelector('[phx-click="choose_topic"]', { timeout: 10_000 })
   await hostPage.locator('[phx-click="choose_topic"]').nth(index).click()
   await expect(hostPage.locator("text=Frage 1 /")).toBeVisible({ timeout: ENGINE_TIMEOUT })
@@ -150,15 +170,33 @@ async function completeRound(
   }
   await expect(hostPage.locator("text=Nächste Antwort anzeigen")).toBeVisible()
 
-  const revealNext = hostPage.locator('[phx-click="reveal_next_answer"]')
-  while (await revealNext.count()) {
-    await revealNext.click({ force: true })
-    await hostPage.waitForTimeout(1000)
-  }
+  await revealRound(hostPage)
 
   if (showStandings) {
     await hostPage.locator('[phx-click="show_standings"]').click()
     await expect(hostPage.locator('[id^="standing-"]')).toHaveCount(2, { timeout: 10_000 })
+  }
+}
+
+/**
+ * Reveal all answers in the current round on the host page.
+ *
+ * Keys off the stable "Antworten (x / N)" counter instead of polling the
+ * reveal button — that button transiently unmounts during the LiveView
+ * re-render, which forced a 600ms settle sleep per step before. Reading the
+ * counter with auto-retrying `expect` calls is race-free and sleep-free.
+ */
+export async function revealRound(hostPage: Page): Promise<void> {
+  const header = hostPage.locator("text=/Antworten \\((\\d+) \\/ (\\d+)\\)/")
+  await expect(header).toBeVisible()
+  const text = (await header.textContent()) ?? ""
+  const total = Number(text.match(/\/ (\d+)/)?.[1])
+  const revealed = Number(text.match(/\((\d+) \//)?.[1])
+  const revealNext = hostPage.locator('[phx-click="reveal_next_answer"]')
+  for (let i = revealed; i < total; i++) {
+    await expect(revealNext).toHaveCount(1)
+    await revealNext.click({ force: true })
+    await expect(hostPage.locator(`text=Antworten (${i + 1} / ${total})`)).toBeVisible()
   }
 }
 
@@ -180,5 +218,5 @@ export const test = base.extend<Fixtures>({
   },
 })
 
-export { expect, loginAsHost, createEvent, joinTeam, joinTeams, startQuiz, pickTopic, setupQuiz, completeRound }
+export { expect, loginAsHost, createEvent, joinTeam, joinTeams, startQuiz, pickTopic, setupQuiz, completeRound, waitForLiveView }
 export type { Page, Browser, BrowserContext }
