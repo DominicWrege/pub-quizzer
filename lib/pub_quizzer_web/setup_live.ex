@@ -50,7 +50,7 @@ defmodule PubQuizzerWeb.SetupLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} max_width="max-w-full" main_class="px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+      <div class="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <div class="text-center max-w-sm w-full">
           <%= if @magic_link_url do %>
             <.icon name="hero-check-circle" class="size-[4rem] mx-auto text-success" />
@@ -58,12 +58,6 @@ defmodule PubQuizzerWeb.SetupLive do
             <p class="py-4 text-base-content/70">
               Ein Login-Link wurde generiert. Klicke darauf, um dich anzumelden.
             </p>
-            <div class="alert alert-info mt-4 text-left">
-              <div class="text-sm break-all">
-                <span class="font-semibold">Login-Link:</span><br />
-                <a href={@magic_link_url} class="link link-primary">{@magic_link_url}</a>
-              </div>
-            </div>
             <div class="mt-4">
               <a href={@magic_link_url} class="btn btn-primary btn-block">Anmelden</a>
             </div>

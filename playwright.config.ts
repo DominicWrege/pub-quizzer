@@ -3,9 +3,9 @@ import { defineConfig, devices } from "@playwright/test"
 /**
  * Playwright config for PubQuizzer E2E tests.
  *
- * The Phoenix dev server (port 4000) is auto-started by `webServer` below.
- * `reuseExistingServer: true` means if you already have `mix phx.server`
- * running, Playwright will use it instead of booting a second instance.
+ * The Phoenix dev server (port 4001) is auto-started by `webServer` below
+ * using a dedicated E2E database (E2E=1), so it never touches the dev DB
+ * and can run alongside a `mix phx.server` on port 4000.
  *
  * Browsers come from the Nix-managed playwright-driver (see flake.nix).
  * `PLAYWRIGHT_BROWSERS_PATH` + `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` are set
@@ -23,7 +23,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
 
   use: {
-    baseURL: "http://localhost:4000",
+    baseURL: "http://localhost:4001",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -38,15 +38,19 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "mix phx.server",
-    url: "http://localhost:4000",
-    reuseExistingServer: true,
-    timeout: 120_000,
+    // Boot an isolated server on port 4001 (E2E=1 selects a dedicated
+    // database that is created/migrated/seeded here) so tests never touch
+    // the dev DB and can run while the dev server holds port 4000.
+    command:
+      "mix ecto.create && mix ecto.migrate && mix run priv/repo/seeds.exs && mix phx.server",
+    url: "http://localhost:4001",
+    reuseExistingServer: false,
+    timeout: 180_000,
     stdout: "pipe",
     stderr: "pipe",
     // Disable Phoenix live reload for E2E: its page reloads race with form
     // submissions and cause flaky tests.
-    env: { ...process.env, E2E: "1" },
+    env: { ...process.env, E2E: "1", PORT: "4001" },
   },
 
   globalTeardown: "e2e/teardown.ts",

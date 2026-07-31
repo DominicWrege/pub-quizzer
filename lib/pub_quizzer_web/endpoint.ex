@@ -49,8 +49,10 @@ defmodule PubQuizzerWeb.Endpoint do
     from: :pub_quizzer,
     gzip: not code_reloading?,
     only: PubQuizzerWeb.static_paths(),
-    cache_control_for_etags: "public, max-age=31536000, immutable",
-    cache_control_for_vsn_requests: "public, max-age=31536000, immutable",
+    cache_control_for_etags:
+      Application.compile_env(:pub_quizzer, :cache_control_for_etags, "public"),
+    cache_control_for_vsn_requests:
+      Application.compile_env(:pub_quizzer, :cache_control_for_vsn_requests, "public"),
     raise_on_missing_only: code_reloading?
 
   # Code reloading can be explicitly enabled under the

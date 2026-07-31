@@ -77,7 +77,6 @@ defmodule PubQuizzerWeb.Router do
       live "/topics/:topic_id/questions/:id/edit", QuestionLive, :edit
 
       live "/events", EventLive, :index
-      live "/events/new", EventLive, :new
       live "/events/:id", EventLive, :show
       live "/events/:id/results", ResultLive, :index
 

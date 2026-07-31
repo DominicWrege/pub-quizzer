@@ -11,7 +11,6 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   def render(assigns) do
     case assigns.live_action do
       :index -> index(assigns)
-      :new -> new(assigns)
       :show -> event_show(assigns)
     end
   end
@@ -34,13 +33,8 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     |> assign(:events, events)
     |> assign(:search_query, "")
     |> assign(:filtered_events, events)
+    |> assign(:show_new_dialog, false)
     |> assign_active_finished(events)
-  end
-
-  defp apply_action(socket, :new, _params, _url) do
-    socket
-    |> assign(:page_title, "Neues Quiz")
-    |> assign(:form, to_form(%{"team_count" => "5"}))
   end
 
   defp apply_action(socket, :show, %{"id" => id}, url) do
@@ -85,6 +79,17 @@ defmodule PubQuizzerWeb.Admin.EventLive do
       end
 
     {:noreply, socket |> assign(:filtered_events, filtered) |> assign_active_finished(filtered)}
+  end
+
+  def handle_event("start_new", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_new_dialog, true)
+     |> assign(:form, to_form(%{"team_count" => "5"}))}
+  end
+
+  def handle_event("cancel_new", _params, socket) do
+    {:noreply, assign(socket, :show_new_dialog, false)}
   end
 
   def handle_event("save", %{"team_count" => team_count} = params, socket) do

@@ -53,6 +53,7 @@ defmodule PubQuizzerWeb.Layouts do
       <header
         class="bg-base-200 border-b border-base-300 px-4 sm:px-6 pt-2 pb-0"
         data-guide-seen={"#{@current_scope.user.guide_seen}"}
+        data-guide-role={@current_scope.user.role}
       >
         <div class="flex items-center justify-between mb-1.5">
           <a href="/" class="flex items-center gap-2">

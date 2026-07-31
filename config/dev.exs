@@ -1,8 +1,13 @@
 import Config
 
 # Configure your database
+# E2E tests run against a separate database so they never touch dev data.
 config :pub_quizzer, PubQuizzer.Repo,
-  database: Path.expand("../pub_quizzer_dev.db", __DIR__),
+  database:
+    if(System.get_env("E2E") == "1",
+      do: Path.expand("../pub_quizzer_e2e.db", __DIR__),
+      else: Path.expand("../pub_quizzer_dev.db", __DIR__)
+    ),
   pool_size: 5,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
@@ -13,6 +18,12 @@ config :pub_quizzer, PubQuizzer.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
+
+# In dev the asset URL is not versioned, so a long-lived immutable cache would
+# serve stale CSS/JS forever. Never cache in dev.
+config :pub_quizzer,
+  cache_control_for_etags: "no-cache",
+  cache_control_for_vsn_requests: "no-cache"
 config :pub_quizzer, PubQuizzerWeb.Endpoint,
   # Binding to 0.0.0.0 allows access from other devices on the network.
   http: [ip: {0, 0, 0, 0}],

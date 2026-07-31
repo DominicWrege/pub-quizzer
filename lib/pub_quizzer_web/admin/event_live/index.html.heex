@@ -14,10 +14,43 @@
         class="input input-bordered w-full"
       />
     </.form>
-    <.button navigate={~p"/admin/events/new"}>
+    <.button phx-click="start_new" id="new-event-btn">
       <.icon name="hero-plus" class="size-4" /> Neues Quiz
     </.button>
   </div>
+
+  <%= if @show_new_dialog do %>
+    <dialog
+      id="event-form-modal"
+      phx-hook="Dialog"
+      data-cancel-event="cancel_new"
+      class="m-auto rounded-box bg-base-100 p-4 sm:p-6 shadow-xl max-w-lg w-[calc(100%-2rem)] sm:w-full max-h-[90vh] overflow-y-auto"
+    >
+      <h3 class="text-lg font-bold">Neues Quiz</h3>
+      <p class="text-sm text-base-content/70 mb-4">
+        Erstelle ein Quiz-Event mit einem 4-stelligen Beitrittscode.
+      </p>
+      <.form for={@form} id="event-form" phx-submit="save">
+        <.input
+          field={@form[:name]}
+          type="text"
+          label="Name (optional)"
+        />
+        <.input
+          field={@form[:team_count]}
+          type="number"
+          label="Anzahl der Teams"
+          min="1"
+          max="10"
+          value={@form[:team_count].value}
+        />
+        <div class="flex justify-between items-center mt-4">
+          <button type="button" phx-click="cancel_new" class="btn btn-sm btn-soft">Abbrechen</button>
+          <button type="submit" class="btn btn-primary btn-sm">Quiz erstellen</button>
+        </div>
+      </.form>
+    </dialog>
+  <% end %>
 
   <%= cond do %>
     <% @filtered_events == [] -> %>

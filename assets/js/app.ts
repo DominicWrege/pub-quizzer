@@ -364,16 +364,22 @@ const OptionSorter = {
   }
 } satisfies Partial<ViewHook>
 
+interface DialogHook extends ViewHook {
+  _onClose: () => void
+}
+
 const Dialog = {
-  mounted(this: ViewHook) {
+  mounted(this: DialogHook) {
     ;(this.el as HTMLDialogElement).showModal()
-    this.el.addEventListener("close", () => {
+    this._onClose = () => {
       this.pushEvent(this.el.dataset.cancelEvent ?? "cancel_confirm")
-    })
+    }
+    this.el.addEventListener("close", this._onClose)
   },
-  destroyed(this: ViewHook) {
+  destroyed(this: DialogHook) {
     const el = this.el as HTMLDialogElement
     if (el.open) {
+      el.removeEventListener("close", this._onClose)
       el.close()
     }
   }

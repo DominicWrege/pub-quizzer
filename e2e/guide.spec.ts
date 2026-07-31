@@ -6,8 +6,9 @@ test.describe("first-login guide", () => {
 
     const ctx = await browser.newContext()
     const page = await ctx.newPage()
-    // Reset guide_seen to false so the guide always appears
-    await page.goto(`/dev/login-as/e2e@localhost.test?reset_guide=true`)
+    // The onboarding guide only shows for moderators, not superadmins.
+    // Reset guide_seen to false so the guide always appears.
+    await page.goto(`/dev/login-as/mod-e2e@localhost.test?reset_guide=true`)
     await page.waitForURL("**/admin/events", { timeout: 10_000 })
 
     // Guide popover appears on /admin/events

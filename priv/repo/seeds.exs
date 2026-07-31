@@ -3,20 +3,40 @@ alias PubQuizzer.Accounts
 alias PubQuizzer.Quiz.{Topic, Question}
 
 # E2E test user for Playwright (see e2e/ and playwright.config.ts).
+# Only created when seeding the E2E database — the dev DB never gets it.
 # Idempotent: only inserts if this email doesn't already exist.
-case Accounts.get_user_by_email("e2e@localhost.test") do
-  nil ->
-    Accounts.create_user!(%{
-      email: "e2e@localhost.test",
-      name: "E2E Host",
-      role: "superadmin",
-      active: true
-    })
+if System.get_env("E2E") == "1" do
+  case Accounts.get_user_by_email("e2e@localhost.test") do
+    nil ->
+      Accounts.create_user!(%{
+        email: "e2e@localhost.test",
+        name: "E2E Host",
+        role: "superadmin",
+        active: true
+      })
 
-    IO.puts("Created E2E test user (e2e@localhost.test).")
+      IO.puts("Created E2E test user (e2e@localhost.test).")
 
-  _user ->
-    :ok
+    _user ->
+      :ok
+  end
+
+  # Moderator-role user: the onboarding guide only shows for moderators,
+  # so the guide E2E test needs a non-superadmin account.
+  case Accounts.get_user_by_email("mod-e2e@localhost.test") do
+    nil ->
+      Accounts.create_user!(%{
+        email: "mod-e2e@localhost.test",
+        name: "E2E Moderator",
+        role: "moderator",
+        active: true
+      })
+
+      IO.puts("Created E2E moderator user (mod-e2e@localhost.test).")
+
+    _user ->
+      :ok
+  end
 end
 
 if Repo.aggregate(Topic, :count) == 0 do

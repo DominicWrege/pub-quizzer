@@ -5,7 +5,7 @@ import { request } from "@playwright/test"
  * Keeps the dev DB clean across repeated test runs.
  */
 async function globalTeardown() {
-  const ctx = await request.newContext({ baseURL: "http://localhost:4000" })
+  const ctx = await request.newContext({ baseURL: "http://localhost:4001" })
   await ctx.delete("/dev/cleanup-events")
   await ctx.dispose()
 }

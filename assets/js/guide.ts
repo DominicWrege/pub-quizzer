@@ -65,7 +65,7 @@ function startGuide(): void {
         },
       },
       {
-        element: 'a[href="/admin/events/new"]',
+        element: "#new-event-btn",
         popover: {
           title: "Neues Quiz erstellen",
           description: "Klicke hier, um ein neues Event zu erstellen. Teams treten dann mit dem 4-stelligen Code bei.",
@@ -89,11 +89,13 @@ function startGuide(): void {
 function maybeStartGuide(): void {
   const header = document.querySelector("header[data-guide-seen]")
   if (header?.getAttribute("data-guide-seen") === "true") return
+  // The onboarding tour is for moderators only — superadmins know the ropes.
+  if (header?.getAttribute("data-guide-role") === "superadmin") return
   if (!window.location.pathname.startsWith("/admin/events")) return
 
   const check = setInterval(() => {
     const navTab = document.querySelector('a[href="/admin/events"]')
-    const newBtn = document.querySelector('a[href="/admin/events/new"]')
+    const newBtn = document.querySelector("#new-event-btn")
     if (navTab && newBtn) {
       clearInterval(check)
       startGuide()

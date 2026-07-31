@@ -215,3 +215,19 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Admin login: on mobile the card chrome is removed and the form is tucked
+   higher so the on-screen keyboard never covers it. Desktop keeps the card. */
+@media (max-width: 639px) {
+  #admin-login-wrap {
+    align-items: flex-start;
+    min-height: calc(100svh - 4rem);
+  }
+
+  #admin-login-card {
+    background-color: transparent;
+    border: 0;
+    box-shadow: none;
+    margin-top: 8svh;
+  }
+}

@@ -46,21 +46,41 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
   end
 
   describe "new" do
-    test "renders form", %{conn: conn} do
-      {:ok, _view, html} =
+    test "opens dialog with form when clicking Neues Quiz", %{conn: conn} do
+      {:ok, view, _html} =
         conn
         |> auth_conn()
-        |> live(~p"/admin/events/new")
+        |> live(~p"/admin/events")
 
-      assert html =~ "Neues Quiz"
-      assert html =~ "event-form"
+      refute has_element?(view, "#event-form")
+
+      view |> element("#new-event-btn") |> render_click()
+
+      assert has_element?(view, "#event-form-modal")
+      assert has_element?(view, "#event-form")
+    end
+
+    test "cancel closes the dialog", %{conn: conn} do
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/events")
+
+      view |> element("#new-event-btn") |> render_click()
+      assert has_element?(view, "#event-form-modal")
+
+      view |> element("button", "Abbrechen") |> render_click()
+
+      refute has_element?(view, "#event-form-modal")
     end
 
     test "submit creates event and redirects to show", %{conn: conn} do
       {:ok, view, _html} =
         conn
         |> auth_conn()
-        |> live(~p"/admin/events/new")
+        |> live(~p"/admin/events")
+
+      view |> element("#new-event-btn") |> render_click()
 
       view
       |> element("#event-form")

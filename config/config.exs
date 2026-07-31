@@ -9,7 +9,9 @@ import Config
 
 config :pub_quizzer,
   ecto_repos: [PubQuizzer.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  cache_control_for_etags: "public, max-age=31536000, immutable",
+  cache_control_for_vsn_requests: "public, max-age=31536000, immutable"
 
 config :pub_quizzer, PubQuizzer.Mailer, adapter: Swoosh.Adapters.Local
 
