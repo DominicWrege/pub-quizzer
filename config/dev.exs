@@ -24,6 +24,7 @@ config :pub_quizzer, PubQuizzer.Repo,
 config :pub_quizzer,
   cache_control_for_etags: "no-cache",
   cache_control_for_vsn_requests: "no-cache"
+
 config :pub_quizzer, PubQuizzerWeb.Endpoint,
   # Binding to 0.0.0.0 allows access from other devices on the network.
   http: [ip: {0, 0, 0, 0}],
