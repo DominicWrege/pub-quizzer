@@ -7,7 +7,9 @@ defmodule PubQuizzerWeb.AdminSessionController do
     if Accounts.has_users?() do
       case get_session(conn, :user_id) do
         nil ->
-          conn |> render(:new)
+          conn
+          |> put_resp_header("cache-control", "private, max-age=10800")
+          |> render(:new)
 
         _user_id ->
           redirect(conn, to: "/admin/events")
