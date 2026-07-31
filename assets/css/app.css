@@ -230,4 +230,19 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
     box-shadow: none;
     margin-top: 8svh;
   }
+
+  /* Mobile toasts: trim the (19px-root-scaled) daisyUI alert sizing down so
+     messages don't dominate the screen. */
+  [data-flash] .alert {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    padding-block: 0.55rem;
+    padding-inline: 0.7rem;
+    gap: 0.55rem;
+  }
+
+  [data-flash] .alert .size-5 {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
 }

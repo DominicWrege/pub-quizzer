@@ -68,7 +68,7 @@ defmodule PubQuizzerWeb.CoreComponents do
       {@rest}
     >
       <div class={[
-        "alert w-80 sm:w-96 max-w-80 sm:max-w-96 text-wrap shadow-lg",
+        "alert w-[calc(100vw-2rem)] sm:w-96 max-w-[calc(100vw-2rem)] sm:max-w-96 text-wrap shadow-lg",
         @kind == :info && "alert-info",
         @kind == :error && "alert-error"
       ]}>
