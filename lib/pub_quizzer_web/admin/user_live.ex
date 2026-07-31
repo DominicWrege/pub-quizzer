@@ -162,12 +162,17 @@ defmodule PubQuizzerWeb.Admin.UserLive do
         <:subtitle>Moderatoren verwalten und Login-Links generieren.</:subtitle>
       </.header>
 
-      <.form for={@form} id="add-user-form" phx-submit="invite" class="flex gap-2 items-center">
+      <.form
+        for={@form}
+        id="add-user-form"
+        phx-submit="invite"
+        class="flex flex-col sm:flex-row gap-2 sm:items-center"
+      >
         <input
           type="email"
           name="email"
           placeholder="name@beispiel.de"
-          class="input input-sm flex-1"
+          class="input input-sm w-full sm:flex-1"
           required
           autocomplete="email"
         />
@@ -175,11 +180,11 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           type="text"
           name="name"
           placeholder="Name"
-          class="input input-sm w-60"
+          class="input input-sm w-full sm:w-60"
           required
           autocomplete="name"
         />
-        <button type="submit" class="btn btn-primary btn-sm shrink-0">
+        <button type="submit" class="btn btn-primary btn-sm shrink-0 w-full sm:w-auto">
           <.icon name="hero-plus" class="size-4" /> Hinzufügen
         </button>
       </.form>
@@ -187,7 +192,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
       <div id="clipboard" phx-hook="ClipboardCopy" class="hidden" />
 
       <%= if @invite_link do %>
-        <div class="rounded-lg border border-base-300 bg-base-200 px-4 py-3 flex items-center justify-between gap-4">
+        <div class="rounded-lg border border-base-300 bg-base-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <span class="font-semibold text-sm">Login-Link generiert</span>
           <div class="flex items-center gap-2">
             <button
@@ -210,7 +215,65 @@ defmodule PubQuizzerWeb.Admin.UserLive do
       <% end %>
 
       <!-- User list -->
-      <div class="overflow-x-auto rounded-lg border-2 border-base-300">
+      <%!-- Mobile: cards --%>
+      <div id="users-cards" class="space-y-3 lg:hidden">
+        <div
+          :for={user <- @users}
+          id={"user-card-#{user.id}"}
+          class="bg-base-200 border-2 border-base-300 rounded-xl px-4 pt-3 pb-3"
+        >
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="font-mono text-sm break-all">{user.email}</span>
+            <span class={[
+              "badge badge-sm shrink-0",
+              user.role == "superadmin" && "badge-primary"
+            ]}>
+              {if user.role == "superadmin", do: "Superadmin", else: "Moderator"}
+            </span>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-medium">{if user.name && user.name != "",
+              do: user.name,
+              else: "—"}</span>
+            <span class={[
+              "badge badge-sm shrink-0",
+              user.active && "badge-success",
+              !user.active && "badge-error"
+            ]}>
+              {if user.active, do: "Aktiv", else: "Inaktiv"}
+            </span>
+          </div>
+          <div class="text-xs text-base-content/60 mt-1">
+            <%= if user.last_signed_in_at do %>
+              Zuletzt: {Calendar.strftime(user.last_signed_in_at, "%d.%m.%y %H:%M")}
+            <% else %>
+              Nie angemeldet
+            <% end %>
+          </div>
+          <div class="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-base-300">
+            <%= if user.id != @current_scope.user.id do %>
+              <button
+                phx-click="resend_link"
+                phx-value-id={user.id}
+                class="btn btn-xs btn-soft"
+                title="Neuen Login-Link senden"
+              >
+                Link
+              </button>
+              <button
+                phx-click="ask_delete"
+                phx-value-id={user.id}
+                class="btn btn-xs btn-danger-soft"
+              >
+                Löschen
+              </button>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <%!-- Desktop: table --%>
+      <div class="overflow-x-auto rounded-lg border-2 border-base-300 hidden lg:block">
         <table class="table table-sm">
           <thead>
             <tr class="border-b-2 border-base-300 bg-base-300">

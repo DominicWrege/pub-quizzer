@@ -254,6 +254,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
 
       updated = Quiz.get_question!(question.id)
       assert updated.prompt == "Changed"
+
       assert updated.options == [
                %{"text" => "Uno"},
                %{"text" => "Dos"},

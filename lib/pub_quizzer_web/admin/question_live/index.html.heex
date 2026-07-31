@@ -6,31 +6,31 @@
 >
   <div class="pt-4 lg:pt-0">
     <.header>
-    <:back>
-      <.link navigate={~p"/admin/topics"} class="btn btn-sm btn-soft gap-0">
-        <span class="sm:hidden">←</span>
-        <span class="hidden sm:inline">← Zurück zu Themen</span>
-      </.link>
-    </:back>
-    Fragen
-    <:subtitle>{@topic.name}</:subtitle>
-    <:actions>
-      <form id="search-form" phx-change="search" class="contents">
-        <input
-          name="search"
-          type="text"
-          value={@search}
-          placeholder="Suchen..."
-          class="input input-sm w-full sm:w-auto"
-        />
-      </form>
-      <.link
-        navigate={~p"/admin/topics/#{@topic.id}/questions/new"}
-        class="btn btn-primary btn-sm"
-      >
-        <.icon name="hero-plus" class="size-4" /> Neue Frage
-      </.link>
-    </:actions>
+      <:back>
+        <.link navigate={~p"/admin/topics"} class="btn btn-sm btn-soft gap-0">
+          <span class="sm:hidden">←</span>
+          <span class="hidden sm:inline">← Zurück zu Themen</span>
+        </.link>
+      </:back>
+      Fragen
+      <:subtitle>{@topic.name}</:subtitle>
+      <:actions>
+        <form id="search-form" phx-change="search" class="contents">
+          <input
+            name="search"
+            type="text"
+            value={@search}
+            placeholder="Suchen..."
+            class="input input-sm w-full sm:w-auto"
+          />
+        </form>
+        <.link
+          navigate={~p"/admin/topics/#{@topic.id}/questions/new"}
+          class="btn btn-primary btn-sm"
+        >
+          <.icon name="hero-plus" class="size-4" /> Neue Frage
+        </.link>
+      </:actions>
     </.header>
   </div>
 
@@ -78,7 +78,9 @@
       <:col :let={{_id, q}} label="#"><span class="opacity-60">{q.position + 1}</span></:col>
       <:col :let={{_id, q}} label="Frage">{q.prompt}</:col>
       <:col :let={{_id, q}} label="Korrekt">
-        <span class="whitespace-nowrap">{String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(q.correct_index))}</span>
+        <span class="whitespace-nowrap">{String.capitalize(
+          PubQuizzerWeb.CoreComponents.letter_for_index(q.correct_index)
+        )}</span>
       </:col>
       <:col :let={{_id, q}} label="Zuletzt">
         <div class="flex items-center gap-1.5 whitespace-nowrap text-sm">

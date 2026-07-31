@@ -2,7 +2,7 @@
   id="question-preview-modal"
   phx-hook="Dialog"
   data-cancel-event="close_preview"
-  class="m-auto rounded-box bg-base-100 p-0 shadow-xl max-w-4xl w-full"
+  class="m-auto rounded-box bg-base-100 p-0 shadow-xl max-w-4xl w-[calc(100%-2rem)] sm:w-full"
 >
   <div class="flex items-center justify-between p-5 border-b border-base-300">
     <div>
@@ -17,7 +17,7 @@
     >×</button>
   </div>
 
-  <div class="p-6 max-h-[80vh] overflow-y-auto">
+  <div class="p-4 sm:p-6 max-h-[80vh] overflow-y-auto">
     <% prompt_text = @form[:prompt].value || "" %>
     <% options = Phoenix.HTML.Form.input_value(@form, :options) || [] %>
     <% correct_index = @form[:correct_index].value %>
@@ -34,7 +34,7 @@
               <%= for {option, idx} <- Enum.with_index(options) do %>
                 <% is_correct = correct_index == idx %>
                 <div class={[
-                  "p-6 rounded-lg text-3xl flex items-center gap-4",
+                  "p-3 sm:p-6 rounded-lg text-2xl sm:text-3xl flex items-center gap-4",
                   is_correct && "bg-success/20 border-2 border-success",
                   !is_correct && "bg-base-300"
                 ]}>
@@ -56,7 +56,7 @@
             <%= for {option, idx} <- Enum.with_index(options) do %>
               <% is_correct = correct_index == idx %>
               <div class={[
-                "p-6 rounded-lg text-3xl flex items-center gap-4",
+                "p-3 sm:p-6 rounded-lg text-2xl sm:text-3xl flex items-center gap-4",
                 is_correct && "bg-success/20 border-2 border-success",
                 !is_correct && "bg-base-300"
               ]}>

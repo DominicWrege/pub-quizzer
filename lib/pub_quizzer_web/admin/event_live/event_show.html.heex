@@ -84,7 +84,7 @@
       </div>
     </div>
 
-    <div class="flex gap-2 mb-6">
+    <div class="flex flex-wrap items-center gap-2 mb-6">
       <button phx-click="add_slot" class="btn btn-sm btn-soft">
         <.icon name="hero-plus" class="size-4" /> Team hinzufügen
       </button>
@@ -102,7 +102,7 @@
       <span class="flex-1"></span>
       <button
         phx-click="do_start"
-        class="btn btn-primary btn-lg text-xl px-10"
+        class="btn btn-primary btn-lg text-xl px-10 w-full sm:w-auto"
         disabled={!@all_teams_connected}
       >
         ▶ Quiz starten
@@ -113,7 +113,58 @@
       <div class="card-body">
         <h3 class="card-title text-lg mb-3">{@event.team_count} Teams</h3>
 
-        <div class="text-lg">
+        <%!-- Mobile: cards --%>
+        <div id="event-team-cards" class="space-y-3 lg:hidden">
+          <div
+            :for={team <- @event.teams}
+            id={"team-card-#{team.id}"}
+            class="bg-base-100 border-2 border-base-300 rounded-xl px-4 pt-3 pb-3"
+          >
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span class="text-sm font-semibold opacity-60">Team {team.slot_index + 1}</span>
+              <%= if team.claimed_at do %>
+                <%= if team.id in @connected_team_ids do %>
+                  <span class="badge badge-success">Beigetreten</span>
+                <% else %>
+                  <span class="badge badge-warning">Getrennt</span>
+                <% end %>
+              <% else %>
+                <span class="badge badge-neutral">Wartend</span>
+              <% end %>
+            </div>
+            <input
+              type="text"
+              value={team.name}
+              class="input input-bordered w-full"
+              phx-blur="rename_team"
+              phx-value-team_id={team.id}
+              data-team-id={team.id}
+            />
+            <div class="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-base-300">
+              <%= if team.claimed_at do %>
+                <button
+                  phx-click="kick_team"
+                  phx-value-team_id={team.id}
+                  class="btn btn-sm btn-soft"
+                  title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
+                >
+                  <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Rauswerfen
+                </button>
+              <% end %>
+              <button
+                phx-click="remove_team"
+                phx-value-team_id={team.id}
+                class="btn btn-sm btn-danger-soft"
+                title="Team entfernen"
+              >
+                <.icon name="hero-x-mark" class="size-4" /> Entfernen
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <%!-- Desktop: table --%>
+        <div class="text-lg hidden lg:block">
           <.table id="event-teams" rows={@event.teams} row_id={fn team -> "team-#{team.id}" end}>
             <:col :let={team} label="#">
               <span class="opacity-60">{team.slot_index + 1}</span>

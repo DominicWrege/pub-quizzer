@@ -48,7 +48,7 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
       max_width="max-w-7xl"
     >
       <.header>
-        <div class="flex items-baseline gap-3">
+        <div class="flex items-baseline gap-2 sm:gap-3 flex-wrap">
           <span>Ergebnisse</span>
           <%= if @event.status != "finished" do %>
             <span class="badge badge-sm badge-primary gap-1">

@@ -177,8 +177,14 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
     changeset =
       case question do
-        nil -> Question.changeset(%Question{options: empty_opts}, Map.merge(%{"correct_index" => 0}, question_params))
-        _ -> Question.changeset(question, question_params)
+        nil ->
+          Question.changeset(
+            %Question{options: empty_opts},
+            Map.merge(%{"correct_index" => 0}, question_params)
+          )
+
+        _ ->
+          Question.changeset(question, question_params)
       end
 
     {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}

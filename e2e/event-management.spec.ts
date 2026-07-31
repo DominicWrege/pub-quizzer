@@ -7,16 +7,15 @@ test.describe("event management", () => {
     const code = await createEvent(hostPage, 2)
     const { contexts } = await joinTeams(browser, code, 1)
 
-    // Find the first team name input and change it
-    const nameInput = hostPage.locator('input[phx-blur="rename_team"]').first()
+    // Find the first team name input in the (desktop) table and change it
+    const nameInput = hostPage.locator("#event-teams input[phx-blur='rename_team']").first()
     await nameInput.fill("Die Superhirne")
     await nameInput.blur()
 
     // The name should persist (re-render shows new value)
-    await expect(hostPage.locator('input[phx-blur="rename_team"]').first()).toHaveValue(
-      "Die Superhirne",
-      { timeout: 10_000 },
-    )
+    await expect(
+      hostPage.locator("#event-teams input[phx-blur='rename_team']").first(),
+    ).toHaveValue("Die Superhirne", { timeout: 10_000 })
 
     for (const ctx of contexts) await ctx.close()
   })
@@ -47,7 +46,7 @@ test.describe("event management", () => {
     await hostPage.goto("/admin/events")
 
     // Search by code
-    await hostPage.locator('input[phx-keyup="search"]').fill(code)
+    await hostPage.locator("#event-search input[name='query']").fill(code)
     await hostPage.waitForTimeout(500)
 
     // The event card with our code should be visible
@@ -78,8 +77,8 @@ test.describe("event management", () => {
     const code = await createEvent(hostPage, 2)
     const { contexts } = await joinTeams(browser, code, 1)
 
-    // Remove the first team
-    await hostPage.locator('[phx-click="remove_team"]').first().click()
+    // Remove the first team in the (desktop) table
+    await hostPage.locator("#event-teams [phx-click='remove_team']").first().click()
 
     // One team row gone (was 2, now 1)
     await expect(hostPage.locator("tbody#event-teams tr")).toHaveCount(1, { timeout: 10_000 })
