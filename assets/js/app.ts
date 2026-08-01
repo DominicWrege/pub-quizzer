@@ -427,3 +427,4 @@ const liveSocket = new LiveSocket("/live", Socket, {
 liveSocket.connect()
 
 import "./guide"
+import "./login_wait"

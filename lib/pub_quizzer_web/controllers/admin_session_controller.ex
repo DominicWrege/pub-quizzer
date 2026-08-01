@@ -34,6 +34,12 @@ defmodule PubQuizzerWeb.AdminSessionController do
     end
   end
 
+  def status(conn, _params) do
+    conn
+    |> put_resp_header("cache-control", "no-store")
+    |> json(%{authenticated: get_session(conn, :user_id) != nil})
+  end
+
   def delete(conn, _params) do
     conn
     |> clear_session()

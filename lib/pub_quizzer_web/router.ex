@@ -26,6 +26,7 @@ defmodule PubQuizzerWeb.Router do
     # Admin session (login/logout)
     get "/admin/login", AdminSessionController, :new
     post "/admin/login", AdminSessionController, :create
+    get "/admin/login/status", AdminSessionController, :status
     get "/admin/logout", AdminSessionController, :delete
 
     # Magic link
