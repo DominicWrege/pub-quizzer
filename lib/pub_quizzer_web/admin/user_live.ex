@@ -28,9 +28,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
          socket
          |> assign(:users, users)
          |> assign(:page_title, "Benutzer")
-         |> assign(:form, to_form(%{"email" => ""}))
-         |> assign(:invite_link, nil)
-         |> assign(:invite_link_timer, nil)
+         |> assign(:form, to_form(%{"email" => "", "name" => ""}))
          |> assign(:confirm_action, nil)
          |> assign(:pending_delete_id, nil)
          |> assign(:base_url, base_url)}
@@ -47,15 +45,12 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           {:ok, raw_token} = Accounts.generate_invite_link(user)
           url = "#{socket.assigns.base_url}/admin/magic?token=#{raw_token}"
 
-          timer_ref = Process.send_after(self(), :clear_invite_link, 25_000)
-
           {:noreply,
            socket
            |> assign(:users, Accounts.list_users())
-           |> assign(:form, to_form(%{"email" => ""}))
-           |> assign(:invite_link, url)
-           |> assign(:invite_link_timer, timer_ref)
-           |> put_flash(:info, "Moderator hinzugefügt.")}
+           |> assign(:form, to_form(%{"email" => "", "name" => ""}))
+           |> push_event("copy_to_clipboard", %{url: url})
+           |> put_flash(:info, "Moderator hinzugefügt – Login-Link kopiert.")}
 
         {:error, _changeset} ->
           {:noreply,
@@ -110,7 +105,6 @@ defmodule PubQuizzerWeb.Admin.UserLive do
          |> assign(:users, Accounts.list_users())
          |> assign(:confirm_action, nil)
          |> assign(:pending_delete_id, nil)
-         |> clear_invite_link()
          |> put_flash(:info, "Benutzer gelöscht.")}
 
       true ->
@@ -120,25 +114,6 @@ defmodule PubQuizzerWeb.Admin.UserLive do
          |> assign(:pending_delete_id, nil)
          |> put_flash(:error, "Keine Berechtigung.")}
     end
-  end
-
-  def handle_event("dismiss_invite_link", _params, socket) do
-    {:noreply, clear_invite_link(socket)}
-  end
-
-  @impl true
-  def handle_info(:clear_invite_link, socket) do
-    {:noreply, clear_invite_link(socket)}
-  end
-
-  defp clear_invite_link(socket) do
-    if ref = socket.assigns[:invite_link_timer] do
-      Process.cancel_timer(ref)
-    end
-
-    socket
-    |> assign(:invite_link, nil)
-    |> assign(:invite_link_timer, nil)
   end
 
   defp connect_base_url(socket) do
@@ -169,6 +144,14 @@ defmodule PubQuizzerWeb.Admin.UserLive do
         class="flex flex-col sm:flex-row gap-2 sm:items-center"
       >
         <input
+          type="text"
+          name="name"
+          placeholder="Name"
+          class="input input-sm w-full sm:flex-1"
+          required
+          autocomplete="name"
+        />
+        <input
           type="email"
           name="email"
           placeholder="name@beispiel.de"
@@ -176,43 +159,12 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           required
           autocomplete="email"
         />
-        <input
-          type="text"
-          name="name"
-          placeholder="Name"
-          class="input input-sm w-full sm:w-60"
-          required
-          autocomplete="name"
-        />
-        <button type="submit" class="btn btn-primary btn-sm shrink-0 w-full sm:w-auto">
+        <button type="submit" class="btn btn-primary btn-sm shrink-0 w-full sm:w-44 gap-1.5">
           <.icon name="hero-plus" class="size-4" /> Hinzufügen
         </button>
       </.form>
 
       <div id="clipboard" phx-hook="ClipboardCopy" class="hidden" />
-
-      <%= if @invite_link do %>
-        <div class="rounded-lg border border-base-300 bg-base-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          <span class="font-semibold text-sm">Login-Link generiert</span>
-          <div class="flex items-center gap-2">
-            <button
-              id="copy-invite-link"
-              phx-hook="CopyLink"
-              data-url={@invite_link}
-              class="btn btn-sm btn-soft"
-            >
-              Link kopieren
-            </button>
-            <button
-              phx-click="dismiss_invite_link"
-              class="btn btn-sm btn-circle btn-ghost"
-              title="Schließen"
-            >
-              <.icon name="hero-x-mark" class="size-4" />
-            </button>
-          </div>
-        </div>
-      <% end %>
 
       <!-- User list -->
       <%!-- Mobile: cards --%>
@@ -223,7 +175,9 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           class="bg-base-200 border-2 border-base-300 rounded-xl px-4 pt-3 pb-3"
         >
           <div class="flex items-center justify-between gap-2 mb-1">
-            <span class="font-mono text-sm break-all">{user.email}</span>
+            <span class="text-sm font-medium">{if user.name && user.name != "",
+              do: user.name,
+              else: "—"}</span>
             <span class={[
               "badge badge-sm shrink-0",
               user.role == "superadmin" && "badge-primary"
@@ -232,9 +186,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
             </span>
           </div>
           <div class="flex items-center justify-between gap-2">
-            <span class="text-sm font-medium">{if user.name && user.name != "",
-              do: user.name,
-              else: "—"}</span>
+            <span class="font-mono text-sm break-all">{user.email}</span>
             <span class={[
               "badge badge-sm shrink-0",
               user.active && "badge-success",
@@ -277,8 +229,8 @@ defmodule PubQuizzerWeb.Admin.UserLive do
         <table class="table table-sm">
           <thead>
             <tr class="border-b-2 border-base-300 bg-base-300">
-              <th>E-Mail</th>
               <th>Name</th>
+              <th>E-Mail</th>
               <th>Rolle</th>
               <th>Status</th>
               <th>Letzte Anmeldung</th>
@@ -287,10 +239,10 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           </thead>
           <tbody id="users" class="divide-y divide-base-300">
             <tr :for={user <- @users} id={"user-#{user.id}"} class="bg-base-200 hover">
-              <td class="font-mono text-sm">{user.email}</td>
               <td class="font-medium">
                 {if user.name && user.name != "", do: user.name, else: "—"}
               </td>
+              <td class="font-mono text-sm">{user.email}</td>
               <td>
                 <span class={[
                   "badge badge-sm",

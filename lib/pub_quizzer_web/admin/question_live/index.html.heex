@@ -68,7 +68,7 @@
       class="bg-base-200 border-2 border-base-300 rounded-xl px-4 pt-4 pb-3"
     >
       <div class="text-xs text-base-content/60 mb-1">#{q.position + 1}</div>
-      <div class="font-medium line-clamp-2 break-words">{q.prompt}</div>
+      <div class="font-medium line-clamp-2 break-words whitespace-pre-wrap">{q.prompt}</div>
       <div class="flex items-center gap-3 mt-2 text-xs text-base-content/50">
         <span>{String.capitalize(letter_for_index(q.correct_index))}</span>
         <span>{Calendar.strftime(q.updated_at, "%d.%m.%y")}</span>
@@ -121,7 +121,9 @@
       row_id={fn {id, _} -> id end}
     >
       <:col :let={{_id, q}} label="#"><span class="opacity-60">{q.position + 1}</span></:col>
-      <:col :let={{_id, q}} label="Frage">{q.prompt}</:col>
+      <:col :let={{_id, q}} label="Frage">
+        <span class="whitespace-pre-wrap">{q.prompt}</span>
+      </:col>
       <:col :let={{_id, q}} label="Status">
         <div class="inline-flex items-center gap-2.5 w-28">
           <input
