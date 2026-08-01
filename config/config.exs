@@ -15,6 +15,16 @@ config :pub_quizzer,
   cache_control_for_etags: "public",
   cache_control_for_vsn_requests: "public, max-age=31536000, immutable"
 
+# SQLite tuning, applied in every environment. WAL lets any number of readers
+# proceed without blocking the single writer, and a generous busy_timeout makes
+# concurrent writers wait for the write lock instead of raising "database is
+# locked" (SQLITE_BUSY). Set explicitly so we don't depend on library defaults.
+config :pub_quizzer, PubQuizzer.Repo,
+  journal_mode: :wal,
+  synchronous: :normal,
+  busy_timeout: 15_000,
+  foreign_keys: :on
+
 config :pub_quizzer, PubQuizzer.Mailer, adapter: Swoosh.Adapters.Local
 
 config :pub_quizzer, :mailer, from_email: System.get_env("MAIL_FROM", "noreply@localhost")
