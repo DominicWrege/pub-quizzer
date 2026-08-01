@@ -3,6 +3,7 @@
   current_scope={@current_scope}
   current_path={@current_path}
   max_width="max-w-4xl"
+  main_class="px-2 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-4 sm:pb-10 max-w-full"
 >
   <.header>
     <:back>
@@ -16,7 +17,7 @@
       <button
         type="button"
         phx-click="toggle_preview"
-        class="btn btn-soft btn-sm gap-1"
+        class="btn btn-soft btn-sm gap-1 hidden sm:inline-flex"
       >
         <.icon name="hero-eye" class="size-4" /> Vorschau
       </button>
@@ -35,9 +36,28 @@
     id="question-form"
     phx-change="validate"
     phx-submit="save"
-    class="bg-base-200 rounded-2xl p-5 sm:p-6 space-y-5 border border-base-300"
+    class="bg-base-200 rounded-2xl p-2 sm:p-6 space-y-5 border border-base-300"
   >
     <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
+
+    <div class="flex items-center justify-between bg-base-100 border border-base-300 rounded-xl px-4 py-3">
+      <div>
+        <div class="text-sm font-medium">Veröffentlicht</div>
+        <div class="text-xs text-base-content/60 hidden sm:block">
+          Entwurfs-Fragen erscheinen nicht im Live-Quiz
+        </div>
+      </div>
+      <label class="cursor-pointer">
+        <input type="hidden" name="question[published]" value="false" />
+        <input
+          type="checkbox"
+          name="question[published]"
+          value="true"
+          checked={@form[:status].value == "published"}
+          class="toggle toggle-success"
+        />
+      </label>
+    </div>
 
     <%= if @form_submitted and @form.errors != [] do %>
       <div class="alert alert-error py-2 px-3 text-sm">
@@ -126,7 +146,7 @@
           Antwortoptionen
         </span>
         <span class="text-xs text-base-content/50">
-          Klick zum Auswählen · Ziehen zum Sortieren
+          Klick zum Auswählen<span class="hidden sm:inline"> · Ziehen zum Sortieren</span>
         </span>
       </div>
 
@@ -152,7 +172,7 @@
             ]}
           >
             <div class="flex items-start gap-2">
-              <div class="flex flex-col items-center gap-0.5 pt-2 text-base-content/30 cursor-grab select-none drag-handle hover:text-base-content/60">
+              <div class="hidden sm:flex flex-col items-center gap-0.5 pt-2 text-base-content/30 cursor-grab select-none drag-handle hover:text-base-content/60">
                 <span class="leading-none text-lg">⠿</span>
               </div>
 
@@ -170,7 +190,7 @@
                 data-option-text
                 phx-hook="AutoResize"
                 onclick="event.stopPropagation()"
-                class="flex-1 bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none text-lg leading-relaxed placeholder:text-base-content/30 focus:outline-none px-2 py-1.5 min-h-[3.75rem] whitespace-pre-wrap"
+                class="flex-1 min-w-0 bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none text-lg leading-relaxed placeholder:text-base-content/30 focus:outline-none px-2 py-1.5 min-h-[3.75rem] whitespace-pre-wrap"
                 placeholder={"Option #{String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(i))}"}
                 rows="2"
               ><%= opt_text %></textarea>
@@ -196,12 +216,23 @@
               data-option-index={i}
               phx-hook="OptionImagePreview"
               phx-drop-target={@option_uploads[i].ref}
-              class="mt-2 ml-16"
+              class="mt-2 ml-9 sm:ml-16"
             >
               <%= cond do %>
                 <% preview = @option_image_previews[i] -> %>
-                  <div class="relative inline-block pt-4">
-                    <img src={preview} class="h-40 rounded border border-base-300" />
+                  <%!-- Mobile: icon button --%>
+                  <button
+                    type="button"
+                    phx-click="view_image"
+                    phx-value-url={preview}
+                    class="sm:hidden btn btn-xs btn-ghost gap-1"
+                  >
+                    <.icon name="hero-photo" class="size-4" />
+                    <span class="text-xs">Bild</span>
+                  </button>
+                  <%!-- Desktop: inline preview --%>
+                  <div class="hidden sm:block relative inline-block pt-4">
+                    <img src={preview} class="h-40 max-w-full rounded border border-base-300" />
                     <button
                       type="button"
                       phx-click="cancel_option_upload"
@@ -228,5 +259,23 @@
 
   <%= if @show_preview do %>
     {preview(assigns)}
+  <% end %>
+
+  <%= if @viewing_image do %>
+    <div
+      class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      phx-click="close_image"
+    >
+      <div class="relative max-w-4xl max-h-[90vh]" phx-click.stop>
+        <img src={@viewing_image} class="max-w-full max-h-[90vh] object-contain rounded" />
+        <button
+          type="button"
+          phx-click="close_image"
+          class="btn btn-circle btn-sm absolute top-2 right-2"
+        >
+          <.icon name="hero-x-mark" class="size-5" />
+        </button>
+      </div>
+    </div>
   <% end %>
 </Layouts.app>

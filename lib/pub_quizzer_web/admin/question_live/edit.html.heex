@@ -3,6 +3,7 @@
   current_scope={@current_scope}
   current_path={@current_path}
   max_width="max-w-[1700px]"
+  main_class="px-2 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-4 sm:pb-10 max-w-full"
 >
   <.header>
     <:back>
@@ -16,7 +17,7 @@
       <button
         type="button"
         phx-click="toggle_preview"
-        class="btn btn-soft btn-sm gap-1"
+        class="btn btn-soft btn-sm gap-1 hidden sm:inline-flex"
       >
         <.icon name="hero-eye" class="size-4" /> Vorschau
       </button>
@@ -30,14 +31,14 @@
     </:actions>
   </.header>
 
-  <div class="lg:grid lg:grid-cols-[2fr_1fr] xl:grid-cols-[3fr_1fr] lg:gap-2">
-    <.form
-      for={@form}
-      id="question-form"
-      phx-change="validate"
-      phx-submit="save"
-      class="bg-base-200 rounded-2xl p-5 sm:p-6 space-y-5 border border-base-300 w-full mx-auto max-w-[1200px]"
-    >
+  <.form
+    for={@form}
+    id="question-form"
+    phx-change="validate"
+    phx-submit="save"
+    class="flex flex-col gap-4 lg:grid lg:grid-cols-[2fr_1fr] xl:grid-cols-[3fr_1fr] lg:gap-2 max-w-full"
+  >
+    <div class="bg-base-200 rounded-2xl p-2 sm:p-6 space-y-5 border border-base-300 min-w-0">
       <%!-- Hidden correct index — driven by click-to-select on option cards --%>
       <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
 
@@ -144,7 +145,7 @@
             Antwortoptionen
           </span>
           <span class="text-xs text-base-content/50">
-            Klick zum Auswählen · Ziehen zum Sortieren
+            Klick zum Auswählen<span class="hidden sm:inline"> · Ziehen zum Sortieren</span>
           </span>
         </div>
 
@@ -172,7 +173,7 @@
             >
               <div class="flex items-start gap-3">
                 <%!-- Drag handle --%>
-                <div class="flex flex-col items-center gap-0.5 pt-2 text-base-content/30 cursor-grab select-none drag-handle hover:text-base-content/60">
+                <div class="hidden sm:flex flex-col items-center gap-0.5 pt-2 text-base-content/30 cursor-grab select-none drag-handle hover:text-base-content/60">
                   <span class="leading-none text-lg">⠿</span>
                 </div>
 
@@ -192,7 +193,7 @@
                   data-option-text
                   phx-hook="AutoResize"
                   onclick="event.stopPropagation()"
-                  class="flex-1 bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none text-lg leading-relaxed placeholder:text-base-content/30 focus:outline-none px-2 py-1.5 min-h-[3.75rem] whitespace-pre-wrap"
+                  class="flex-1 min-w-0 bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none text-lg leading-relaxed placeholder:text-base-content/30 focus:outline-none px-2 py-1.5 min-h-[3.75rem] whitespace-pre-wrap"
                   placeholder={"Option #{String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(i))}"}
                   rows="2"
                 ><%= opt_text %></textarea>
@@ -220,12 +221,23 @@
                 data-option-index={i}
                 phx-hook="OptionImagePreview"
                 phx-drop-target={@option_uploads[i].ref}
-                class="mt-2 ml-16"
+                class="mt-2 ml-10 sm:ml-16"
               >
                 <%= cond do %>
                   <% preview = @option_image_previews[i] -> %>
-                    <div class="relative inline-block pt-4">
-                      <img src={preview} class="h-40 rounded border border-base-300" />
+                    <%!-- Mobile: icon button --%>
+                    <button
+                      type="button"
+                      phx-click="view_image"
+                      phx-value-url={preview}
+                      class="sm:hidden btn btn-xs btn-ghost gap-1"
+                    >
+                      <.icon name="hero-photo" class="size-4" />
+                      <span class="text-xs">Bild</span>
+                    </button>
+                    <%!-- Desktop: inline preview --%>
+                    <div class="hidden sm:block relative inline-block pt-4">
+                      <img src={preview} class="h-40 max-w-full rounded border border-base-300" />
                       <button
                         type="button"
                         phx-click="cancel_option_upload"
@@ -234,8 +246,19 @@
                       >×</button>
                     </div>
                   <% img = opt_img -> %>
-                    <div class="relative inline-block pt-4 group">
-                      <img src={img} class="h-40 rounded border border-base-300" />
+                    <%!-- Mobile: icon button --%>
+                    <button
+                      type="button"
+                      phx-click="view_image"
+                      phx-value-url={img}
+                      class="sm:hidden btn btn-xs btn-ghost gap-1"
+                    >
+                      <.icon name="hero-photo" class="size-4" />
+                      <span class="text-xs">Bild</span>
+                    </button>
+                    <%!-- Desktop: inline preview --%>
+                    <div class="hidden sm:block relative inline-block pt-4 group">
+                      <img src={img} class="h-40 max-w-full rounded border border-base-300" />
                       <button
                         type="button"
                         phx-click="remove_option_image"
@@ -255,155 +278,152 @@
           <% end %>
         </div>
       </div>
-    </.form>
+    </div>
 
-    <%!-- Edit history sidebar (visible on lg+) --%>
-    <aside class="hidden lg:block">
-      <section class="card bg-base-200 border border-base-300 sticky top-4">
-        <div class="card-body p-4 gap-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-base-content/80">Bearbeitungsverlauf</h3>
-            <span class="text-xs text-base-content/50">{length(@versions)} Versionen</span>
+    <%!-- Right column: status + edit history --%>
+    <div class="min-w-0">
+      <div class="space-y-3 lg:sticky lg:top-4">
+        <div class={[
+          "rounded-xl border p-4 transition-colors",
+          if(@form[:status].value == "published",
+            do: "border-success/40 bg-success/10",
+            else: "border-warning/40 bg-warning/10"
+          )
+        ]}>
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class={[
+                "size-9 rounded-lg grid place-items-center shrink-0 transition-colors",
+                if(@form[:status].value == "published",
+                  do: "bg-success/20 text-success",
+                  else: "bg-warning/20 text-warning"
+                )
+              ]}>
+                <.icon
+                  name={
+                    if @form[:status].value == "published",
+                      do: "hero-check-circle",
+                      else: "hero-pencil"
+                  }
+                  class="size-5"
+                />
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-semibold leading-tight">
+                  {if @form[:status].value == "published", do: "Veröffentlicht", else: "Entwurf"}
+                </div>
+                <div class="text-xs text-base-content/60 leading-tight mt-0.5 hidden sm:block">
+                  {if @form[:status].value == "published",
+                    do: "Sichtbar im Live-Quiz",
+                    else: "Nicht im Live-Quiz"}
+                </div>
+              </div>
+            </div>
+            <label class="cursor-pointer shrink-0">
+              <input type="hidden" name="question[published]" value="false" />
+              <input
+                type="checkbox"
+                name="question[published]"
+                value="true"
+                checked={@form[:status].value == "published"}
+                class="toggle toggle-success"
+              />
+            </label>
           </div>
-          <%= if @versions == [] do %>
-            <p class="text-sm text-base-content/70 italic">Noch keine Versionen.</p>
-          <% else %>
-            <div class="space-y-2">
-              <%= for {version, diffs} <- @versions do %>
-                <div class="rounded-lg border border-base-300 bg-base-100 px-3 py-2">
-                  <div class="flex items-center gap-2">
-                    <div class="avatar avatar-placeholder">
-                      <div class="bg-primary text-primary-content rounded-full w-7">
-                        <span class="text-xs font-semibold">
-                          {String.at((version.user && version.user.name) || "?", 0)}
+        </div>
+
+        <section class="card bg-base-200 border border-base-300">
+          <div class="card-body p-4 gap-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-base-content/80">Bearbeitungsverlauf</h3>
+              <span class="text-xs text-base-content/50">{length(@versions)} Versionen</span>
+            </div>
+            <%= if @versions == [] do %>
+              <p class="text-sm text-base-content/70 italic">Noch keine Versionen.</p>
+            <% else %>
+              <div class="space-y-2">
+                <%= for {version, diffs} <- @versions do %>
+                  <div class="rounded-lg border border-base-300 bg-base-100 px-3 py-2">
+                    <div class="flex items-center gap-2">
+                      <div class="avatar avatar-placeholder">
+                        <div class="bg-primary text-primary-content rounded-full w-7">
+                          <span class="text-xs font-semibold">
+                            {String.at((version.user && version.user.name) || "?", 0)}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <span class="font-medium text-sm block truncate">
+                          {(version.user && version.user.name) || "Unbekannt"}
+                        </span>
+                        <span class="text-xs text-base-content/70">
+                          {Calendar.strftime(version.inserted_at, "%d.%m.%y %H:%M")}
                         </span>
                       </div>
                     </div>
-                    <div class="min-w-0 flex-1">
-                      <span class="font-medium text-sm block truncate">
-                        {(version.user && version.user.name) || "Unbekannt"}
-                      </span>
-                      <span class="text-xs text-base-content/70">
-                        {Calendar.strftime(version.inserted_at, "%d.%m.%y %H:%M")}
-                      </span>
-                    </div>
+                    <%= if diffs != [] do %>
+                      <ul class="mt-2 space-y-1 text-xs text-base-content/80 border-t border-base-300 pt-2">
+                        <%= for diff <- diffs do %>
+                          <li class="flex items-start gap-1">
+                            <.icon
+                              name="hero-pencil"
+                              class="size-3 mt-0.5 shrink-0 text-base-content/60"
+                            />
+                            <%= case diff.field do %>
+                              <% :prompt -> %>
+                                <span class="font-semibold">Frage geändert</span>
+                              <% :options -> %>
+                                <span class="font-semibold">Optionen geändert</span>
+                              <% :correct_index -> %>
+                                <span class="font-semibold">Antwort:</span>
+                                {String.capitalize(
+                                  PubQuizzerWeb.CoreComponents.letter_for_index(diff.old || 0)
+                                )} → {String.capitalize(
+                                  PubQuizzerWeb.CoreComponents.letter_for_index(diff.new || 0)
+                                )}
+                              <% :image -> %>
+                                <%= cond do %>
+                                  <% is_nil(diff.old) and not is_nil(diff.new) -> %>
+                                    <span class="font-semibold">Bild hinzugefügt</span>
+                                  <% not is_nil(diff.old) and is_nil(diff.new) -> %>
+                                    <span class="font-semibold">Bild entfernt</span>
+                                  <% true -> %>
+                                    <span class="font-semibold">Bild geändert</span>
+                                <% end %>
+                            <% end %>
+                          </li>
+                        <% end %>
+                      </ul>
+                    <% end %>
                   </div>
-                  <%= if diffs != [] do %>
-                    <ul class="mt-2 space-y-1 text-xs text-base-content/80 border-t border-base-300 pt-2">
-                      <%= for diff <- diffs do %>
-                        <li class="flex items-start gap-1">
-                          <.icon
-                            name="hero-pencil"
-                            class="size-3 mt-0.5 shrink-0 text-base-content/60"
-                          />
-                          <%= case diff.field do %>
-                            <% :prompt -> %>
-                              <span class="font-semibold">Frage geändert</span>
-                            <% :options -> %>
-                              <span class="font-semibold">Optionen geändert</span>
-                            <% :correct_index -> %>
-                              <span class="font-semibold">Antwort:</span>
-                              {String.capitalize(
-                                PubQuizzerWeb.CoreComponents.letter_for_index(diff.old || 0)
-                              )} → {String.capitalize(
-                                PubQuizzerWeb.CoreComponents.letter_for_index(diff.new || 0)
-                              )}
-                            <% :image -> %>
-                              <%= cond do %>
-                                <% is_nil(diff.old) and not is_nil(diff.new) -> %>
-                                  <span class="font-semibold">Bild hinzugefügt</span>
-                                <% not is_nil(diff.old) and is_nil(diff.new) -> %>
-                                  <span class="font-semibold">Bild entfernt</span>
-                                <% true -> %>
-                                  <span class="font-semibold">Bild geändert</span>
-                              <% end %>
-                          <% end %>
-                        </li>
-                      <% end %>
-                    </ul>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </section>
-    </aside>
-  </div>
-
-  <%!-- Edit history (mobile: below the grid) --%>
-  <section class="lg:hidden card bg-base-200 border border-base-300">
-    <div class="card-body p-5 gap-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-base-content/80">Bearbeitungsverlauf</h3>
-        <span class="text-xs text-base-content/50">{length(@versions)} Versionen</span>
-      </div>
-
-      <%= if @versions == [] do %>
-        <p class="text-sm text-base-content/70 italic">Noch keine Versionen.</p>
-      <% else %>
-        <div class="space-y-2">
-          <%= for {version, diffs} <- @versions do %>
-            <div class="rounded-lg border border-base-300 bg-base-100 px-3 py-2">
-              <div class="flex items-center gap-2">
-                <div class="avatar avatar-placeholder">
-                  <div class="bg-primary text-primary-content rounded-full w-7">
-                    <span class="text-xs font-semibold">
-                      {String.at((version.user && version.user.name) || "?", 0)}
-                    </span>
-                  </div>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <span class="font-medium text-sm block truncate">
-                    {(version.user && version.user.name) || "Unbekannt"}
-                  </span>
-                  <span class="text-xs text-base-content/70">
-                    {Calendar.strftime(version.inserted_at, "%d.%m.%y %H:%M")}
-                  </span>
-                </div>
+                <% end %>
               </div>
-              <%= if diffs != [] do %>
-                <ul class="mt-2 space-y-1 text-xs text-base-content/80 border-t border-base-300 pt-2">
-                  <%= for diff <- diffs do %>
-                    <li class="flex items-start gap-1">
-                      <.icon
-                        name="hero-pencil"
-                        class="size-3 mt-0.5 shrink-0 text-base-content/60"
-                      />
-                      <%= case diff.field do %>
-                        <% :prompt -> %>
-                          <span class="font-semibold">Frage geändert</span>
-                        <% :options -> %>
-                          <span class="font-semibold">Optionen geändert</span>
-                        <% :correct_index -> %>
-                          <span class="font-semibold">Antwort:</span>
-                          {String.capitalize(
-                            PubQuizzerWeb.CoreComponents.letter_for_index(diff.old || 0)
-                          )} → {String.capitalize(
-                            PubQuizzerWeb.CoreComponents.letter_for_index(diff.new || 0)
-                          )}
-                        <% :image -> %>
-                          <%= cond do %>
-                            <% is_nil(diff.old) and not is_nil(diff.new) -> %>
-                              <span class="font-semibold">Bild hinzugefügt</span>
-                            <% not is_nil(diff.old) and is_nil(diff.new) -> %>
-                              <span class="font-semibold">Bild entfernt</span>
-                            <% true -> %>
-                              <span class="font-semibold">Bild geändert</span>
-                          <% end %>
-                      <% end %>
-                    </li>
-                  <% end %>
-                </ul>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
+            <% end %>
+          </div>
+        </section>
+      </div>
     </div>
-  </section>
+  </.form>
 
   <%= if @show_preview do %>
     {preview(assigns)}
+  <% end %>
+
+  <%= if @viewing_image do %>
+    <div
+      class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      phx-click="close_image"
+    >
+      <div class="relative max-w-4xl max-h-[90vh]" phx-click.stop>
+        <img src={@viewing_image} class="max-w-full max-h-[90vh] object-contain rounded" />
+        <button
+          type="button"
+          phx-click="close_image"
+          class="btn btn-circle btn-sm absolute top-2 right-2"
+        >
+          <.icon name="hero-x-mark" class="size-5" />
+        </button>
+      </div>
+    </div>
   <% end %>
 </Layouts.app>

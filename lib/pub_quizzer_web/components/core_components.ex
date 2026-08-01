@@ -78,7 +78,6 @@ defmodule PubQuizzerWeb.CoreComponents do
           <p :if={@title} class="font-semibold">{@title}</p>
           <p>{extract_msg(flash_raw)}</p>
         </div>
-        <div class="flex-1" />
         <button
           type="button"
           class="btn btn-sm btn-ghost px-1 text-white"
@@ -352,7 +351,7 @@ defmodule PubQuizzerWeb.CoreComponents do
           </p>
         </div>
       </div>
-      <div class="w-full lg:w-auto flex flex-wrap items-center justify-start sm:justify-end gap-2 sm:gap-3">
+      <div class="w-full lg:w-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">
         {render_slot(@actions)}
       </div>
     </header>

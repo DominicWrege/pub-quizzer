@@ -26,6 +26,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       |> assign(:search, "")
       |> assign(:option_image_previews, %{})
       |> assign(:show_preview, false)
+      |> assign(:viewing_image, nil)
       |> allow_upload(:image,
         accept: ~w(.jpg .jpeg .png .gif .webp),
         max_entries: 1,
@@ -107,6 +108,22 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
      socket
      |> assign(:search, search)
      |> stream(:questions, questions, reset: true)}
+  end
+
+  def handle_event("toggle_status", %{"id" => id}, socket) do
+    question = Quiz.get_question!(String.to_integer(id))
+    new_status = if question.status == "published", do: "draft", else: "published"
+    {:ok, _} = Quiz.update_question(question, %{status: new_status})
+
+    flash =
+      if new_status == "published",
+        do: "Frage veröffentlicht.",
+        else: "Frage auf Entwurf gesetzt."
+
+    {:noreply,
+     socket
+     |> restream_questions()
+     |> put_flash(:info, flash)}
   end
 
   def handle_event("ask_delete", %{"id" => id}, socket) do
@@ -259,7 +276,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     question_params = %{
       "correct_index" => index,
       "options" => current_opts,
-      "prompt" => Phoenix.HTML.Form.input_value(form, :prompt)
+      "prompt" => Phoenix.HTML.Form.input_value(form, :prompt),
+      "status" => Phoenix.HTML.Form.input_value(form, :status)
     }
 
     question = Map.get(socket.assigns, :question)
@@ -274,6 +292,14 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
   end
 
+  def handle_event("view_image", %{"url" => url}, socket) do
+    {:noreply, assign(socket, :viewing_image, url)}
+  end
+
+  def handle_event("close_image", _, socket) do
+    {:noreply, assign(socket, :viewing_image, nil)}
+  end
+
   defp normalize_params(%{"question" => q}) do
     q
     |> Map.update("options", [], fn opts ->
@@ -284,6 +310,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       "" -> nil
       v -> String.to_integer(v)
     end)
+    |> normalize_status()
   end
 
   defp normalize_params(%{"prompt" => _, "options" => _} = params) do
@@ -294,6 +321,15 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       "" -> nil
       v -> String.to_integer(v)
     end)
+    |> normalize_status()
+  end
+
+  defp normalize_status(params) do
+    case Map.pop(params, "published") do
+      {nil, params} -> params
+      {"true", params} -> Map.put(params, "status", "published")
+      {_other, params} -> Map.put(params, "status", "draft")
+    end
   end
 
   defp normalize_options(opts) when is_list(opts) do
