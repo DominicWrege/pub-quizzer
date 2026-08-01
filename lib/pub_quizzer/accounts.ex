@@ -168,19 +168,24 @@ defmodule PubQuizzer.Accounts do
     case generate_magic_link(email) do
       {:ok, raw_token, user} ->
         url = "#{base_url}/admin/magic?token=#{raw_token}"
-
-        case AuthEmail.deliver_magic_link(user, url) do
-          {:ok, _} ->
-            {:ok, url}
-
-          {:error, reason} ->
-            Logger.error("Failed to deliver magic link to #{email}: #{inspect(reason)}")
-            {:error, :delivery_failed}
-        end
+        deliver_email_async(user, url, email)
+        {:ok, url}
 
       {:error, :not_found} ->
         {:error, :not_found}
     end
+  end
+
+  defp deliver_email_async(user, url, email) do
+    Task.Supervisor.start_child(PubQuizzer.TaskSupervisor, fn ->
+      case AuthEmail.deliver_magic_link(user, url) do
+        {:ok, _} ->
+          :ok
+
+        {:error, reason} ->
+          Logger.error("Failed to deliver magic link to #{email}: #{inspect(reason)}")
+      end
+    end)
   end
 
   def deliver_invite_link(%User{} = user, base_url) do

@@ -17,6 +17,7 @@ defmodule PubQuizzer.Application do
       {Registry, keys: :unique, name: PubQuizzer.Quiz.EngineRegistry},
       {Registry, keys: :unique, name: PubQuizzer.TeamPresence},
       {DynamicSupervisor, strategy: :one_for_one, name: PubQuizzer.Quiz.EngineSupervisor},
+      {Task.Supervisor, name: PubQuizzer.TaskSupervisor},
       PubQuizzerWeb.Endpoint
     ]
 
