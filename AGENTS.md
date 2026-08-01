@@ -36,6 +36,7 @@ Key details:
 ## Project guidelines
 
 - **NEVER commit or push without asking the user first** — always wait for explicit confirmation. This is a hard rule. Breaking it causes major frustration.
+- **Always announce subagent use** — before launching any subagent via the `task` tool, tell the user you are doing so. They want visibility into every subagent invocation; never run one silently.
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
 - **Whenever `mix.lock` changes** (adding or updating a dependency), you **must** update the `mix-deps` hash in `nix/release.nix` (the `beamPackages.fetchMixDeps` `hash` attr) **before pushing**, otherwise CI (`nix build .#pub-quizzer`) fails with a fixed-output hash mismatch. Get the correct hash by running `nix build .#pub-quizzer` and reading the `got:` value from the error (or set `hash = lib.fakeHash;` first to force the error).
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
