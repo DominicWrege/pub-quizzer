@@ -28,11 +28,12 @@
     <div class="card bg-base-200 overflow-hidden">
       <div class="card-body">
         <%= if main_image do %>
+          <% position = @form[:image_position].value || "left" %>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-2">
               {prompt_text}
             </h4>
-            <div class="space-y-4">
+            <div class={["space-y-4", position == "left" && "sm:order-2"]}>
               <%= for {option, idx} <- Enum.with_index(options) do %>
                 <% is_correct = correct_index == idx %>
                 <div class={[
@@ -48,7 +49,7 @@
                 </div>
               <% end %>
             </div>
-            <div class="flex items-start">
+            <div class={["flex items-start", position == "left" && "sm:order-1"]}>
               <img src={main_image} alt="Fragebild" class="rounded-lg max-h-72 w-auto" />
             </div>
           </div>

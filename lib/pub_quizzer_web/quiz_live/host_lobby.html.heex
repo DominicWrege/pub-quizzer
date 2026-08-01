@@ -138,11 +138,12 @@
       <div class="card bg-base-200 mb-4 overflow-hidden">
         <div class="card-body" id="quiz-qa-area">
           <%= if question[:image] do %>
+            <% position = question[:image_position] || "left" %>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-2">
                 {question.prompt}
               </h4>
-              <div class="space-y-4">
+              <div class={["space-y-4", position == "left" && "sm:order-2"]}>
                 <%= for {option, idx} <- Enum.with_index(question.options) do %>
                   <div class="p-6 rounded-lg bg-base-300 text-3xl qa-option flex items-center gap-4">
                     <span class="font-mono font-bold shrink-0">{letter_for_index(idx)}.</span>
@@ -159,7 +160,7 @@
                   </div>
                 <% end %>
               </div>
-              <div class="flex items-start">
+              <div class={["flex items-start", position == "left" && "sm:order-1"]}>
                 <img
                   src={question.image}
                   srcset={thumbnail_url(question.image) <> " 480w, " <> question.image <> " 1280w"}

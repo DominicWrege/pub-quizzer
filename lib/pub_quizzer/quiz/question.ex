@@ -3,6 +3,7 @@ defmodule PubQuizzer.Quiz.Question do
   import Ecto.Changeset
 
   @statuses ~w(draft published)
+  @image_positions ~w(left right)
 
   schema "questions" do
     field :prompt, :string
@@ -10,6 +11,7 @@ defmodule PubQuizzer.Quiz.Question do
     field :correct_index, :integer
     field :position, :integer, default: 0
     field :image, :string
+    field :image_position, :string, default: "left"
     field :status, :string, default: "draft"
 
     belongs_to :topic, PubQuizzer.Quiz.Topic
@@ -19,13 +21,30 @@ defmodule PubQuizzer.Quiz.Question do
 
   def changeset(question, attrs) do
     question
-    |> cast(attrs, [:prompt, :options, :correct_index, :position, :image, :status])
+    |> cast(attrs, [
+      :prompt,
+      :options,
+      :correct_index,
+      :position,
+      :image,
+      :image_position,
+      :status
+    ])
+    |> normalize_image()
     |> validate_required([:prompt, :options, :correct_index])
     |> validate_inclusion(:status, @statuses)
+    |> validate_inclusion(:image_position, @image_positions)
     |> validate_length(:prompt, min: 1, max: 500)
     |> validate_length(:options, min: 2, max: 6)
     |> validate_options_text()
     |> validate_correct_index()
+  end
+
+  defp normalize_image(changeset) do
+    update_change(changeset, :image, fn
+      value when is_binary(value) -> if String.trim(value) == "", do: nil, else: value
+      value -> value
+    end)
   end
 
   defp validate_options_text(changeset) do

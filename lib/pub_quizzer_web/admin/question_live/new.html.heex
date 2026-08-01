@@ -119,6 +119,44 @@
             <.live_file_input upload={@uploads.image} class="sr-only" />
           </label>
         </div>
+
+        <div class="flex items-center justify-between px-3 sm:px-0">
+          <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+            Bildposition
+          </span>
+          <div class="inline-flex bg-base-200 rounded-lg p-0.5">
+            <label class={[
+              "px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-all",
+              (@form[:image_position].value || "left") == "left" &&
+                "bg-base-100 shadow-sm text-base-content",
+              (@form[:image_position].value || "left") != "left" &&
+                "text-base-content/60 hover:text-base-content"
+            ]}>
+              <input
+                type="radio"
+                name="question[image_position]"
+                value="left"
+                class="sr-only"
+                checked={(@form[:image_position].value || "left") == "left"}
+              /> Links
+            </label>
+            <label class={[
+              "px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-all",
+              (@form[:image_position].value || "left") == "right" &&
+                "bg-base-100 shadow-sm text-base-content",
+              (@form[:image_position].value || "left") != "right" &&
+                "text-base-content/60 hover:text-base-content"
+            ]}>
+              <input
+                type="radio"
+                name="question[image_position]"
+                value="right"
+                class="sr-only"
+                checked={(@form[:image_position].value || "left") == "right"}
+              /> Rechts
+            </label>
+          </div>
+        </div>
       </div>
     </div>
 

@@ -296,7 +296,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       "correct_index" => index,
       "options" => current_opts,
       "prompt" => Phoenix.HTML.Form.input_value(form, :prompt),
-      "status" => Phoenix.HTML.Form.input_value(form, :status)
+      "status" => Phoenix.HTML.Form.input_value(form, :status),
+      "image_position" => Phoenix.HTML.Form.input_value(form, :image_position)
     }
 
     question = Map.get(socket.assigns, :question)

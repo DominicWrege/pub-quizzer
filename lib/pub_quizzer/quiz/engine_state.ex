@@ -360,11 +360,18 @@ defmodule PubQuizzer.Quiz.EngineState do
         prompt: q.prompt,
         options: q.options,
         correct_index: q.correct_index,
-        image: q.image,
+        image: nil_if_blank(q.image),
+        image_position: q.image_position || "left",
         position: idx
       }
     end)
   end
+
+  defp nil_if_blank(value) when is_binary(value) do
+    if String.trim(value) == "", do: nil, else: value
+  end
+
+  defp nil_if_blank(value), do: value
 
   defp compute_round_scores(state) do
     # For each question in the round, check if each team's answer is correct.
