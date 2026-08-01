@@ -77,7 +77,8 @@
             class={[
               "rounded-lg border-2 border-dashed transition-colors",
               @uploads.image.entries != [] && "border-primary bg-primary/5",
-              @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30"
+              @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30",
+              (@image_preview_url == nil and @question.image == nil) && "hidden sm:block"
             ]}
           >
             <div class="p-2 sm:p-3">
@@ -103,7 +104,9 @@
                     src={img}
                     data-main-image-preview
                     alt="Aktuelles Bild"
-                    class="rounded-lg max-h-36 sm:max-h-56 w-full object-contain"
+                    phx-click="view_image"
+                    phx-value-url={img}
+                    class="rounded-lg max-h-36 sm:max-h-56 w-full object-contain cursor-zoom-in"
                   />
                 <% true -> %>
                   <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-2 sm:py-6 text-base-content/40">
@@ -112,7 +115,7 @@
                   </div>
               <% end %>
             </div>
-            <label class="flex items-center justify-center gap-2 p-3 cursor-pointer text-xs text-base-content/70 hover:text-base-content hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300">
+            <label class="hidden sm:flex items-center justify-center gap-2 p-3 cursor-pointer text-xs text-base-content/70 hover:text-base-content hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300">
               <.icon name="hero-photo" class="size-4" />
               <span>{if @question.image, do: "Bild ersetzen", else: "Bild auswählen"}</span>
               <.live_file_input upload={@uploads.image} class="sr-only" />
@@ -250,7 +253,7 @@
                       >×</button>
                     </div>
                   <% true -> %>
-                    <label class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-base-300 text-xs text-base-content/70 bg-base-200 hover:bg-base-300 hover:border-base-content/40 cursor-pointer transition-colors">
+                    <label class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-base-300 text-xs text-base-content/70 bg-base-200 hover:bg-base-300 hover:border-base-content/40 cursor-pointer transition-colors">
                       <.icon name="hero-photo" class="size-3.5" />
                       <span>Bild</span>
                       <.live_file_input upload={@option_uploads[i]} class="sr-only" />

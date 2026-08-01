@@ -212,31 +212,11 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   end
 
   def handle_event("save", params, socket) do
-    question_params = normalize_params(params)
-
-    question_params =
-      consume_uploaded_entries(socket, :image, fn %{path: tmp_path}, _entry ->
-        store_compressed(tmp_path)
-      end)
-      |> List.first()
-      |> then(fn image_path ->
-        if image_path, do: Map.put(question_params, "image", image_path), else: question_params
-      end)
-
-    option_images = consume_option_images(socket)
-    existing_images = existing_option_images(socket)
-
-    question_params =
-      Map.update!(question_params, "options", fn options ->
-        options
-        |> Enum.with_index()
-        |> Enum.map(fn {opt, idx} ->
-          img = Map.get(option_images, idx) || Map.get(existing_images, idx)
-          if img, do: Map.put(opt, "image", img), else: Map.delete(opt, "image")
-        end)
-      end)
-
-    save_question(socket, question_params)
+    if uploads_pending?(socket) do
+      {:noreply, put_flash(socket, :error, "Bild-Upload läuft noch – bitte kurz warten.")}
+    else
+      do_save(socket, params)
+    end
   end
 
   def handle_event("validate", params, socket) do
@@ -328,6 +308,43 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   def handle_event("close_image", _, socket) do
     {:noreply, assign(socket, :viewing_image, nil)}
+  end
+
+  defp do_save(socket, params) do
+    question_params = normalize_params(params)
+
+    question_params =
+      consume_uploaded_entries(socket, :image, fn %{path: tmp_path}, _entry ->
+        store_compressed(tmp_path)
+      end)
+      |> List.first()
+      |> then(fn image_path ->
+        if image_path, do: Map.put(question_params, "image", image_path), else: question_params
+      end)
+
+    option_images = consume_option_images(socket)
+    existing_images = existing_option_images(socket)
+
+    question_params =
+      Map.update!(question_params, "options", fn options ->
+        options
+        |> Enum.with_index()
+        |> Enum.map(fn {opt, idx} ->
+          img = Map.get(option_images, idx) || Map.get(existing_images, idx)
+          if img, do: Map.put(opt, "image", img), else: Map.delete(opt, "image")
+        end)
+      end)
+
+    save_question(socket, question_params)
+  end
+
+  defp uploads_pending?(socket) do
+    pending? = fn entries -> Enum.any?(entries, &(not &1.done?)) end
+
+    pending?.(socket.assigns.uploads.image.entries) or
+      Enum.any?(0..(@option_count - 1), fn i ->
+        pending?.(socket.assigns.uploads[:"option_image_#{i}"].entries)
+      end)
   end
 
   defp build_changeset(nil, params) do
@@ -459,16 +476,12 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         {:ok, "/uploads/#{filename}"}
 
       {output, _exit_code} ->
-        # Reject large files rather than serving uncompressed originals
-        {:ok, size} = File.stat(tmp_path)
-
-        if size > 1_000_000 do
-          {:error, "image compression failed and original is too large: #{output}"}
-        else
-          Logger.warning("ffmpeg compression failed, using original: #{output}")
-          File.cp!(tmp_path, dest)
-          {:ok, "/uploads/#{filename}"}
-        end
+        # Never fail the upload on compression errors — fall back to the original
+        # file. Returning {:error, _} here would raise inside consume_uploaded_entries
+        # and crash the LiveView.
+        Logger.warning("ffmpeg compression failed, using original: #{output}")
+        File.cp!(tmp_path, dest)
+        {:ok, "/uploads/#{filename}"}
     end
   end
 

@@ -91,7 +91,7 @@
           phx-hook="ImagePreview"
           phx-drop-target={@uploads.image.ref}
           class={[
-            "rounded-lg border-2 border-dashed transition-colors",
+            "hidden sm:block rounded-lg border-2 border-dashed transition-colors",
             @uploads.image.entries != [] && "border-primary bg-primary/5",
             @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30"
           ]}
@@ -199,7 +199,7 @@
               data-option-index={i}
               phx-hook="OptionImagePreview"
               phx-drop-target={@option_uploads[i].ref}
-              class="mt-2 ml-8 sm:ml-16"
+              class="hidden sm:block mt-2 ml-8 sm:ml-16"
             >
               <%= cond do %>
                 <% preview = @option_image_previews[i] -> %>
