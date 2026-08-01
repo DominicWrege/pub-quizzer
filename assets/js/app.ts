@@ -182,6 +182,10 @@ const OptionSorter = {
     this._onUp = null
     this._lastTarget = null
 
+    const coarse = window.matchMedia('(pointer: coarse)').matches
+    const narrow = window.matchMedia('(max-width: 1023px)').matches
+    if (coarse || narrow) return
+
     this.el.addEventListener('mousedown', (e: MouseEvent) => {
       const target = e.target as HTMLElement
       const handle = target.closest('.drag-handle')
