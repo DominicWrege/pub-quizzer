@@ -97,6 +97,13 @@ body.presentation-mode header.bg-base-200 {
   --btn-fg: var(--color-base-100);
 }
 
+/* Elevation for sticky admin toolbars once their list has scrolled. Toggled by
+   assets/js/admin-shell.ts on the admin app shell. */
+body.app-scrolled [data-sticky-bar] {
+  border-color: var(--color-base-300);
+  box-shadow: 0 6px 16px -12px oklch(0 0 0 / 0.25);
+}
+
 .btn-danger-soft {
   --btn-bg: color-mix(in oklch, var(--color-error) 10%, var(--color-base-100));
   --btn-border: color-mix(in oklch, var(--color-error) 30%, var(--color-base-100));

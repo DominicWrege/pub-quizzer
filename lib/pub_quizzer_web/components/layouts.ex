@@ -38,7 +38,7 @@ defmodule PubQuizzerWeb.Layouts do
   attr :max_width, :string, default: "max-w-2xl", doc: "max width class for the content area"
 
   attr :main_class, :string,
-    default: "px-4 pt-2 sm:pt-4 pb-4 sm:pb-10 sm:px-6 lg:px-8",
+    default: "px-4 pb-4 sm:pb-10 sm:px-6 lg:px-8",
     doc: "classes for the main element"
 
   attr :hide_nav_actions, :boolean,
@@ -50,71 +50,75 @@ defmodule PubQuizzerWeb.Layouts do
   def app(assigns) do
     ~H"""
     <%= if @current_scope && @current_scope[:user] do %>
-      <header
-        class="bg-base-200 border-b border-base-300 px-4 sm:px-6 pt-2 pb-0"
-        data-guide-seen={"#{@current_scope.user.guide_seen}"}
-        data-guide-role={@current_scope.user.role}
-      >
-        <div class="flex items-center justify-between mb-1.5">
-          <a href="/" class="flex items-center gap-2">
-            <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
-          </a>
-          <div class="flex-none flex items-center gap-4">
-            <details
-              class="dropdown dropdown-end"
-              phx-click-away={Phoenix.LiveView.JS.remove_attribute("open")}
-            >
-              <summary class="btn btn-sm btn-soft rounded-full p-0 w-8 h-8">
-                <div class="avatar avatar-placeholder">
-                  <div class="bg-primary text-primary-content rounded-full w-7 text-xs font-semibold flex items-center justify-center">
-                    {String.at(@current_scope.user.name || "?", 0)}
+      <div class="flex h-dvh flex-col overflow-hidden" data-app-shell>
+        <header
+          class="shrink-0 bg-base-200 border-b border-base-300 px-4 sm:px-6 pt-2 pb-0"
+          data-guide-seen={"#{@current_scope.user.guide_seen}"}
+          data-guide-role={@current_scope.user.role}
+        >
+          <div class="flex items-center justify-between mb-1.5">
+            <a href="/" class="flex items-center gap-2">
+              <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
+            </a>
+            <div class="flex-none flex items-center gap-4">
+              <details
+                class="dropdown dropdown-end"
+                phx-click-away={Phoenix.LiveView.JS.remove_attribute("open")}
+              >
+                <summary class="btn btn-sm btn-soft rounded-full p-0 w-8 h-8">
+                  <div class="avatar avatar-placeholder">
+                    <div class="bg-primary text-primary-content rounded-full w-7 text-xs font-semibold flex items-center justify-center">
+                      {String.at(@current_scope.user.name || "?", 0)}
+                    </div>
                   </div>
-                </div>
-              </summary>
-              <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg min-w-40 p-2 mt-2 z-50 border border-base-200">
-                <li>
-                  <.link navigate={~p"/admin/profile"} class="text-sm">
-                    <span class="truncate max-w-32">{@current_scope.user.name || "Profil"}</span>
-                  </.link>
-                </li>
-                <li>
-                  <.link navigate={~p"/admin/logout"} class="text-sm">
-                    <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
-                  </.link>
-                </li>
-              </ul>
-            </details>
+                </summary>
+                <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg min-w-40 p-2 mt-2 z-50 border border-base-200">
+                  <li>
+                    <.link navigate={~p"/admin/profile"} class="text-sm">
+                      <span class="truncate max-w-32">{@current_scope.user.name || "Profil"}</span>
+                    </.link>
+                  </li>
+                  <li>
+                    <.link navigate={~p"/admin/logout"} class="text-sm">
+                      <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
+                    </.link>
+                  </li>
+                </ul>
+              </details>
+            </div>
           </div>
-        </div>
-        <div class="flex items-center gap-0 sm:gap-1 overflow-x-auto">
-          <.link
-            navigate={~p"/admin/events"}
-            class={nav_tab_class(@current_path, "/admin/events")}
-          >
-            <.icon name="hero-play" class="size-4 hidden sm:inline" /> Quiz
-          </.link>
-          <.link
-            navigate={~p"/admin/topics"}
-            class={nav_tab_class(@current_path, "/admin/topics")}
-          >
-            <.icon name="hero-bookmark" class="size-4 hidden sm:inline" /> Themen verwalten
-          </.link>
-          <%= if @current_scope.user.role == "superadmin" do %>
+          <div class="flex items-center gap-0 sm:gap-1 overflow-x-auto">
             <.link
-              navigate={~p"/admin/users"}
-              class={nav_tab_class(@current_path, "/admin/users")}
+              navigate={~p"/admin/events"}
+              class={nav_tab_class(@current_path, "/admin/events")}
             >
-              <.icon name="hero-key" class="size-4 hidden sm:inline" /> Benutzer
+              <.icon name="hero-play" class="size-4 hidden sm:inline" /> Quiz
             </.link>
-          <% end %>
-        </div>
-      </header>
-      <div class="flex">
-        <main class={["flex-1", @main_class]}>
-          <div class={["mx-auto space-y-6 max-w-full sm:max-w-none", @max_width]}>
-            {render_slot(@inner_block)}
+            <.link
+              navigate={~p"/admin/topics"}
+              class={nav_tab_class(@current_path, "/admin/topics")}
+            >
+              <.icon name="hero-bookmark" class="size-4 hidden sm:inline" /> Themen verwalten
+            </.link>
+            <%= if @current_scope.user.role == "superadmin" do %>
+              <.link
+                navigate={~p"/admin/users"}
+                class={nav_tab_class(@current_path, "/admin/users")}
+              >
+                <.icon name="hero-key" class="size-4 hidden sm:inline" /> Benutzer
+              </.link>
+            <% end %>
           </div>
-        </main>
+        </header>
+        <div class="flex min-h-0 flex-1">
+          <main class={["flex-1 overflow-y-auto overscroll-contain", @main_class]}>
+            <%!-- Top padding lives here (not on <main>) so sticky toolbars pin
+              flush with the header instead of being inset by main's padding. --%>
+            <div class={["mx-auto space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-4", @max_width]}>
+              {render_slot(@inner_block)}
+            </div>
+          </main>
+        </div>
       </div>
     <% else %>
       <header class="navbar px-4 sm:px-6 lg:px-8 border-b border-base-300">

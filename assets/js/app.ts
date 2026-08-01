@@ -428,3 +428,4 @@ liveSocket.connect()
 
 import "./guide"
 import "./login_wait"
+import "./admin-shell"
