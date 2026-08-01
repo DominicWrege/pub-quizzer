@@ -530,6 +530,28 @@ defmodule PubQuizzerWeb.CoreComponents do
     """
   end
 
+  @doc """
+  Renders user-authored text while preserving its line breaks as `<br>` tags.
+
+  Unlike applying `whitespace-pre-wrap`/`pre-line` to a container, this does
+  not leak the surrounding template's own indentation or newlines, because the
+  parent element keeps normal whitespace handling. When the parent is a flex
+  container (such as daisyUI's `card-title`), wrap the component in a single
+  inline element so its lines stay stacked.
+  """
+  attr :text, :string, default: nil
+
+  def multiline_text(assigns) do
+    ~H"""
+    <%= for {line, index} <- Enum.with_index(String.split(@text || "", "\n")) do %>
+      <%= if index > 0 do %>
+        <br />
+      <% end %>
+      {line}
+    <% end %>
+    """
+  end
+
   defp icon_svg(name) do
     case name do
       "list-bullet" ->
