@@ -26,14 +26,26 @@
         </div>
       </div>
       <div class="flex items-center gap-2 sm:gap-3 w-full lg:w-auto">
-        <form id="search-form" phx-change="search" class="flex-1 lg:flex-none">
+        <form id="search-form" phx-change="search" class="group relative flex-1 lg:flex-none">
+          <.icon
+            name="hero-magnifying-glass"
+            class="pointer-events-none absolute z-10 left-2.5 top-1/2 size-4 -translate-y-1/2 text-base-content/50 transition-colors duration-150 group-focus-within:text-base-content/70"
+          />
           <input
             name="search"
             type="text"
             value={@search}
             placeholder="Suchen..."
-            class="input input-sm w-full lg:w-56"
+            class="input input-sm peer w-full pl-8 pr-8 lg:w-56"
           />
+          <button
+            type="button"
+            data-clear-input
+            aria-label="Suche leeren"
+            class="absolute z-10 right-1.5 top-1/2 hidden size-6 -translate-y-1/2 items-center justify-center rounded-full text-base-content/50 transition duration-150 hover:bg-base-300 hover:text-base-content active:scale-90 peer-[:not(:placeholder-shown)]:flex"
+          >
+            <.icon name="hero-x-mark" class="size-3.5" />
+          </button>
         </form>
         <.link
           navigate={~p"/admin/topics/#{@topic.id}/questions/new"}
@@ -45,8 +57,11 @@
     </div>
   </div>
 
-  <%!-- Mobile: cards --%>
-  <div id="questions-cards" phx-update="stream" class="space-y-3 pb-24 lg:pb-0 lg:hidden">
+  <%!-- Mobile: cards. Plain keyed list (not a second phx-update="stream"
+      container): stream DOM ids must equal the stream item ids, which the
+      desktop table already uses — prefixed card ids would never match the
+      client-side stream prune/reset, leaving stale cards after filtering. --%>
+  <div id="questions-cards" class="space-y-3 pb-24 lg:pb-0 lg:hidden">
     <div
       :for={{id, q} <- @streams.questions}
       id={"card-#{id}"}

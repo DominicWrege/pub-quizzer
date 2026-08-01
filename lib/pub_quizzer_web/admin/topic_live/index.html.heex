@@ -8,14 +8,26 @@
     data-sticky-bar
     class="sticky top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-base-100 border-b border-transparent transition-[box-shadow,border-color] duration-200 pt-3 pb-3 lg:pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mb-4"
   >
-    <.form for={%{}} id="topic-search" phx-change="search" class="flex-1 max-w-sm">
+    <.form for={%{}} id="topic-search" phx-change="search" class="group relative flex-1 max-w-sm">
+      <.icon
+        name="hero-magnifying-glass"
+        class="pointer-events-none absolute z-10 left-3 top-1/2 size-4 -translate-y-1/2 text-base-content/50 transition-colors duration-150 group-focus-within:text-base-content/70"
+      />
       <input
         type="text"
         name="query"
         placeholder="Nach Name oder Beschreibung suchen..."
         value={@search_query}
-        class="input input-bordered w-full"
+        class="input input-bordered peer w-full pl-10 pr-10"
       />
+      <button
+        type="button"
+        data-clear-input
+        aria-label="Suche leeren"
+        class="absolute z-10 right-2 top-1/2 hidden size-7 -translate-y-1/2 items-center justify-center rounded-full text-base-content/50 transition duration-150 hover:bg-base-300 hover:text-base-content active:scale-90 peer-[:not(:placeholder-shown)]:flex"
+      >
+        <.icon name="hero-x-mark" class="size-4" />
+      </button>
     </.form>
     <.button phx-click="start_new">
       <.icon name="hero-plus" class="size-4" /> Neues Thema
