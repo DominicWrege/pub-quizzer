@@ -249,7 +249,6 @@
               >
                 <%= cond do %>
                   <% preview = @option_image_previews[i] -> %>
-                    <%!-- Mobile: icon button --%>
                     <button
                       type="button"
                       phx-click="view_image"
@@ -259,18 +258,16 @@
                       <.icon name="hero-photo" class="size-4" />
                       <span class="text-xs">Bild</span>
                     </button>
-                    <%!-- Desktop: inline preview --%>
-                    <div class="hidden sm:block relative inline-block pt-4">
+                    <div class="hidden sm:block relative w-fit">
                       <img src={preview} class="h-40 max-w-full rounded border border-base-300" />
                       <button
                         type="button"
                         phx-click="cancel_option_upload"
                         phx-value-index={i}
-                        class="btn btn-xs btn-circle absolute top-2 -right-2"
+                        class="btn btn-xs btn-circle absolute top-2 right-2"
                       >×</button>
                     </div>
                   <% img = opt_img -> %>
-                    <%!-- Mobile: icon button --%>
                     <button
                       type="button"
                       phx-click="view_image"
@@ -280,23 +277,28 @@
                       <.icon name="hero-photo" class="size-4" />
                       <span class="text-xs">Bild</span>
                     </button>
-                    <%!-- Desktop: inline preview --%>
-                    <div class="hidden sm:block relative inline-block pt-4 group">
+                    <div class="hidden sm:block relative w-fit group">
                       <img src={img} class="h-40 max-w-full rounded border border-base-300" />
                       <button
                         type="button"
                         phx-click="remove_option_image"
                         phx-value-index={i}
-                        class="btn btn-xs btn-circle absolute -top-1 -right-2 opacity-0 group-hover:opacity-100"
+                        class="btn btn-xs btn-circle absolute top-2 right-2 opacity-0 group-hover:opacity-100"
                       >×</button>
                     </div>
                   <% true -> %>
-                    <label class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-base-300 text-xs text-base-content/70 bg-base-200 hover:bg-base-300 hover:border-base-content/40 cursor-pointer transition-colors">
-                      <.icon name="hero-photo" class="size-3.5" />
-                      <span>Bild</span>
-                      <.live_file_input upload={@option_uploads[i]} class="sr-only" />
-                    </label>
+                    <% :ok %>
                 <% end %>
+
+                <label class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-base-300 text-xs text-base-content/70 bg-base-200 hover:bg-base-300 hover:border-base-content/40 cursor-pointer transition-colors">
+                  <.icon name="hero-photo" class="size-3.5" />
+                  <span>
+                    {if @option_image_previews[i] || opt_img,
+                      do: "Bild ersetzen",
+                      else: "Bild hinzufügen"}
+                  </span>
+                  <.live_file_input upload={@option_uploads[i]} class="sr-only" />
+                </label>
               </div>
             </div>
           <% end %>

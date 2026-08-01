@@ -69,8 +69,14 @@ const ImagePreview = {
   }
 } satisfies Partial<ViewHook>
 
+interface OptionPreviewHook extends ViewHook {
+  currentUrl: string | null
+}
+
 const OptionImagePreview = {
-  mounted(this: ViewHook) {
+  mounted(this: OptionPreviewHook) {
+    this.currentUrl = null
+
     this.el.addEventListener("click", (e: Event) => {
       const target = e.target as HTMLElement
       if (target.closest("button")) return
@@ -79,15 +85,11 @@ const OptionImagePreview = {
 
     const previewFile = (file: File | undefined | null) => {
       if (!file) return
-      const reader = new FileReader()
+      if (this.currentUrl) URL.revokeObjectURL(this.currentUrl)
+      const url = URL.createObjectURL(file)
+      this.currentUrl = url
       const idx = this.el.dataset.optionIndex ?? ""
-      reader.onload = (ev) => {
-        const result = ev.target?.result
-        if (typeof result === "string") {
-          this.pushEvent("option_image_preview", { index: idx, data_url: result })
-        }
-      }
-      reader.readAsDataURL(file)
+      this.pushEvent("option_image_preview", { index: idx, data_url: url })
     }
 
     this.el.addEventListener("change", (e: Event) => {
@@ -100,7 +102,7 @@ const OptionImagePreview = {
       if (file) previewFile(file)
     })
   }
-}
+} satisfies Partial<ViewHook>
 
 interface CopyLinkHook extends ViewHook {
   orig: string
