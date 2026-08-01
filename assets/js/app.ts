@@ -399,6 +399,18 @@ const liveSocket = new LiveSocket("/live", Socket, {
   reconnectAfterMs: (tries: number) =>
     Math.min(1000 * Math.pow(2, Math.min(tries, 5)) + Math.random() * 500, 30_000),
   maxReloadAfterDisconnect: 5,
+  dom: {
+    // morphdom strips the imperatively-set `open` attribute from a <dialog> on
+    // re-render (it is set by showModal(), not present in the HEEx template),
+    // silently closing open dialogs without a `close` event. On Firefox this
+    // corrupts the top-layer stack and leaves the page unresponsive. Preserve
+    // the attribute so a dialog stays open for as long as it is rendered.
+    onBeforeElUpdated(fromEl, toEl) {
+      if (fromEl instanceof HTMLDialogElement && fromEl.open && !toEl.hasAttribute("open")) {
+        toEl.setAttribute("open", "")
+      }
+    }
+  },
   hooks: {
     AutoDismiss,
     ImagePreview,
