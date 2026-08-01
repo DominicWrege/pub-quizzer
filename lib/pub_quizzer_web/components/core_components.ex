@@ -339,6 +339,8 @@ defmodule PubQuizzerWeb.CoreComponents do
     default: false,
     doc: "keep the actions on the title row on small screens instead of stacking them below"
 
+  attr :class, :any, default: nil, doc: "extra classes merged onto the outer header element"
+
   def header(assigns) do
     ~H"""
     <header class={[
@@ -348,7 +350,8 @@ defmodule PubQuizzerWeb.CoreComponents do
           else:
             "flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 lg:gap-6"
         ),
-      "pb-2"
+      "pb-2",
+      @class
     ]}>
       <div class={[
         "flex",
@@ -633,6 +636,9 @@ defmodule PubQuizzerWeb.CoreComponents do
 
       "arrow-down-tray" ->
         ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>)
+
+      "arrow-left" ->
+        ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>)
     end
   end
 

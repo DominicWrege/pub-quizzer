@@ -13,7 +13,9 @@ test.describe("question CRUD", () => {
     await waitForLiveView(hostPage)
 
     // --- Create ---
-    await hostPage.locator("a[href*='/questions/new']").click()
+    // Two links match (inline header button + mobile FAB); the inline one is
+    // first in the DOM and visible at desktop width.
+    await hostPage.locator("a[href*='/questions/new']").first().click()
     await expect(hostPage).toHaveURL(/\/questions\/new$/, { timeout: 10_000 })
     await waitForLiveView(hostPage)
 

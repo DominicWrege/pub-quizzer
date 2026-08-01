@@ -107,11 +107,13 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   defp apply_action(socket, :index, %{"topic_id" => topic_id}) do
     topic = Quiz.get_topic!(topic_id)
+    questions = Quiz.list_questions_for_topic(topic.id)
 
     socket
     |> assign(:topic, topic)
-    |> assign(:page_title, "Fragen")
-    |> stream(:questions, Quiz.list_questions_for_topic(topic.id))
+    |> assign(:page_title, topic.name)
+    |> assign(:questions_count, length(questions))
+    |> stream(:questions, questions)
   end
 
   defp apply_action(socket, :new, %{"topic_id" => topic_id}) do
@@ -161,6 +163,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     {:noreply,
      socket
      |> assign(:search, search)
+     |> assign(:questions_count, length(questions))
      |> stream(:questions, questions, reset: true)}
   end
 
@@ -493,7 +496,9 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         Quiz.search_questions_for_topic(socket.assigns.topic.id, socket.assigns.search)
       end
 
-    stream(socket, :questions, questions, reset: true)
+    socket
+    |> assign(:questions_count, length(questions))
+    |> stream(:questions, questions, reset: true)
   end
 
   defp compute_version_diffs(versions) do

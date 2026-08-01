@@ -5,7 +5,7 @@
   max_width="max-w-4xl"
   main_class="px-2 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-4 sm:pb-10 max-w-full"
 >
-  <.header inline_actions>
+  <.header inline_actions class="max-sm:mb-2">
     <:back>
       <.link navigate={~p"/admin/topics/#{@topic.id}/questions"} class="btn btn-sm btn-soft">
         ←<span class="hidden sm:inline"> Zurück</span>
