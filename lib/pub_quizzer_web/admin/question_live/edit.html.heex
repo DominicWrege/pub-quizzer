@@ -8,7 +8,7 @@
   <.header>
     <:back>
       <.link navigate={~p"/admin/topics/#{@topic.id}/questions"} class="btn btn-sm btn-soft">
-        ← Zurück
+        ←<span class="hidden sm:inline"> Zurück</span>
       </.link>
     </:back>
     Frage bearbeiten
@@ -38,15 +38,15 @@
     phx-submit="save"
     class="flex flex-col gap-4 lg:grid lg:grid-cols-[2fr_1fr] xl:grid-cols-[3fr_1fr] lg:gap-2 max-w-full"
   >
-    <div class="bg-base-200 rounded-2xl p-2 sm:p-6 space-y-5 border border-base-300 min-w-0">
+    <div class="bg-base-200 rounded-2xl p-1.5 sm:p-6 space-y-5 border border-base-300 min-w-0">
       <%!-- Hidden correct index — driven by click-to-select on option cards --%>
       <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
 
       <.form_errors form={@form} submitted={@form_submitted} />
 
       <%!-- Prompt card --%>
-      <div class="card bg-base-100 border border-base-300 shadow-md">
-        <div class="card-body p-5 gap-4">
+      <div class="card sm:bg-base-100 sm:border sm:border-base-300 sm:shadow-md">
+        <div class="card-body p-0 sm:p-5 gap-3 sm:gap-4">
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
               Frage
@@ -80,14 +80,14 @@
               @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30"
             ]}
           >
-            <div class="p-3">
+            <div class="p-2 sm:p-3">
               <%= cond do %>
                 <% url = @image_preview_url -> %>
                   <div class="relative inline-block">
                     <img
                       src={url}
                       data-main-image-preview
-                      class="rounded-lg max-h-56 w-full object-contain"
+                      class="rounded-lg max-h-36 sm:max-h-56 w-full object-contain"
                     />
                     <%= if ref = List.first(@uploads.image.entries) && List.first(@uploads.image.entries).ref do %>
                       <button
@@ -103,11 +103,11 @@
                     src={img}
                     data-main-image-preview
                     alt="Aktuelles Bild"
-                    class="rounded-lg max-h-56 w-full object-contain"
+                    class="rounded-lg max-h-36 sm:max-h-56 w-full object-contain"
                   />
                 <% true -> %>
-                  <div class="flex flex-col items-center gap-1 py-6 text-base-content/40">
-                    <.icon name="hero-photo" class="size-8" />
+                  <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-2 sm:py-6 text-base-content/40">
+                    <.icon name="hero-photo" class="size-5 sm:size-8" />
                     <span class="text-xs">Kein Bild ausgewählt</span>
                   </div>
               <% end %>
@@ -148,13 +148,13 @@
               phx-click="select_correct"
               phx-value-index={i}
               class={[
-                "opt-row group relative rounded-xl border-2 p-4 transition-all cursor-pointer shadow-md",
-                is_correct && "border-success bg-success/10 shadow-lg",
+                "opt-row group relative rounded-lg sm:rounded-xl p-1.5 sm:p-4 transition-all cursor-pointer sm:border-2 sm:shadow-md",
+                is_correct && "bg-success/10 sm:border-success sm:shadow-lg",
                 !is_correct &&
-                  "border-base-300 bg-base-100 hover:border-base-content/40 hover:shadow-lg"
+                  "bg-base-100 sm:border-base-300 sm:hover:border-base-content/40 sm:hover:shadow-lg"
               ]}
             >
-              <div class="flex items-start gap-3">
+              <div class="flex items-start gap-2 sm:gap-3">
                 <%!-- Drag handle --%>
                 <div class="hidden sm:flex flex-col items-center gap-0.5 pt-2 text-base-content/30 cursor-grab select-none drag-handle hover:text-base-content/60">
                   <span class="leading-none text-lg">⠿</span>
@@ -162,7 +162,7 @@
 
                 <%!-- Letter label --%>
                 <div class={[
-                  "font-mono font-bold text-xl w-7 pt-2 shrink-0 text-center",
+                  "font-mono font-bold text-lg sm:text-xl w-6 sm:w-7 pt-2 shrink-0 text-center",
                   is_correct && "text-success",
                   !is_correct && "text-base-content/50"
                 ]}>
@@ -183,7 +183,7 @@
 
                 <%!-- Correct indicator --%>
                 <div class={[
-                  "pt-2 shrink-0 transition-opacity",
+                  "hidden sm:block pt-2 shrink-0 transition-opacity",
                   is_correct && "opacity-100",
                   !is_correct && "opacity-0 group-hover:opacity-30"
                 ]}>
@@ -204,7 +204,7 @@
                 data-option-index={i}
                 phx-hook="OptionImagePreview"
                 phx-drop-target={@option_uploads[i].ref}
-                class="mt-2 ml-10 sm:ml-16"
+                class="mt-2 ml-8 sm:ml-16"
               >
                 <%= cond do %>
                   <% preview = @option_image_previews[i] -> %>
