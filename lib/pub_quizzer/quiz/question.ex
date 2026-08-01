@@ -2,12 +2,15 @@ defmodule PubQuizzer.Quiz.Question do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @statuses ~w(draft published)
+
   schema "questions" do
     field :prompt, :string
     field :options, {:array, :map}
     field :correct_index, :integer
     field :position, :integer, default: 0
     field :image, :string
+    field :status, :string, default: "draft"
 
     belongs_to :topic, PubQuizzer.Quiz.Topic
 
@@ -16,8 +19,9 @@ defmodule PubQuizzer.Quiz.Question do
 
   def changeset(question, attrs) do
     question
-    |> cast(attrs, [:prompt, :options, :correct_index, :position, :image])
+    |> cast(attrs, [:prompt, :options, :correct_index, :position, :image, :status])
     |> validate_required([:prompt, :options, :correct_index])
+    |> validate_inclusion(:status, @statuses)
     |> validate_length(:prompt, min: 1, max: 500)
     |> validate_length(:options, min: 2, max: 6)
     |> validate_options_text()

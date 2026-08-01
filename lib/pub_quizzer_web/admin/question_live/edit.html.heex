@@ -42,22 +42,7 @@
       <%!-- Hidden correct index — driven by click-to-select on option cards --%>
       <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
 
-      <%= if @form_submitted and @form.errors != [] do %>
-        <div class="alert alert-error py-2 px-3 text-sm">
-          <.icon name="hero-exclamation-circle" class="size-4" />
-          <span>
-            <%= for {msg, _} <- @form.errors do %>
-              <span>{msg}</span>
-            <% end %>
-            <%= for {msg, _} <- @form[:prompt].errors do %>
-              <span>{msg}</span>
-            <% end %>
-            <%= for {msg, _} <- @form[:options].errors do %>
-              <span>{msg}</span>
-            <% end %>
-          </span>
-        </div>
-      <% end %>
+      <.form_errors form={@form} submitted={@form_submitted} />
 
       <%!-- Prompt card --%>
       <div class="card bg-base-100 border border-base-300 shadow-md">
@@ -70,9 +55,7 @@
               <span class="text-xs text-base-content/50">
                 Richtige Antwort:
                 <span class="font-mono font-bold text-success">
-                  {String.capitalize(
-                    PubQuizzerWeb.CoreComponents.letter_for_index(@form[:correct_index].value)
-                  )}
+                  {String.capitalize(letter_for_index(@form[:correct_index].value))}
                 </span>
               </span>
             <% end %>
@@ -183,7 +166,7 @@
                   is_correct && "text-success",
                   !is_correct && "text-base-content/50"
                 ]}>
-                  {String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(i))}
+                  {String.capitalize(letter_for_index(i))}
                 </div>
 
                 <%!-- Text input (transparent, auto-growing, multi-line friendly) --%>
@@ -194,7 +177,7 @@
                   phx-hook="AutoResize"
                   onclick="event.stopPropagation()"
                   class="flex-1 min-w-0 bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none text-lg leading-relaxed placeholder:text-base-content/30 focus:outline-none px-2 py-1.5 min-h-[3.75rem] whitespace-pre-wrap"
-                  placeholder={"Option #{String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(i))}"}
+                  placeholder={"Option #{String.capitalize(letter_for_index(i))}"}
                   rows="2"
                 ><%= opt_text %></textarea>
 
@@ -376,10 +359,8 @@
                                 <span class="font-semibold">Optionen geändert</span>
                               <% :correct_index -> %>
                                 <span class="font-semibold">Antwort:</span>
-                                {String.capitalize(
-                                  PubQuizzerWeb.CoreComponents.letter_for_index(diff.old || 0)
-                                )} → {String.capitalize(
-                                  PubQuizzerWeb.CoreComponents.letter_for_index(diff.new || 0)
+                                {String.capitalize(letter_for_index(diff.old || 0))} → {String.capitalize(
+                                  letter_for_index(diff.new || 0)
                                 )}
                               <% :image -> %>
                                 <%= cond do %>
@@ -409,21 +390,5 @@
     {preview(assigns)}
   <% end %>
 
-  <%= if @viewing_image do %>
-    <div
-      class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-      phx-click="close_image"
-    >
-      <div class="relative max-w-4xl max-h-[90vh]" phx-click.stop>
-        <img src={@viewing_image} class="max-w-full max-h-[90vh] object-contain rounded" />
-        <button
-          type="button"
-          phx-click="close_image"
-          class="btn btn-circle btn-sm absolute top-2 right-2"
-        >
-          <.icon name="hero-x-mark" class="size-5" />
-        </button>
-      </div>
-    </div>
-  <% end %>
+  <.image_lightbox url={@viewing_image} />
 </Layouts.app>

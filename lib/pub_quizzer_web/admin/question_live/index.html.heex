@@ -44,13 +44,32 @@
       <div class="text-xs text-base-content/60 mb-1">#{q.position + 1}</div>
       <div class="font-medium line-clamp-2 break-words">{q.prompt}</div>
       <div class="flex items-center gap-3 mt-2 text-xs text-base-content/50">
-        <span>{String.capitalize(PubQuizzerWeb.CoreComponents.letter_for_index(q.correct_index))}</span>
+        <span>{String.capitalize(letter_for_index(q.correct_index))}</span>
         <span>{Calendar.strftime(q.updated_at, "%d.%m.%y")}</span>
         <%= if q.last_editor_name do %>
           <span>{q.last_editor_name}</span>
         <% end %>
       </div>
-      <div class="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-base-300">
+      <div class="flex items-center gap-2 mt-2 pt-2 border-t border-base-300">
+        <input
+          type="checkbox"
+          class="toggle toggle-success toggle-sm"
+          checked={q.status == "published"}
+          phx-click="toggle_status"
+          phx-value-id={q.id}
+          aria-label={
+            if q.status == "draft",
+              do: "Frage veröffentlichen",
+              else: "Frage auf Entwurf setzen"
+          }
+        />
+        <span class={[
+          "text-xs font-medium",
+          if(q.status == "published", do: "text-success", else: "text-warning")
+        ]}>
+          {if q.status == "published", do: "Live", else: "Entwurf"}
+        </span>
+        <div class="flex-1"></div>
         <.link
           navigate={~p"/admin/topics/#{@topic.id}/questions/#{q}/edit"}
           class="btn btn-primary btn-sm"
@@ -77,10 +96,30 @@
     >
       <:col :let={{_id, q}} label="#"><span class="opacity-60">{q.position + 1}</span></:col>
       <:col :let={{_id, q}} label="Frage">{q.prompt}</:col>
+      <:col :let={{_id, q}} label="Status">
+        <div class="inline-flex items-center gap-2.5 w-28">
+          <input
+            type="checkbox"
+            class="toggle toggle-success toggle-sm"
+            checked={q.status == "published"}
+            phx-click="toggle_status"
+            phx-value-id={q.id}
+            aria-label={
+              if q.status == "draft",
+                do: "Frage veröffentlichen",
+                else: "Frage auf Entwurf setzen"
+            }
+          />
+          <span class={[
+            "text-sm font-medium whitespace-nowrap",
+            if(q.status == "published", do: "text-success", else: "text-warning")
+          ]}>
+            {if q.status == "published", do: "Live", else: "Entwurf"}
+          </span>
+        </div>
+      </:col>
       <:col :let={{_id, q}} label="Korrekt">
-        <span class="whitespace-nowrap">{String.capitalize(
-          PubQuizzerWeb.CoreComponents.letter_for_index(q.correct_index)
-        )}</span>
+        <span class="whitespace-nowrap">{String.capitalize(letter_for_index(q.correct_index))}</span>
       </:col>
       <:col :let={{_id, q}} label="Zuletzt">
         <div class="flex items-center gap-1.5 whitespace-nowrap text-sm">

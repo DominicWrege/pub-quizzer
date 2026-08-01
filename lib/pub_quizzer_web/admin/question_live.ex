@@ -1,12 +1,15 @@
 defmodule PubQuizzerWeb.Admin.QuestionLive do
   use PubQuizzerWeb, :live_view
 
+  require Logger
+
   alias PubQuizzer.Quiz
   alias PubQuizzer.Quiz.Question
   embed_templates "question_live/*"
 
   @upload_dir "priv/static/uploads"
   @option_count 4
+  @empty_options [%{"text" => ""}, %{"text" => ""}, %{"text" => ""}, %{"text" => ""}]
 
   @impl true
   def render(assigns) do
@@ -15,6 +18,58 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       :new -> new(assigns)
       :edit -> edit(assigns)
     end
+  end
+
+  @doc "Full-screen image viewer dialog. Renders nothing when `url` is nil."
+  attr :url, :string, default: nil
+
+  def image_lightbox(%{url: nil} = assigns), do: ~H""
+
+  def image_lightbox(assigns) do
+    ~H"""
+    <div
+      class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      phx-click="close_image"
+    >
+      <div class="relative max-w-4xl max-h-[90vh]" phx-click.stop>
+        <img src={@url} class="max-w-full max-h-[90vh] object-contain rounded" />
+        <button
+          type="button"
+          phx-click="close_image"
+          class="btn btn-circle btn-sm absolute top-2 right-2"
+        >
+          <.icon name="hero-x-mark" class="size-5" />
+        </button>
+      </div>
+    </div>
+    """
+  end
+
+  @doc "Validation error banner. Renders nothing until the form has been submitted with errors."
+  attr :form, :any, required: true
+  attr :submitted, :boolean, default: false
+
+  def form_errors(%{submitted: false} = assigns), do: ~H""
+
+  def form_errors(%{form: %{errors: []}} = assigns), do: ~H""
+
+  def form_errors(assigns) do
+    ~H"""
+    <div class="alert alert-error py-2 px-3 text-sm">
+      <.icon name="hero-exclamation-circle" class="size-4" />
+      <span>
+        <%= for {msg, _} <- @form.errors do %>
+          <span>{msg}</span>
+        <% end %>
+        <%= for {msg, _} <- @form[:prompt].errors do %>
+          <span>{msg}</span>
+        <% end %>
+        <%= for {msg, _} <- @form[:options].errors do %>
+          <span>{msg}</span>
+        <% end %>
+      </span>
+    </div>
+    """
   end
 
   @impl true
@@ -61,8 +116,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   defp apply_action(socket, :new, %{"topic_id" => topic_id}) do
     topic = Quiz.get_topic!(topic_id)
-    empty_opts = [%{"text" => ""}, %{"text" => ""}, %{"text" => ""}, %{"text" => ""}]
-    changeset = Question.changeset(%Question{options: empty_opts}, %{correct_index: 0})
+    changeset = Question.changeset(%Question{options: @empty_options}, %{correct_index: 0})
 
     socket
     |> assign(:topic, topic)
@@ -187,35 +241,17 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   def handle_event("validate", params, socket) do
     question_params = normalize_params(params)
-
     question = Map.get(socket.assigns, :question)
-
-    empty_opts = [%{"text" => ""}, %{"text" => ""}, %{"text" => ""}, %{"text" => ""}]
-
-    changeset =
-      case question do
-        nil ->
-          Question.changeset(
-            %Question{options: empty_opts},
-            Map.merge(%{"correct_index" => 0}, question_params)
-          )
-
-        _ ->
-          Question.changeset(question, question_params)
-      end
+    changeset = build_changeset(question, question_params)
 
     {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
   end
 
   def handle_event("cancel_upload", %{"ref" => ref}, socket) do
-    socket =
-      if ref do
-        cancel_upload(socket, :image, ref)
-      else
-        socket
-      end
-
-    {:noreply, assign(socket, :image_preview_url, nil)}
+    {:noreply,
+     socket
+     |> cancel_upload(:image, ref)
+     |> assign(:image_preview_url, nil)}
   end
 
   def handle_event("image_preview", %{"data_url" => data_url}, socket) do
@@ -281,13 +317,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     }
 
     question = Map.get(socket.assigns, :question)
-    empty_opts = [%{"text" => ""}, %{"text" => ""}, %{"text" => ""}, %{"text" => ""}]
-
-    changeset =
-      case question do
-        nil -> Question.changeset(%Question{options: empty_opts}, question_params)
-        _ -> Question.changeset(question, question_params)
-      end
+    changeset = build_changeset(question, question_params)
 
     {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
   end
@@ -300,22 +330,22 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     {:noreply, assign(socket, :viewing_image, nil)}
   end
 
-  defp normalize_params(%{"question" => q}) do
-    q
-    |> Map.update("options", [], fn opts ->
-      normalize_options(opts)
-    end)
-    |> Map.update("correct_index", nil, fn
-      nil -> nil
-      "" -> nil
-      v -> String.to_integer(v)
-    end)
-    |> normalize_status()
+  defp build_changeset(nil, params) do
+    Question.changeset(
+      %Question{options: @empty_options},
+      Map.merge(%{"correct_index" => 0}, params)
+    )
   end
 
-  defp normalize_params(%{"prompt" => _, "options" => _} = params) do
+  defp build_changeset(question, params) do
+    Question.changeset(question, params)
+  end
+
+  defp normalize_params(%{"question" => q}), do: normalize_params(q)
+
+  defp normalize_params(params) do
     params
-    |> Map.update("options", [], fn opts -> normalize_options(opts) end)
+    |> Map.update("options", [], &normalize_options/1)
     |> Map.update("correct_index", nil, fn
       nil -> nil
       "" -> nil
@@ -423,7 +453,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
             :ok
 
           {thumb_output, _} ->
-            require Logger
             Logger.warning("thumbnail generation failed: #{thumb_output}")
         end
 
@@ -436,7 +465,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         if size > 1_000_000 do
           {:error, "image compression failed and original is too large: #{output}"}
         else
-          require Logger
           Logger.warning("ffmpeg compression failed, using original: #{output}")
           File.cp!(tmp_path, dest)
           {:ok, "/uploads/#{filename}"}
@@ -456,10 +484,9 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   end
 
   defp compute_version_diffs(versions) do
-    versions
-    |> Enum.with_index()
-    |> Enum.map(fn {version, idx} ->
-      prev = Enum.at(versions, idx + 1)
+    prevs = Enum.drop(versions, 1) ++ [nil]
+
+    Enum.zip_with(versions, prevs, fn version, prev ->
       {version, diff_against(version, prev)}
     end)
   end
@@ -491,7 +518,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
           {Quiz.create_question(Map.put(question_params, "topic_id", topic_id)), :insert}
 
         q ->
-          {Quiz.update_question(q, question_params), :insert}
+          {Quiz.update_question(q, question_params), :update}
       end
 
     case result do

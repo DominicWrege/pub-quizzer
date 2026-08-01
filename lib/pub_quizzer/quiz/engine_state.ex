@@ -352,7 +352,7 @@ defmodule PubQuizzer.Quiz.EngineState do
   end
 
   defp load_questions_for_topic(topic_id) do
-    PubQuizzer.Quiz.list_questions_for_topic(topic_id)
+    PubQuizzer.Quiz.list_published_questions_for_topic(topic_id)
     |> Enum.with_index()
     |> Enum.map(fn {q, idx} ->
       %{

@@ -20,7 +20,8 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
           options: options,
           correct_index: correct,
           topic_id: topic.id,
-          position: idx
+          position: idx,
+          status: "published"
         })
     end
 
@@ -90,7 +91,8 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
             options: options,
             correct_index: correct,
             topic_id: topic2.id,
-            position: idx
+            position: idx,
+            status: "published"
           })
       end
 
@@ -135,7 +137,8 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
             options: options,
             correct_index: correct,
             topic_id: topic2.id,
-            position: idx
+            position: idx,
+            status: "published"
           })
       end
 
@@ -221,7 +224,8 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
           correct_index: 0,
           topic_id: topic_with_image.id,
           position: 0,
-          image: "/uploads/test_image.jpg"
+          image: "/uploads/test_image.jpg",
+          status: "published"
         })
 
       Engine.start_quiz(event.id)

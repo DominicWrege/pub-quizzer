@@ -496,7 +496,7 @@ defmodule PubQuizzer.Quiz.Engine do
   defp load_questions_for_topic(topic_id) do
     alias PubQuizzer.Quiz
 
-    Quiz.list_questions_for_topic(topic_id)
+    Quiz.list_published_questions_for_topic(topic_id)
     |> Enum.with_index()
     |> Enum.map(fn {q, idx} ->
       %{

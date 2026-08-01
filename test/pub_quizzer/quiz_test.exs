@@ -116,6 +116,67 @@ defmodule PubQuizzer.QuizTest do
       [loaded] = Quiz.list_questions_for_topic(topic.id)
       assert loaded.last_editor_name == nil
     end
+
+    test "create_question/1 defaults new questions to draft", %{topic: topic} do
+      {:ok, q} =
+        Quiz.create_question(%{
+          prompt: "New question",
+          options: ["A", "B", "C", "D"],
+          correct_index: 0,
+          topic_id: topic.id
+        })
+
+      assert q.status == "draft"
+    end
+
+    test "list_published_questions_for_topic/1 excludes drafts", %{topic: topic} do
+      {:ok, _draft} =
+        Quiz.create_question(%{
+          prompt: "Draft",
+          options: ["A", "B"],
+          correct_index: 0,
+          topic_id: topic.id
+        })
+
+      {:ok, published} =
+        Quiz.create_question(%{
+          prompt: "Published",
+          options: ["A", "B"],
+          correct_index: 0,
+          topic_id: topic.id,
+          status: "published"
+        })
+
+      assert Enum.map(Quiz.list_published_questions_for_topic(topic.id), & &1.id) == [
+               published.id
+             ]
+    end
+
+    test "list_topic_names/0 excludes topics that only have draft questions" do
+      {:ok, draft_topic} = Quiz.create_topic(%{name: "Draft Only"})
+      {:ok, live_topic} = Quiz.create_topic(%{name: "Has Published"})
+
+      {:ok, _} =
+        Quiz.create_question(%{
+          prompt: "Draft q",
+          options: ["A", "B"],
+          correct_index: 0,
+          topic_id: draft_topic.id
+        })
+
+      {:ok, _} =
+        Quiz.create_question(%{
+          prompt: "Live q",
+          options: ["A", "B"],
+          correct_index: 0,
+          topic_id: live_topic.id,
+          status: "published"
+        })
+
+      ids = Enum.map(Quiz.list_topic_names(), & &1.id)
+      assert live_topic.id in ids
+      refute draft_topic.id in ids
+    end
   end
 
   defp insert_question(topic) do

@@ -27,6 +27,7 @@ defmodule PubQuizzer.Quiz do
     Topic
     |> where(enabled: true)
     |> join(:inner, [t], q in assoc(t, :questions))
+    |> where([_t, q], q.status == "published")
     |> group_by([t], t.id)
     |> order_by([t], asc: t.name)
     |> select([t], %{id: t.id, name: t.name})
@@ -70,6 +71,7 @@ defmodule PubQuizzer.Quiz do
       from(t in Topic,
         where: t.id in ^topic_ids and t.enabled == true,
         join: q in assoc(t, :questions),
+        where: q.status == "published",
         group_by: t.id,
         select: t.id
       )
@@ -92,6 +94,13 @@ defmodule PubQuizzer.Quiz do
     |> order_by(asc: :position)
     |> Repo.all()
     |> attach_last_editor()
+  end
+
+  def list_published_questions_for_topic(topic_id) do
+    Question
+    |> where(topic_id: ^topic_id, status: "published")
+    |> order_by(asc: :position)
+    |> Repo.all()
   end
 
   def search_questions_for_topic(topic_id, query) when is_binary(query) do

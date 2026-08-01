@@ -356,4 +356,153 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       refute has_element?(view, "tr#questions-#{question.id}")
     end
   end
+
+  describe "toggle status" do
+    test "new questions default to draft and show the Entwurf badge", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, question} =
+        Quiz.create_question(%{
+          prompt: "Draft question",
+          options: ["A", "B", "C", "D"],
+          correct_index: 0,
+          topic_id: topic.id
+        })
+
+      assert question.status == "draft"
+
+      {:ok, _view, html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      assert html =~ "Entwurf"
+    end
+
+    test "publishes a draft question", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, question} =
+        Quiz.create_question(%{
+          prompt: "To publish",
+          options: ["A", "B", "C", "D"],
+          correct_index: 0,
+          topic_id: topic.id
+        })
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view
+      |> element("tr#questions-#{question.id} input[phx-click='toggle_status']")
+      |> render_click()
+
+      assert Quiz.get_question!(question.id).status == "published"
+    end
+
+    test "unpublishes a published question", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, question} =
+        Quiz.create_question(%{
+          prompt: "To unpublish",
+          options: ["A", "B", "C", "D"],
+          correct_index: 0,
+          topic_id: topic.id,
+          status: "published"
+        })
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view
+      |> element("tr#questions-#{question.id} input[phx-click='toggle_status']")
+      |> render_click()
+
+      assert Quiz.get_question!(question.id).status == "draft"
+    end
+  end
+
+  describe "form status toggle" do
+    test "creates a published question when the toggle is on", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/new")
+
+      view
+      |> form("#question-form", %{
+        "question" => %{
+          "prompt" => "Published via form?",
+          "options" => %{"0" => "A", "1" => "B", "2" => "C", "3" => "D"},
+          "correct_index" => "0",
+          "published" => "true"
+        }
+      })
+      |> render_submit()
+
+      assert [q] = Quiz.list_questions_for_topic(topic.id)
+      assert q.status == "published"
+    end
+
+    test "creates a draft question when the toggle is off", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/new")
+
+      view
+      |> form("#question-form", %{
+        "question" => %{
+          "prompt" => "Draft via form?",
+          "options" => %{"0" => "A", "1" => "B", "2" => "C", "3" => "D"},
+          "correct_index" => "0",
+          "published" => "false"
+        }
+      })
+      |> render_submit()
+
+      assert [q] = Quiz.list_questions_for_topic(topic.id)
+      assert q.status == "draft"
+    end
+
+    test "updates status via the edit form toggle", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, question} =
+        Quiz.create_question(%{
+          prompt: "Edit status",
+          options: ["A", "B", "C", "D"],
+          correct_index: 0,
+          topic_id: topic.id,
+          status: "published"
+        })
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      view
+      |> form("#question-form", %{
+        "question" => %{
+          "prompt" => "Edit status",
+          "options" => %{"0" => "A", "1" => "B", "2" => "C", "3" => "D"},
+          "correct_index" => "0",
+          "published" => "false"
+        }
+      })
+      |> render_submit()
+
+      assert Quiz.get_question!(question.id).status == "draft"
+    end
+  end
 end

@@ -281,7 +281,8 @@ if Repo.aggregate(Topic, :count) == 0 do
           prompt: prompt,
           options: Enum.map(options, &%{"text" => &1}),
           correct_index: correct,
-          position: q_idx
+          position: q_idx,
+          status: "published"
         })
         |> Repo.insert()
     end

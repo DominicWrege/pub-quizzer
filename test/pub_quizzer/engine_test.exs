@@ -21,7 +21,8 @@ defmodule PubQuizzer.Quiz.EngineTest do
           options: options,
           correct_index: correct,
           topic_id: topic.id,
-          position: idx
+          position: idx,
+          status: "published"
         })
     end
 
@@ -205,7 +206,8 @@ defmodule PubQuizzer.Quiz.EngineTest do
             options: options,
             correct_index: correct,
             topic_id: topic2.id,
-            position: idx
+            position: idx,
+            status: "published"
           })
       end
 
