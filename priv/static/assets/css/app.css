@@ -12358,6 +12358,11 @@
       display: none;
     }
   }
+  .lg\:inline-flex {
+    @media (width >= 64rem) {
+      display: inline-flex;
+    }
+  }
   .lg\:w-auto {
     @media (width >= 64rem) {
       width: auto;

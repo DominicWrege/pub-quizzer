@@ -40,6 +40,17 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
 
       assert html =~ "1"
     end
+
+    test "shows a PDF export link per topic", %{conn: conn} do
+      {:ok, topic} = Quiz.create_topic(%{name: "Geography"})
+
+      {:ok, _view, html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics")
+
+      assert html =~ "/admin/topics/#{topic.id}/export"
+    end
   end
 
   describe "new topic" do

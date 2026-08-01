@@ -68,6 +68,8 @@ defmodule PubQuizzerWeb.Router do
   scope "/admin", PubQuizzerWeb.Admin do
     pipe_through [:browser, :moderator_auth]
 
+    get "/topics/:id/export", TopicExportController, :export
+
     live_session :admin,
       on_mount: [{PubQuizzerWeb.AdminAuth, :ensure_authenticated}] do
       live "/topics", TopicLive, :index

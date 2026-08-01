@@ -604,6 +604,9 @@ defmodule PubQuizzerWeb.CoreComponents do
 
       "light-bulb" ->
         ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.439a4.5 4.5 0 0 0 6.75-3.75V12a7.5 7.5 0 0 0-15 0v4.5a4.5 4.5 0 0 0 6.75 3.75M9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008H13.5V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>)
+
+      "arrow-down-tray" ->
+        ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>)
     end
   end
 

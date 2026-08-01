@@ -120,6 +120,12 @@
             >
               <.icon name="hero-pencil" class="size-4" /> Bearbeiten
             </.link>
+            <.link
+              href={~p"/admin/topics/#{topic}/export"}
+              class="btn btn-primary btn-sm hidden lg:inline-flex"
+            >
+              <.icon name="hero-arrow-down-tray" class="size-4" /> PDF
+            </.link>
           </div>
         </div>
       <% end %>

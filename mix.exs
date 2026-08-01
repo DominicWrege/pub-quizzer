@@ -58,7 +58,8 @@ defmodule PubQuizzer.MixProject do
       {:eqrcode, "~> 0.2"},
       {:bandit, "~> 1.5"},
       {:swoosh, "~> 1.26"},
-      {:req, "~> 0.5"}
+      {:req, "~> 0.5"},
+      {:pdf, "~> 0.8"}
     ]
   end
 
