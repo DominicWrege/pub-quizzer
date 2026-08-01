@@ -325,25 +325,48 @@ defmodule PubQuizzerWeb.CoreComponents do
 
   @doc """
   Renders a header with title.
+
+  By default the actions stack below the title on small screens. Pass
+  `inline_actions` to keep them on the title row instead, which suits headers
+  with a single compact action such as a save button.
   """
   slot :inner_block, required: true
   slot :subtitle
   slot :actions
   slot :back, doc: "renders a back button on the left side"
 
+  attr :inline_actions, :boolean,
+    default: false,
+    doc: "keep the actions on the title row on small screens instead of stacking them below"
+
   def header(assigns) do
     ~H"""
     <header class={[
       @actions != [] &&
-        "flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 lg:gap-6",
+        if(@inline_actions,
+          do: "flex flex-wrap items-start gap-x-2 gap-y-2 sm:gap-x-4",
+          else:
+            "flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 lg:gap-6"
+        ),
       "pb-2"
     ]}>
-      <div class="flex items-center gap-4">
+      <div class={[
+        "flex",
+        if(@inline_actions,
+          do: "items-start gap-2 sm:gap-4 min-w-0 flex-1",
+          else: "items-center gap-4"
+        )
+      ]}>
         <div :if={@back != []} class="flex-none">
           {render_slot(@back)}
         </div>
-        <div class="flex items-baseline gap-2 flex-wrap">
-          <h1 class="text-lg font-semibold leading-8">
+        <div class={
+          if(@inline_actions,
+            do: "flex flex-col min-w-0 flex-1",
+            else: "flex items-baseline gap-2 flex-wrap"
+          )
+        }>
+          <h1 class={["text-lg font-semibold leading-8", @inline_actions && "truncate min-w-0"]}>
             {render_slot(@inner_block)}
           </h1>
           <p :if={@subtitle != []} class="text-sm text-base-content/70">
@@ -351,7 +374,10 @@ defmodule PubQuizzerWeb.CoreComponents do
           </p>
         </div>
       </div>
-      <div class="w-full lg:w-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+      <div class={[
+        "flex flex-wrap items-center justify-end gap-2 sm:gap-3",
+        if(@inline_actions, do: "ml-auto flex-none", else: "w-full lg:w-auto")
+      ]}>
         {render_slot(@actions)}
       </div>
     </header>
