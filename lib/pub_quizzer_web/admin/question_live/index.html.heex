@@ -46,7 +46,7 @@
   </div>
 
   <%!-- Mobile: cards --%>
-  <div id="questions-cards" class="space-y-3 pb-24 lg:pb-0 lg:hidden">
+  <div id="questions-cards" phx-update="stream" class="space-y-3 pb-24 lg:pb-0 lg:hidden">
     <div
       :for={{id, q} <- @streams.questions}
       id={"card-#{id}"}

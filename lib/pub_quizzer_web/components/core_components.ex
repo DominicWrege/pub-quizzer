@@ -659,7 +659,7 @@ defmodule PubQuizzerWeb.CoreComponents do
         id={@id}
         phx-hook="Dialog"
         data-cancel-event={@cancel_event}
-        class="m-auto rounded-box bg-base-100 p-6 shadow-xl max-w-md min-w-sm"
+        class="m-auto rounded-box bg-base-100 p-6 shadow-xl w-[calc(100%-2rem)] sm:w-auto sm:min-w-sm max-w-md"
       >
         <div class="flex items-start justify-between gap-4">
           <h3 class="text-lg font-bold">{@title}</h3>
@@ -679,8 +679,13 @@ defmodule PubQuizzerWeb.CoreComponents do
         <% else %>
           <p class="pt-4">{@message}</p>
         <% end %>
-        <div class="flex justify-end mt-6">
-          <button phx-click={@confirm_event} class={["btn btn-sm", @confirm_class]}>{@confirm_label}</button>
+        <div class="flex mt-6">
+          <button
+            phx-click={@confirm_event}
+            class={["btn btn-sm w-full sm:w-auto sm:ml-auto min-h-11 sm:min-h-0", @confirm_class]}
+          >
+            {@confirm_label}
+          </button>
         </div>
       </dialog>
     <% end %>
