@@ -629,19 +629,25 @@ defmodule PubQuizzerWeb.CoreComponents do
         data-cancel-event={@cancel_event}
         class="m-auto rounded-box bg-base-100 p-6 shadow-xl max-w-md min-w-sm"
       >
-        <h3 class="text-lg font-bold">{@title}</h3>
+        <div class="flex items-start justify-between gap-4">
+          <h3 class="text-lg font-bold">{@title}</h3>
+          <button
+            type="button"
+            phx-click={@cancel_event}
+            aria-label="Schließen"
+            class="btn btn-circle btn-ghost btn-sm shrink-0"
+          >
+            <.icon name="hero-x-mark" class="size-5" />
+          </button>
+        </div>
         <%= if @inner_block do %>
-          <div class="py-4">
+          <div class="pt-4">
             {render_slot(@inner_block)}
           </div>
         <% else %>
-          <p class="py-4">{@message}</p>
+          <p class="pt-4">{@message}</p>
         <% end %>
-        <div class="flex gap-2 justify-end">
-          <button
-            phx-click={@cancel_event}
-            class="btn btn-sm btn-soft"
-          >Abbrechen</button>
+        <div class="flex justify-end mt-6">
           <button phx-click={@confirm_event} class={["btn btn-sm", @confirm_class]}>{@confirm_label}</button>
         </div>
       </dialog>

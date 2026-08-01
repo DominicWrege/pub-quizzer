@@ -69,7 +69,7 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
       view |> element("#new-event-btn") |> render_click()
       assert has_element?(view, "#event-form-modal")
 
-      view |> element("button", "Abbrechen") |> render_click()
+      view |> element(~s(#event-form-modal button[aria-label="Schließen"])) |> render_click()
 
       refute has_element?(view, "#event-form-modal")
     end

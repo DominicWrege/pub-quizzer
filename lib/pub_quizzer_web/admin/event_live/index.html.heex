@@ -26,10 +26,22 @@
       data-cancel-event="cancel_new"
       class="m-auto rounded-box bg-base-100 p-4 sm:p-6 shadow-xl max-w-lg w-[calc(100%-2rem)] sm:w-full max-h-[90vh] overflow-y-auto"
     >
-      <h3 class="text-lg font-bold">Neues Quiz</h3>
-      <p class="text-sm text-base-content/70 mb-4">
-        Erstelle ein Quiz-Event mit einem 4-stelligen Beitrittscode.
-      </p>
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="text-lg font-bold">Neues Quiz</h3>
+          <p class="text-sm text-base-content/70 mt-1">
+            Erstelle ein Quiz-Event mit einem 4-stelligen Beitrittscode.
+          </p>
+        </div>
+        <button
+          type="button"
+          phx-click="cancel_new"
+          aria-label="Schließen"
+          class="btn btn-circle btn-ghost btn-sm shrink-0"
+        >
+          <.icon name="hero-x-mark" class="size-5" />
+        </button>
+      </div>
       <.form for={@form} id="event-form" phx-submit="save">
         <.input
           field={@form[:name]}
@@ -44,8 +56,7 @@
           max="10"
           value={@form[:team_count].value}
         />
-        <div class="flex justify-between items-center mt-4">
-          <button type="button" phx-click="cancel_new" class="btn btn-sm btn-soft">Abbrechen</button>
+        <div class="flex justify-end mt-6">
           <button type="submit" class="btn btn-primary btn-sm">Quiz erstellen</button>
         </div>
       </.form>

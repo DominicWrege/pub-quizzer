@@ -66,7 +66,7 @@ test.describe("host actions", () => {
     await expect(hostPage.locator("#finish-quiz-modal")).toBeVisible({ timeout: 5_000 })
 
     // Cancel it
-    await hostPage.locator("#finish-quiz-modal button", { hasText: "Abbrechen" }).click()
+    await hostPage.locator("#finish-quiz-modal button[aria-label='Schließen']").click()
     await expect(hostPage.locator("#finish-quiz-modal")).not.toBeVisible({ timeout: 5_000 })
 
     // Quiz is still running — "Nächste Frage" or question text still visible

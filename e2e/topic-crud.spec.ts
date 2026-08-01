@@ -55,7 +55,7 @@ test.describe("topic CRUD", () => {
     // Open the nested delete confirmation, then cancel it
     await hostPage.locator("#topic-form-modal [phx-click='ask_delete']").click()
     await expect(hostPage.locator("#delete-topic-modal")).toBeVisible({ timeout: 5_000 })
-    await hostPage.locator("#delete-topic-modal button", { hasText: "Abbrechen" }).click()
+    await hostPage.locator("#delete-topic-modal button[aria-label='Schließen']").click()
     await expect(hostPage.locator("#delete-topic-modal")).toHaveCount(0, { timeout: 5_000 })
 
     // The edit dialog must still be open and usable (regression: morphdom used
@@ -66,7 +66,7 @@ test.describe("topic CRUD", () => {
     await expect(hostPage.locator("#topic-form-modal button[type='submit']")).toBeEnabled()
 
     // Closing the edit dialog restores the page behind it
-    await hostPage.locator("#topic-form-modal button", { hasText: "Abbrechen" }).click()
+    await hostPage.locator("#topic-form-modal button[aria-label='Schließen']").click()
     await expect(hostPage.locator("#topic-form-modal")).toHaveCount(0, { timeout: 5_000 })
     await expect(hostPage.locator('[phx-click="start_new"]')).toBeEnabled()
   })
