@@ -37,6 +37,7 @@ Key details:
 
 - **NEVER commit or push without asking the user first** — always wait for explicit confirmation. This is a hard rule. Breaking it causes major frustration.
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
+- **Whenever `mix.lock` changes** (adding or updating a dependency), you **must** update the `mix-deps` hash in `nix/release.nix` (the `beamPackages.fetchMixDeps` `hash` attr) **before pushing**, otherwise CI (`nix build .#pub-quizzer`) fails with a fixed-output hash mismatch. Get the correct hash by running `nix build .#pub-quizzer` and reading the `got:` value from the error (or set `hash = lib.fakeHash;` first to force the error).
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
 - **Never** commit or push without asking the user first — always wait for explicit confirmation
 - **Every time you add or update JavaScript** (including HEEx `phx-*` bindings that trigger JS), you **must** verify there are no browser console errors by running a Playwright check that captures `page.on("console")` and `page.on("pageerror")` events on the affected pages. A bare `<input>` with `phx-change` outside a `<form>` is a common source of "form events require the input to be inside a form" errors.
