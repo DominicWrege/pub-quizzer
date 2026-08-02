@@ -8,44 +8,24 @@
 
   outputs =
     { self, nixpkgs, flake-utils }:
-    let
-      supportedSystems = [
+    flake-utils.lib.eachSystem
+      [
         "x86_64-linux"
         "aarch64-linux"
-      ];
-      forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (system: f system);
-    in
-    {
-      # --- NixOS module (consumed by a server configuration) ---
-      nixosModules.default = { pkgs, ... }: {
-        nixpkgs.overlays = [
-          (final: prev: {
-            pub-quizzer = self.packages.${pkgs.stdenv.hostPlatform.system}.pub-quizzer;
-          })
-        ];
-        imports = [ ./nix/module.nix ];
-      };
-
-      # --- Release packages ---
-      packages = forAllSystems (
+      ]
+      (
         system:
         let
-          pkgs = import nixpkgs { inherit system; };
-        in
-        {
-          default = self.packages.${system}.pub-quizzer;
+          pkgs = nixpkgs.legacyPackages.${system};
           pub-quizzer = pkgs.callPackage ./nix/release.nix { };
-        }
-      );
-
-      # --- Dev shell (original, for local development) ---
-      devShells = forAllSystems (
-        system:
-        let
-          pkgs = import nixpkgs { inherit system; };
         in
         {
-          default = pkgs.mkShell {
+          packages = {
+            default = pub-quizzer;
+            inherit pub-quizzer;
+          };
+
+          devShells.default = pkgs.mkShell {
             packages = with pkgs; [
               beamPackages.elixir
               beamPackages.erlang
@@ -71,6 +51,16 @@
             '';
           };
         }
-      );
+      )
+    // {
+      # --- NixOS module (consumed by a server configuration) ---
+      nixosModules.default = { pkgs, ... }: {
+        nixpkgs.overlays = [
+          (final: prev: {
+            pub-quizzer = self.packages.${pkgs.stdenv.hostPlatform.system}.pub-quizzer;
+          })
+        ];
+        imports = [ ./nix/module.nix ];
+      };
     };
 }
