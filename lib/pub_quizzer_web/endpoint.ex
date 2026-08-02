@@ -49,6 +49,12 @@ defmodule PubQuizzerWeb.Endpoint do
     from: :pub_quizzer,
     gzip: not code_reloading?,
     only: PubQuizzerWeb.static_paths(),
+    # `only:` matches a request's first path segment exactly, which fails for
+    # digested top-level files whose names gain a hash suffix (e.g. phx.digest
+    # turns favicon.svg into favicon-<hash>.svg, no longer matching "favicon.svg").
+    # Directories like assets/ still match by their first segment, but these
+    # top-level files need prefix matching so their digested copies are served.
+    only_matching: ["favicon", "robots", "site"],
     cache_control_for_etags:
       Application.compile_env(:pub_quizzer, :cache_control_for_etags, "public"),
     cache_control_for_vsn_requests:
