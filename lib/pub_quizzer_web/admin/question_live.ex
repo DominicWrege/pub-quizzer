@@ -141,7 +141,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     socket
     |> assign(:topic, topic)
     |> assign(:question, question)
-    |> assign(:page_title, "Frage bearbeiten")
+    |> assign(:page_title, "Frage bearbeiten – #{topic.name}")
     |> assign(:form, to_form(changeset))
     |> assign(:form_submitted, false)
     |> assign(:image_preview_url, nil)
