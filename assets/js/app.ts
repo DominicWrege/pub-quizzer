@@ -77,12 +77,6 @@ const OptionImagePreview = {
   mounted(this: OptionPreviewHook) {
     this.currentUrl = null
 
-    this.el.addEventListener("click", (e: Event) => {
-      const target = e.target as HTMLElement
-      if (target.closest("button")) return
-      e.stopPropagation()
-    })
-
     const previewFile = (file: File | undefined | null) => {
       if (!file) return
       if (this.currentUrl) URL.revokeObjectURL(this.currentUrl)
