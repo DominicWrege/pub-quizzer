@@ -81,7 +81,7 @@
           name="question[prompt]"
           id="question_prompt"
           phx-hook="AutoResize"
-          class="w-full text-2xl font-semibold leading-relaxed bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none placeholder:text-base-content/30 focus:outline-none px-3 py-2 whitespace-pre-wrap"
+          class="w-full text-lg sm:text-2xl font-semibold leading-relaxed bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none placeholder:text-base-content/30 focus:outline-none px-3 py-2 whitespace-pre-wrap"
           placeholder="Wie lautet die Frage?"
           rows="2"
         ><%= @form[:prompt].value || "" %></textarea>
@@ -211,7 +211,7 @@
                 data-option-text
                 phx-hook="AutoResize"
                 onclick="event.stopPropagation()"
-                class="flex-1 min-w-0 bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none text-lg leading-relaxed placeholder:text-base-content/30 focus:outline-none px-2 py-1.5 min-h-[3.75rem] whitespace-pre-wrap"
+                class="flex-1 min-w-0 bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none text-base sm:text-lg leading-relaxed placeholder:text-base-content/30 focus:outline-none px-2 py-1.5 min-h-[3.75rem] whitespace-pre-wrap"
                 placeholder={"Option #{String.capitalize(letter_for_index(i))}"}
                 rows="2"
               ><%= opt_text %></textarea>
