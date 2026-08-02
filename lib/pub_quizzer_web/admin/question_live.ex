@@ -166,22 +166,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
      |> stream(:questions, questions, reset: true)}
   end
 
-  def handle_event("toggle_status", %{"id" => id}, socket) do
-    question = Quiz.get_question!(String.to_integer(id))
-    new_status = if question.status == "published", do: "draft", else: "published"
-    {:ok, _} = Quiz.update_question(question, %{status: new_status})
-
-    flash =
-      if new_status == "published",
-        do: "Frage veröffentlicht.",
-        else: "Frage auf Entwurf gesetzt."
-
-    {:noreply,
-     socket
-     |> restream_questions()
-     |> put_flash(:info, flash)}
-  end
-
   def handle_event("ask_delete", %{"id" => id}, socket) do
     {:noreply,
      socket

@@ -57,128 +57,67 @@
     </div>
   </div>
 
-  <%!-- Mobile: cards. Plain keyed list (not a second phx-update="stream"
-      container): stream DOM ids must equal the stream item ids, which the
-      desktop table already uses — prefixed card ids would never match the
-      client-side stream prune/reset, leaving stale cards after filtering. --%>
-  <div id="questions-cards" class="space-y-3 pb-24 lg:pb-0 lg:hidden">
+  <%!-- Unified question list — cards at every breakpoint. This is the single
+      phx-update="stream" container: child ids equal the stream item ids, so
+      search resets and deletes prune correctly. --%>
+  <div
+    id="questions"
+    phx-update="stream"
+    class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start pb-24 lg:pb-8"
+  >
     <div
       :for={{id, q} <- @streams.questions}
-      id={"card-#{id}"}
-      class="bg-base-200 border-2 border-base-300 rounded-xl px-4 pt-4 pb-3"
+      id={id}
+      class="flex flex-col bg-base-200 border-2 border-base-300 rounded-xl px-4 pt-4 pb-3 transition-shadow hover:shadow-md"
     >
-      <div class="text-xs text-base-content/60 mb-1">#{q.position + 1}</div>
-      <div class="font-medium line-clamp-2 break-words"><.multiline_text text={q.prompt} /></div>
-      <div class="flex items-center gap-3 mt-2 text-xs text-base-content/50">
-        <span>{String.capitalize(letter_for_index(q.correct_index))}</span>
+      <%!-- Read-only status + image indicator --%>
+      <div class="flex items-center justify-between gap-2 mb-1.5">
+        <span class={[
+          "badge badge-soft badge-sm gap-1.5",
+          if(q.status == "published", do: "badge-success", else: "badge-warning")
+        ]}>
+          <span class={[
+            "size-1.5 rounded-full",
+            if(q.status == "published", do: "bg-success", else: "bg-warning")
+          ]}></span>
+          {if q.status == "published", do: "Live", else: "Entwurf"}
+        </span>
+        <%= if q.image do %>
+          <span class="badge badge-ghost badge-xs gap-1">
+            <.icon name="hero-photo" class="size-3" /> Bild
+          </span>
+        <% end %>
+      </div>
+
+      <div class="font-medium break-words">
+        <.multiline_text text={q.prompt} />
+      </div>
+
+      <div class="flex items-center gap-2 mt-2 text-xs text-base-content/50">
         <span>{Calendar.strftime(q.updated_at, "%d.%m.%y")}</span>
         <%= if q.last_editor_name do %>
+          <span class="text-base-content/30">·</span>
           <span>{q.last_editor_name}</span>
         <% end %>
       </div>
+
       <div class="flex items-center gap-2 mt-2 pt-2 border-t border-base-300">
-        <input
-          type="checkbox"
-          class="toggle toggle-success toggle-sm"
-          checked={q.status == "published"}
-          phx-click="toggle_status"
-          phx-value-id={q.id}
-          aria-label={
-            if q.status == "draft",
-              do: "Frage veröffentlichen",
-              else: "Frage auf Entwurf setzen"
-          }
-        />
-        <span class={[
-          "text-xs font-medium",
-          if(q.status == "published", do: "text-success", else: "text-warning")
-        ]}>
-          {if q.status == "published", do: "Live", else: "Entwurf"}
-        </span>
         <div class="flex-1"></div>
         <.link
           navigate={~p"/admin/topics/#{@topic.id}/questions/#{q}/edit"}
-          class="btn btn-primary btn-sm"
-        >
-          <.icon name="hero-pencil" class="size-4" />
-        </.link>
-        <button
-          phx-click="ask_delete"
-          phx-value-id={q.id}
-          class="btn btn-sm btn-danger-soft"
-        >
-          <.icon name="hero-trash" class="size-4" />
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <%!-- Desktop: table --%>
-  <div class="overflow-x-auto rounded-lg border-2 border-base-300 hidden lg:block">
-    <.table
-      id="questions"
-      rows={@streams.questions}
-      row_id={fn {id, _} -> id end}
-    >
-      <:col :let={{_id, q}} label="#"><span class="opacity-60">{q.position + 1}</span></:col>
-      <:col :let={{_id, q}} label="Frage">
-        <span class="break-words"><.multiline_text text={q.prompt} /></span>
-      </:col>
-      <:col :let={{_id, q}} label="Status">
-        <div class="inline-flex items-center gap-2.5 w-28">
-          <input
-            type="checkbox"
-            class="toggle toggle-success toggle-sm"
-            checked={q.status == "published"}
-            phx-click="toggle_status"
-            phx-value-id={q.id}
-            aria-label={
-              if q.status == "draft",
-                do: "Frage veröffentlichen",
-                else: "Frage auf Entwurf setzen"
-            }
-          />
-          <span class={[
-            "text-sm font-medium whitespace-nowrap",
-            if(q.status == "published", do: "text-success", else: "text-warning")
-          ]}>
-            {if q.status == "published", do: "Live", else: "Entwurf"}
-          </span>
-        </div>
-      </:col>
-      <:col :let={{_id, q}} label="Korrekt">
-        <span class="whitespace-nowrap">{String.capitalize(letter_for_index(q.correct_index))}</span>
-      </:col>
-      <:col :let={{_id, q}} label="Zuletzt">
-        <div class="flex items-center gap-1.5 whitespace-nowrap text-sm">
-          <span class="text-base-content/70">{Calendar.strftime(q.updated_at, "%d.%m.%y %H:%M")}</span>
-          <%= if q.last_editor_name do %>
-            <span class="text-base-content/40">·</span>
-            <span class="text-base-content/50">{q.last_editor_name}</span>
-          <% end %>
-          <%= if q.image do %>
-            <span class="badge badge-ghost badge-xs gap-1">
-              <.icon name="hero-eye" class="size-3" /> Bild
-            </span>
-          <% end %>
-        </div>
-      </:col>
-      <:action :let={{_id, q}}>
-        <.link
-          navigate={~p"/admin/topics/#{@topic.id}/questions/#{q}/edit"}
-          class="btn btn-primary btn-sm"
+          class="btn btn-primary btn-sm gap-1.5"
         >
           <.icon name="hero-pencil" class="size-4" /> Bearbeiten
         </.link>
         <button
           phx-click="ask_delete"
           phx-value-id={q.id}
-          class="btn btn-sm btn-danger-soft"
+          class="btn btn-sm btn-danger-soft gap-1.5"
         >
           <.icon name="hero-trash" class="size-4" /> Löschen
         </button>
-      </:action>
-    </.table>
+      </div>
+    </div>
   </div>
 
   <%!-- Mobile floating "Neue Frage" button --%>

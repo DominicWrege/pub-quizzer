@@ -346,84 +346,14 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
         |> auth_conn()
         |> live(~p"/admin/topics/#{topic}/questions")
 
-      assert has_element?(view, "tr#questions-#{question.id}")
+      assert has_element?(view, "#questions-#{question.id}")
 
       view
-      |> element("tr#questions-#{question.id} button[phx-click='ask_delete']")
+      |> element("#questions-#{question.id} button[phx-click='ask_delete']")
       |> render_click()
 
       view |> element("button[phx-click='confirm_delete']") |> render_click()
-      refute has_element?(view, "tr#questions-#{question.id}")
-    end
-  end
-
-  describe "toggle status" do
-    test "new questions default to draft and show the Entwurf badge", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, question} =
-        Quiz.create_question(%{
-          prompt: "Draft question",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id
-        })
-
-      assert question.status == "draft"
-
-      {:ok, _view, html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics/#{topic}/questions")
-
-      assert html =~ "Entwurf"
-    end
-
-    test "publishes a draft question", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, question} =
-        Quiz.create_question(%{
-          prompt: "To publish",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id
-        })
-
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics/#{topic}/questions")
-
-      view
-      |> element("tr#questions-#{question.id} input[phx-click='toggle_status']")
-      |> render_click()
-
-      assert Quiz.get_question!(question.id).status == "published"
-    end
-
-    test "unpublishes a published question", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, question} =
-        Quiz.create_question(%{
-          prompt: "To unpublish",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id,
-          status: "published"
-        })
-
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics/#{topic}/questions")
-
-      view
-      |> element("tr#questions-#{question.id} input[phx-click='toggle_status']")
-      |> render_click()
-
-      assert Quiz.get_question!(question.id).status == "draft"
+      refute has_element?(view, "#questions-#{question.id}")
     end
   end
 
