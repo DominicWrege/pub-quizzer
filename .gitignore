@@ -48,3 +48,10 @@ node_modules
 result
 .playwright-cli/
 e2e/_inspect.spec.ts
+
+# Runtime/dev image uploads (referenced by question images in the DB).
+# Served by PubQuizzerWeb.UploadController from PubQuizzer.upload_dir/0
+# (priv/uploads in dev, /var/lib/pub-quizzer/uploads on prod). The committed
+# fixtures (1.jpeg, 2.jpg) stay tracked; everything new is ignored.
+# To track a new fixture: git add -f <file>.
+/priv/uploads/

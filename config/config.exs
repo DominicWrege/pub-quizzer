@@ -10,6 +10,12 @@ import Config
 config :pub_quizzer,
   ecto_repos: [PubQuizzer.Repo],
   generators: [timestamp_type: :utc_datetime],
+  # Where user-uploaded images live. Kept OUTSIDE priv/static so Plug.Static
+  # never serves (or, in dev, raises over) them — they are served by
+  # PubQuizzerWeb.UploadController instead. Relative paths are expanded against
+  # the working directory (repo root in dev); production overrides this in
+  # runtime.exs via UPLOAD_DIR to a persistent, writable location.
+  upload_dir: "priv/uploads",
   # Etag-served files (non-vsn requests, e.g. uploads) revalidate on every
   # request — only fingerprinted (?vsn=...) assets may be cached for a year.
   cache_control_for_etags: "public",

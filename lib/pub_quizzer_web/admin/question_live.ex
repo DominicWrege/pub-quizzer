@@ -7,7 +7,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   alias PubQuizzer.Quiz.Question
   embed_templates "question_live/*"
 
-  @upload_dir "priv/static/uploads"
   @option_count 4
   @empty_options [%{"text" => ""}, %{"text" => ""}, %{"text" => ""}, %{"text" => ""}]
 
@@ -433,17 +432,38 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   end
 
   defp store_compressed(tmp_path) do
-    filename = "#{System.unique_integer([:positive, :monotonic])}.jpg"
-    dest = Path.join(@upload_dir, filename)
-    thumb_dest = Path.join(@upload_dir, "thumb_#{filename}")
-    File.mkdir_p!(@upload_dir)
+    dir = PubQuizzer.upload_dir()
+    File.mkdir_p!(dir)
+    base = content_hash(tmp_path)
 
     if System.find_executable("ffmpeg") do
+      filename = base <> ".jpg"
+      dest = Path.join(dir, filename)
+      thumb_dest = Path.join(dir, "thumb_" <> filename)
       compress_with_ffmpeg(tmp_path, dest, thumb_dest)
     else
       Logger.warning("ffmpeg not found, copying original file")
+      filename = base <> source_extension(tmp_path)
+      dest = Path.join(dir, filename)
       File.cp!(tmp_path, dest)
       {:ok, "/uploads/#{filename}"}
+    end
+  end
+
+  # Names uploads by a SHA-256 hash of their content: collision-free, stable
+  # across re-uploads, and safe to cache immutably (same bytes => same URL).
+  defp content_hash(path) do
+    path
+    |> File.stream!([], 65_536)
+    |> Enum.reduce(:crypto.hash_init(:sha256), &:crypto.hash_update(&2, &1))
+    |> :crypto.hash_final()
+    |> Base.url_encode64(padding: false)
+  end
+
+  defp source_extension(path) do
+    case path |> Path.extname() |> String.downcase() do
+      "" -> ".jpg"
+      ext -> ext
     end
   end
 

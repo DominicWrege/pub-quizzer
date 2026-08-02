@@ -23,6 +23,11 @@ defmodule PubQuizzerWeb.Router do
 
     get "/", PageController, :home
 
+    # User-uploaded images, served from the runtime upload dir (persistent on
+    # prod, where the release's priv/static is read-only). Public so team
+    # devices can render question images during a quiz.
+    get "/uploads/:filename", UploadController, :show
+
     # Admin session (login/logout)
     get "/admin/login", AdminSessionController, :new
     post "/admin/login", AdminSessionController, :create

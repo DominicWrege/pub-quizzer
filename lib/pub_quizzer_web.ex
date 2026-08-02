@@ -17,8 +17,12 @@ defmodule PubQuizzerWeb do
   those modules here.
   """
 
+  # NOTE: "uploads" is intentionally NOT listed here. User uploads live in a
+  # runtime-configurable dir (see PubQuizzer.upload_dir/0) that is outside the
+  # release's read-only priv/static on prod, so they are served by
+  # PubQuizzerWeb.UploadController rather than Plug.Static.
   def static_paths,
-    do: ~w(assets fonts images uploads favicon.ico favicon.svg site.webmanifest robots.txt)
+    do: ~w(assets fonts images favicon.ico favicon.svg site.webmanifest robots.txt)
 
   def router do
     quote do

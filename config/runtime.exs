@@ -50,6 +50,11 @@ if config_env() == :prod do
     database: database_path,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")
 
+  # Persistent, writable directory for user-uploaded images. The release's
+  # priv/static is read-only (Nix store), so uploads must live elsewhere and
+  # are served by PubQuizzerWeb.UploadController rather than Plug.Static.
+  config :pub_quizzer, :upload_dir, System.get_env("UPLOAD_DIR", "/var/lib/pub-quizzer/uploads")
+
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want

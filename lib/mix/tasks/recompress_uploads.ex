@@ -7,15 +7,16 @@ defmodule Mix.Tasks.RecompressUploads do
   """
   use Mix.Task
 
-  @upload_dir "priv/static/uploads"
   @thumb_prefix "thumb_"
 
   @impl true
   def run(_args) do
-    File.mkdir_p!(@upload_dir)
+    Mix.Task.run("app.config")
+    upload_dir = PubQuizzer.upload_dir()
+    File.mkdir_p!(upload_dir)
 
     files =
-      File.ls!(@upload_dir)
+      File.ls!(upload_dir)
       |> Enum.reject(&String.starts_with?(&1, @thumb_prefix))
       |> Enum.filter(fn name ->
         ext = Path.extname(name) |> String.downcase()
@@ -23,9 +24,9 @@ defmodule Mix.Tasks.RecompressUploads do
       end)
 
     Enum.each(files, fn name ->
-      src = Path.join(@upload_dir, name)
-      dest = Path.join(@upload_dir, name)
-      thumb = Path.join(@upload_dir, @thumb_prefix <> name)
+      src = Path.join(upload_dir, name)
+      dest = Path.join(upload_dir, name)
+      thumb = Path.join(upload_dir, @thumb_prefix <> name)
 
       # Re-compress main image at current quality
       tmp = Path.join(System.tmp_dir!(), "recompress-#{name}")
