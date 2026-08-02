@@ -59,6 +59,7 @@ in
       description = "Pub-Quizzer realtime pub quiz app";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
+      path = [ pkgs.ffmpeg ];
 
       environment = {
         PHX_SERVER = "true";

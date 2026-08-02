@@ -438,6 +438,18 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     thumb_dest = Path.join(@upload_dir, "thumb_#{filename}")
     File.mkdir_p!(@upload_dir)
 
+    if System.find_executable("ffmpeg") do
+      compress_with_ffmpeg(tmp_path, dest, thumb_dest)
+    else
+      Logger.warning("ffmpeg not found, copying original file")
+      File.cp!(tmp_path, dest)
+      {:ok, "/uploads/#{filename}"}
+    end
+  end
+
+  defp compress_with_ffmpeg(tmp_path, dest, thumb_dest) do
+    filename = Path.basename(dest)
+
     args = [
       "-y",
       "-i",
@@ -462,7 +474,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
     case System.cmd("ffmpeg", args, stderr_to_stdout: true) do
       {_output, 0} ->
-        # Thumbnail is best-effort — not worth failing the upload if it can't be made.
         case System.cmd("ffmpeg", thumb_args, stderr_to_stdout: true) do
           {_thumb_output, 0} ->
             :ok
@@ -474,9 +485,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         {:ok, "/uploads/#{filename}"}
 
       {output, _exit_code} ->
-        # Never fail the upload on compression errors — fall back to the original
-        # file. Returning {:error, _} here would raise inside consume_uploaded_entries
-        # and crash the LiveView.
         Logger.warning("ffmpeg compression failed, using original: #{output}")
         File.cp!(tmp_path, dest)
         {:ok, "/uploads/#{filename}"}
