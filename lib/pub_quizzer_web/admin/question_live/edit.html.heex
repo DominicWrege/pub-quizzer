@@ -95,7 +95,7 @@
                         type="button"
                         phx-click="cancel_upload"
                         phx-value-ref={ref}
-                        class="btn btn-xs btn-circle absolute top-2 right-2"
+                        class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
                       >×</button>
                     <% end %>
                   </div>
@@ -115,7 +115,7 @@
                   </div>
               <% end %>
             </div>
-            <label class="hidden sm:flex items-center justify-center gap-2 p-3 cursor-pointer text-xs text-base-content/70 hover:text-base-content hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300">
+            <label class="hidden sm:flex items-center justify-center gap-2 p-3 cursor-pointer text-xs text-base-content/70 hover:text-base-content hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300 select-none">
               <.icon name="hero-photo" class="size-4" />
               <span>{if @question.image, do: "Bild ersetzen", else: "Bild auswählen"}</span>
               <.live_file_input upload={@uploads.image} class="sr-only" />
@@ -222,6 +222,18 @@
                   rows="2"
                 ><%= opt_text %></textarea>
 
+                <%!-- Add-image trigger (only when empty, so the card body stays clickable) --%>
+                <%= if @option_image_previews[i] == nil and opt_img == nil do %>
+                  <label
+                    for={live_option_upload(assigns, i).ref}
+                    onclick="event.stopPropagation()"
+                    title="Bild hinzufügen"
+                    class="hidden sm:inline-flex shrink-0 mt-2 items-center justify-center size-10 rounded-md border border-base-300 text-base-content/50 bg-base-200 hover:bg-base-300 hover:text-base-content cursor-pointer transition-colors select-none"
+                  >
+                    <.icon name="hero-photo" class="size-6" />
+                  </label>
+                <% end %>
+
                 <%!-- Correct indicator --%>
                 <div class={[
                   "hidden sm:block pt-2 shrink-0 transition-opacity",
@@ -239,21 +251,23 @@
                 </div>
               </div>
 
-              <%!-- Per-option image zone --%>
+              <%!-- Per-option image zone (file input always in DOM so the upload can track) --%>
               <div
                 id={"option-image-zone-#{i}"}
                 data-option-index={i}
                 phx-hook="OptionImagePreview"
-                phx-drop-target={@option_uploads[i].ref}
+                phx-drop-target={live_option_upload(assigns, i).ref}
                 class="mt-2 ml-8 sm:ml-16"
               >
+                <.live_file_input upload={live_option_upload(assigns, i)} class="sr-only" />
+
                 <%= cond do %>
                   <% preview = @option_image_previews[i] -> %>
                     <button
                       type="button"
                       phx-click="view_image"
                       phx-value-url={preview}
-                      class="sm:hidden btn btn-xs btn-ghost gap-1"
+                      class="sm:hidden btn btn-xs btn-ghost gap-1 select-none"
                     >
                       <.icon name="hero-photo" class="size-4" />
                       <span class="text-xs">Bild</span>
@@ -264,7 +278,7 @@
                         type="button"
                         phx-click="cancel_option_upload"
                         phx-value-index={i}
-                        class="btn btn-xs btn-circle absolute top-2 right-2"
+                        class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
                       >×</button>
                     </div>
                   <% img = opt_img -> %>
@@ -272,7 +286,7 @@
                       type="button"
                       phx-click="view_image"
                       phx-value-url={img}
-                      class="sm:hidden btn btn-xs btn-ghost gap-1"
+                      class="sm:hidden btn btn-xs btn-ghost gap-1 select-none"
                     >
                       <.icon name="hero-photo" class="size-4" />
                       <span class="text-xs">Bild</span>
@@ -283,22 +297,12 @@
                         type="button"
                         phx-click="remove_option_image"
                         phx-value-index={i}
-                        class="btn btn-xs btn-circle absolute top-2 right-2 opacity-0 group-hover:opacity-100"
+                        class="btn btn-xs btn-circle absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 select-none"
                       >×</button>
                     </div>
                   <% true -> %>
                     <% :ok %>
                 <% end %>
-
-                <label class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-base-300 text-xs text-base-content/70 bg-base-200 hover:bg-base-300 hover:border-base-content/40 cursor-pointer transition-colors">
-                  <.icon name="hero-photo" class="size-3.5" />
-                  <span>
-                    {if @option_image_previews[i] || opt_img,
-                      do: "Bild ersetzen",
-                      else: "Bild hinzufügen"}
-                  </span>
-                  <.live_file_input upload={@option_uploads[i]} class="sr-only" />
-                </label>
               </div>
             </div>
           <% end %>

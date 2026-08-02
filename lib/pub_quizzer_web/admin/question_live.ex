@@ -85,7 +85,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       |> allow_upload(:image,
         accept: ~w(.jpg .jpeg .png .gif .webp),
         max_entries: 1,
-        max_file_size: 20_000_000
+        max_file_size: 20_000_000,
+        auto_upload: true
       )
 
     socket =
@@ -93,7 +94,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         allow_upload(acc, :"option_image_#{i}",
           accept: ~w(.jpg .jpeg .png .gif .webp),
           max_entries: 1,
-          max_file_size: 20_000_000
+          max_file_size: 20_000_000,
+          auto_upload: true
         )
       end)
 
@@ -129,7 +131,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:image_preview_url, nil)
     |> assign(:option_image_previews, %{})
     |> assign(:show_preview, false)
-    |> assign_option_uploads()
   end
 
   defp apply_action(socket, :edit, %{"topic_id" => topic_id, "id" => id}) do
@@ -148,7 +149,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:option_image_previews, %{})
     |> assign(:show_preview, false)
     |> assign(:versions, compute_version_diffs(versions))
-    |> assign_option_uploads()
   end
 
   @impl true
@@ -400,14 +400,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     end)
   end
 
-  defp assign_option_uploads(socket) do
-    assign(
-      socket,
-      :option_uploads,
-      for i <- 0..(@option_count - 1), into: %{} do
-        {i, socket.assigns.uploads[:"option_image_#{i}"]}
-      end
-    )
+  def live_option_upload(assigns, i) do
+    assigns.uploads[:"option_image_#{i}"]
   end
 
   defp consume_option_images(socket) do
