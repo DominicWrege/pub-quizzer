@@ -1,6 +1,7 @@
 import "phoenix_html"
 import { Socket } from "phoenix"
 import { LiveSocket, type ViewHook } from "phoenix_live_view"
+import { restorePresentationMode } from "./presentation"
 
 // Phoenix LiveView hooks accept plain object literals — `this` is bound to the
 // hook instance at runtime. We type `this: ViewHook` on each method so TS knows
@@ -127,15 +128,9 @@ const ClipboardCopy = {
   }
 }
 
-interface ScrollToBottomHook extends ViewHook {
-  _keydown: (e: KeyboardEvent) => void
-}
-
 const ScrollToBottom = {
-  mounted(this: ScrollToBottomHook) {
-    if (localStorage.getItem("pm") === "true") {
-      document.body.classList.add("presentation-mode")
-    }
+  mounted(this: ViewHook) {
+    restorePresentationMode()
     const qfz = parseInt(localStorage.getItem("qfz") ?? "") || 0
     document.body.dataset.quizFontSize = String(qfz)
     const label = document.getElementById("qfz-label")
@@ -147,16 +142,6 @@ const ScrollToBottom = {
         this.el.scrollIntoView({ behavior: "smooth", block: "end" })
       })
     })
-    this._keydown = (e: KeyboardEvent) => {
-      if (e.key === "p" || e.key === "P") {
-        const active = document.body.classList.toggle("presentation-mode")
-        localStorage.setItem("pm", String(active))
-      }
-    }
-    document.addEventListener("keydown", this._keydown)
-  },
-  destroyed(this: ScrollToBottomHook) {
-    document.removeEventListener("keydown", this._keydown)
   }
 } satisfies Partial<ViewHook>
 
