@@ -55,3 +55,12 @@ e2e/_inspect.spec.ts
 # fixtures (1.jpeg, 2.jpg) stay tracked; everything new is ignored.
 # To track a new fixture: git add -f <file>.
 /priv/uploads/
+
+# Frontend bundles are rebuilt by the dev watchers (esbuild/tailwind) and by the
+# Nix release build (nix/release.nix), so the bundle dir is never committed.
+# `mix phx.digest` output (hashed copies, *.gz, cache_manifest.json) is produced
+# only inside the Nix build sandbox — dev serves the plain tracked sources in
+# priv/static (favicon, images, robots, manifest) directly. If you ever run
+# `mix phx.digest` locally, clear its stray output with: git clean -fd priv/static
+/priv/static/assets/
+/priv/static/cache_manifest.json
