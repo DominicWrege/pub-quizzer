@@ -25,7 +25,8 @@
         form="question-form"
         class="btn btn-primary btn-sm gap-1"
       >
-        <.icon name="hero-check-circle" class="size-4" /> Speichern
+        <span class="loading loading-spinner loading-xs hidden [.phx-submit-loading_&]:inline-block"></span>
+        <.icon name="hero-check-circle" class="size-4 [.phx-submit-loading_&]:hidden" /> Speichern
       </button>
     </:actions>
   </.header>
