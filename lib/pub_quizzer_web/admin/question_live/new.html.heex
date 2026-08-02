@@ -40,23 +40,53 @@
   >
     <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
 
-    <div class="flex items-center justify-between bg-base-100 border border-base-300 rounded-xl px-4 py-3">
-      <div>
-        <div class="text-sm font-medium">Veröffentlicht</div>
-        <div class="text-xs text-base-content/60 hidden sm:block">
-          Entwurfs-Fragen erscheinen nicht im Live-Quiz
+    <div class={[
+      "rounded-xl border p-4 transition-colors",
+      if(@form[:status].value == "published",
+        do: "border-success/40 bg-success/10",
+        else: "border-warning/40 bg-warning/10"
+      )
+    ]}>
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class={[
+            "size-9 rounded-lg grid place-items-center shrink-0 transition-colors",
+            if(@form[:status].value == "published",
+              do: "bg-success/20 text-success",
+              else: "bg-warning/20 text-warning"
+            )
+          ]}>
+            <.icon
+              name={
+                if @form[:status].value == "published",
+                  do: "hero-check-circle",
+                  else: "hero-pencil"
+              }
+              class="size-5"
+            />
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold leading-tight">
+              {if @form[:status].value == "published", do: "Veröffentlicht", else: "Entwurf"}
+            </div>
+            <div class="text-xs text-base-content/60 leading-tight mt-0.5 hidden sm:block">
+              {if @form[:status].value == "published",
+                do: "Sichtbar im Live-Quiz",
+                else: "Nicht im Live-Quiz"}
+            </div>
+          </div>
         </div>
+        <label class="cursor-pointer shrink-0">
+          <input type="hidden" name="question[published]" value="false" />
+          <input
+            type="checkbox"
+            name="question[published]"
+            value="true"
+            checked={@form[:status].value == "published"}
+            class="toggle toggle-success"
+          />
+        </label>
       </div>
-      <label class="cursor-pointer">
-        <input type="hidden" name="question[published]" value="false" />
-        <input
-          type="checkbox"
-          name="question[published]"
-          value="true"
-          checked={@form[:status].value == "published"}
-          class="toggle toggle-success"
-        />
-      </label>
     </div>
 
     <.form_errors form={@form} submitted={@form_submitted} />
@@ -98,13 +128,23 @@
         >
           <div class="p-1">
             <%= cond do %>
-              <% @image_preview_url -> %>
-                <div class="relative">
-                  <img
-                    src={@image_preview_url}
-                    data-main-image-preview
-                    class="rounded-lg max-h-36 sm:max-h-56 w-full object-contain"
-                  />
+              <% url = @image_preview_url -> %>
+                <div class="flex justify-center">
+                  <div class="relative inline-block">
+                    <img
+                      src={url}
+                      data-main-image-preview
+                      class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain"
+                    />
+                    <%= if ref = List.first(@uploads.image.entries) && List.first(@uploads.image.entries).ref do %>
+                      <button
+                        type="button"
+                        phx-click="cancel_upload"
+                        phx-value-ref={ref}
+                        class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
+                      >×</button>
+                    <% end %>
+                  </div>
                 </div>
               <% true -> %>
                 <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-1.5 sm:py-2 text-base-content/40">

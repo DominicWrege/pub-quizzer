@@ -21,9 +21,14 @@ test.describe("topic CRUD", () => {
     await expect(hostPage.locator(`text=${topicName}`)).toBeVisible({ timeout: 10_000 })
 
     // --- Edit ---
-    // Find the edit button within the same card as our topic name
+    // The card's primary button now navigates to the question list, where the
+    // topic editor lives in the header.
     const topicCard = hostPage.locator(".card", { hasText: topicName })
-    await topicCard.locator("[phx-click='start_edit']").click()
+    await topicCard.locator("a[href*='/questions']").click()
+    await expect(hostPage).toHaveURL(/\/admin\/topics\/\d+\/questions$/, { timeout: 10_000 })
+    await waitForLiveView(hostPage)
+
+    await hostPage.locator("button[phx-click='start_edit_topic']").click()
     await expect(hostPage.locator("#topic-form-modal")).toBeVisible({ timeout: 5_000 })
 
     const editedName = `${topicName} (edited)`
@@ -32,14 +37,15 @@ test.describe("topic CRUD", () => {
     await expect(hostPage.locator(`text=${editedName}`)).toBeVisible({ timeout: 10_000 })
 
     // --- Delete ---
-    await hostPage.locator(".card", { hasText: editedName }).locator("[phx-click='start_edit']").click()
+    await hostPage.locator("button[phx-click='start_edit_topic']").click()
     await expect(hostPage.locator("#topic-form-modal")).toBeVisible({ timeout: 5_000 })
 
-    await hostPage.locator("#topic-form-modal [phx-click='ask_delete']").click()
+    await hostPage.locator("#topic-form-modal [phx-click='ask_delete_topic']").click()
     await expect(hostPage.locator("#delete-topic-modal")).toBeVisible({ timeout: 5_000 })
     await hostPage.locator("#delete-topic-modal button", { hasText: "Löschen" }).click()
 
-    // Topic is gone
+    // Deleting redirects back to the overview, where the topic is gone
+    await expect(hostPage).toHaveURL(/\/admin\/topics$/, { timeout: 10_000 })
     await expect(hostPage.locator(`text=${editedName}`)).toHaveCount(0, { timeout: 10_000 })
   })
 
@@ -48,12 +54,16 @@ test.describe("topic CRUD", () => {
     await waitForLiveView(hostPage)
     await hostPage.waitForSelector('[phx-click="start_new"]', { state: "visible" })
 
-    // Open the edit dialog for the first topic
-    await hostPage.locator(".card").first().locator("[phx-click='start_edit']").click()
+    // Open the first topic's question list, then its topic editor
+    await hostPage.locator(".card").first().locator("a[href*='/questions']").click()
+    await expect(hostPage).toHaveURL(/\/admin\/topics\/\d+\/questions$/, { timeout: 10_000 })
+    await waitForLiveView(hostPage)
+
+    await hostPage.locator("button[phx-click='start_edit_topic']").click()
     await expect(hostPage.locator("#topic-form-modal")).toBeVisible({ timeout: 5_000 })
 
     // Open the nested delete confirmation, then cancel it
-    await hostPage.locator("#topic-form-modal [phx-click='ask_delete']").click()
+    await hostPage.locator("#topic-form-modal [phx-click='ask_delete_topic']").click()
     await expect(hostPage.locator("#delete-topic-modal")).toBeVisible({ timeout: 5_000 })
     await hostPage.locator("#delete-topic-modal button[aria-label='Schließen']").click()
     await expect(hostPage.locator("#delete-topic-modal")).toHaveCount(0, { timeout: 5_000 })
@@ -68,6 +78,5 @@ test.describe("topic CRUD", () => {
     // Closing the edit dialog restores the page behind it
     await hostPage.locator("#topic-form-modal button[aria-label='Schließen']").click()
     await expect(hostPage.locator("#topic-form-modal")).toHaveCount(0, { timeout: 5_000 })
-    await expect(hostPage.locator('[phx-click="start_new"]')).toBeEnabled()
   })
 })

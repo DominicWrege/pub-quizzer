@@ -35,14 +35,14 @@ test.describe("question CRUD", () => {
     // Submit the form directly (the submit button is outside the form via form= attr)
     await hostPage.locator("#question-form").evaluate((el: HTMLFormElement) => el.requestSubmit())
 
-    // Back to questions list, new question appears (scoped to desktop table)
+    // Back to questions list, new question appears
     await expect(hostPage).toHaveURL(/\/admin\/topics\/\d+\/questions$/, { timeout: 15_000 })
     await waitForLiveView(hostPage)
     await expect(hostPage.locator(`#questions >> text=${prompt}`)).toBeVisible({ timeout: 10_000 })
 
     // --- Delete ---
     await hostPage
-      .locator("#questions tr", { hasText: prompt })
+      .locator("#questions > div", { hasText: prompt })
       .locator("[phx-click='ask_delete']")
       .click()
     await expect(hostPage.locator("#delete-question-modal")).toBeVisible({ timeout: 5_000 })

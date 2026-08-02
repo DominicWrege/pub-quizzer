@@ -17,7 +17,10 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 4,
+  // Sequential: the admin CRUD specs all mutate the same shared E2E database,
+  // so running files in parallel races on the topic/question list and produces
+  // flaky Ecto.NoResultsError failures. workers: 1 is the stable mode.
+  workers: 1,
   reporter: [["html", { open: "never" }], ["list"]],
   timeout: 60_000,
   expect: { timeout: 10_000 },

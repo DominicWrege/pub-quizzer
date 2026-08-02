@@ -21,10 +21,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
      |> assign(:search_query, "")
      |> assign(:filtered_topics, topics)
      |> assign(:editing_topic_id, nil)
-     |> assign(:form, nil)
-     |> assign(:topic, nil)
-     |> assign(:confirm_action, nil)
-     |> assign(:pending_delete_id, nil)}
+     |> assign(:form, nil)}
   end
 
   @impl true
@@ -51,22 +48,10 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
     {:noreply, socket |> assign(:filtered_topics, filtered) |> assign(:search_query, query)}
   end
 
-  @impl true
-  def handle_event("start_edit", %{"id" => id}, socket) do
-    topic = Quiz.get_topic!(id)
-
-    {:noreply,
-     socket
-     |> assign(:editing_topic_id, topic.id)
-     |> assign(:topic, topic)
-     |> assign(:form, to_form(Topic.changeset(topic, %{})))}
-  end
-
   def handle_event("start_new", _params, socket) do
     {:noreply,
      socket
      |> assign(:editing_topic_id, :new)
-     |> assign(:topic, nil)
      |> assign(:form, to_form(Topic.changeset(%Topic{}, %{})))}
   end
 
@@ -74,34 +59,7 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
     {:noreply,
      socket
      |> assign(:editing_topic_id, nil)
-     |> assign(:topic, nil)
      |> assign(:form, nil)}
-  end
-
-  def handle_event("ask_delete", %{"id" => id}, socket) do
-    {:noreply,
-     socket
-     |> assign(:confirm_action, :delete_topic)
-     |> assign(:pending_delete_id, String.to_integer(id))}
-  end
-
-  def handle_event("confirm_delete", _params, socket) do
-    topic = Quiz.get_topic!(socket.assigns.pending_delete_id)
-    {:ok, _} = Quiz.delete_topic(topic)
-
-    {:noreply,
-     socket
-     |> assign(:confirm_action, nil)
-     |> assign(:pending_delete_id, nil)
-     |> assign(:editing_topic_id, nil)
-     |> assign(:topic, nil)
-     |> assign(:form, nil)
-     |> assign_topics()
-     |> put_flash(:info, "Thema gelöscht.")}
-  end
-
-  def handle_event("cancel_confirm", _params, socket) do
-    {:noreply, socket |> assign(:confirm_action, nil) |> assign(:pending_delete_id, nil)}
   end
 
   def handle_event("save", %{"topic" => topic_params}, socket) do
@@ -114,26 +72,9 @@ defmodule PubQuizzerWeb.Admin.TopicLive do
         {:noreply,
          socket
          |> assign(:editing_topic_id, nil)
-         |> assign(:topic, nil)
          |> assign(:form, nil)
          |> assign_topics()
          |> put_flash(:info, "Thema erstellt.")}
-
-      {:error, changeset} ->
-        {:noreply, assign(socket, :form, to_form(changeset, action: :insert))}
-    end
-  end
-
-  defp save_topic(socket, id, topic_params) when is_integer(id) do
-    case Quiz.update_topic(socket.assigns.topic, topic_params) do
-      {:ok, _topic} ->
-        {:noreply,
-         socket
-         |> assign(:editing_topic_id, nil)
-         |> assign(:topic, nil)
-         |> assign(:form, nil)
-         |> assign_topics()
-         |> put_flash(:info, "Thema aktualisiert.")}
 
       {:error, changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset, action: :insert))}

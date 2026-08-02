@@ -435,4 +435,90 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       assert Quiz.get_question!(question.id).status == "draft"
     end
   end
+
+  describe "edit topic from question list" do
+    test "opens the topic form via the header pencil button", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      refute has_element?(view, "#topic-form")
+
+      view |> element("button[phx-click='start_edit_topic']") |> render_click()
+
+      assert has_element?(view, "#topic-form")
+    end
+
+    test "updates topic name and description", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view |> element("button[phx-click='start_edit_topic']") |> render_click()
+
+      view
+      |> form("#topic-form", topic: %{name: "Renamed", description: "New desc"})
+      |> render_submit()
+
+      updated = Quiz.get_topic!(topic.id)
+      assert updated.name == "Renamed"
+      assert updated.description == "New desc"
+      refute has_element?(view, "#topic-form")
+    end
+
+    test "disables the topic", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view |> element("button[phx-click='start_edit_topic']") |> render_click()
+
+      view
+      |> form("#topic-form", topic: %{enabled: false})
+      |> render_submit()
+
+      assert Quiz.get_topic!(topic.id).enabled == false
+    end
+
+    test "enables the topic", %{conn: conn} do
+      {:ok, topic} = Quiz.create_topic(%{name: "Off", enabled: false})
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view |> element("button[phx-click='start_edit_topic']") |> render_click()
+
+      view
+      |> form("#topic-form", topic: %{enabled: true})
+      |> render_submit()
+
+      assert Quiz.get_topic!(topic.id).enabled == true
+    end
+
+    test "deletes the topic and redirects to the overview", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view |> element("button[phx-click='start_edit_topic']") |> render_click()
+      view |> element("button[phx-click='ask_delete_topic']") |> render_click()
+      view |> element("button[phx-click='confirm_delete_topic']") |> render_click()
+
+      assert_redirect(view, ~p"/admin/topics")
+    end
+  end
 end

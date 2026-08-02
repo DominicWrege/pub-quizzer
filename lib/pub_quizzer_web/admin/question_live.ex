@@ -5,6 +5,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   alias PubQuizzer.Quiz
   alias PubQuizzer.Quiz.Question
+  alias PubQuizzer.Quiz.Topic
   embed_templates "question_live/*"
 
   @option_count 4
@@ -114,6 +115,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:topic, topic)
     |> assign(:page_title, topic.name)
     |> assign(:questions_count, length(questions))
+    |> assign(:editing_topic, false)
+    |> assign(:topic_form, nil)
     |> stream(:questions, questions)
   end
 
@@ -195,6 +198,46 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   def handle_event("cancel_confirm", _params, socket) do
     {:noreply, socket |> assign(:confirm_action, nil) |> assign(:pending_delete_id, nil)}
+  end
+
+  def handle_event("start_edit_topic", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:editing_topic, true)
+     |> assign(:topic_form, to_form(Topic.changeset(socket.assigns.topic, %{})))}
+  end
+
+  def handle_event("cancel_edit_topic", _params, socket) do
+    {:noreply, socket |> assign(:editing_topic, false) |> assign(:topic_form, nil)}
+  end
+
+  def handle_event("save_topic", %{"topic" => topic_params}, socket) do
+    case Quiz.update_topic(socket.assigns.topic, topic_params) do
+      {:ok, topic} ->
+        {:noreply,
+         socket
+         |> assign(:topic, topic)
+         |> assign(:page_title, topic.name)
+         |> assign(:editing_topic, false)
+         |> assign(:topic_form, nil)
+         |> put_flash(:info, "Thema aktualisiert.")}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :topic_form, to_form(changeset, action: :update))}
+    end
+  end
+
+  def handle_event("ask_delete_topic", _params, socket) do
+    {:noreply, assign(socket, :confirm_action, :delete_topic)}
+  end
+
+  def handle_event("confirm_delete_topic", _params, socket) do
+    {:ok, _} = Quiz.delete_topic(socket.assigns.topic)
+
+    {:noreply,
+     socket
+     |> put_flash(:info, "Thema gelöscht.")
+     |> push_navigate(to: ~p"/admin/topics")}
   end
 
   def handle_event("save", params, socket) do

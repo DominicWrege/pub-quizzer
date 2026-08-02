@@ -99,50 +99,6 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
     end
   end
 
-  describe "edit topic" do
-    test "updates topic inline", %{conn: conn} do
-      {:ok, topic} = Quiz.create_topic(%{name: "Old Name"})
-
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics")
-
-      view
-      |> element("div#topics-#{topic.id} a", "Bearbeiten")
-      |> render_click()
-
-      view
-      |> form("#topic-form", topic: %{name: "New Name", description: "Updated"})
-      |> render_submit()
-
-      updated = Quiz.get_topic!(topic.id)
-      assert updated.name == "New Name"
-      assert updated.description == "Updated"
-    end
-  end
-
-  describe "delete topic" do
-    test "deletes topic from index", %{conn: conn} do
-      {:ok, topic} = Quiz.create_topic(%{name: "To Delete"})
-
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics")
-
-      assert has_element?(view, "div#topics-#{topic.id}")
-
-      view
-      |> element("div#topics-#{topic.id} a", "Bearbeiten")
-      |> render_click()
-
-      view |> element("button[phx-click='ask_delete']") |> render_click()
-      view |> element("button[phx-click='confirm_delete']") |> render_click()
-      refute has_element?(view, "div#topics-#{topic.id}")
-    end
-  end
-
   describe "toggle enabled" do
     test "shows active badge", %{conn: conn} do
       {:ok, topic} = Quiz.create_topic(%{name: "Active"})
@@ -153,50 +109,6 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
         |> live(~p"/admin/topics")
 
       assert has_element?(view, "div#topics-#{topic.id} .badge-success", "Aktiv")
-    end
-
-    test "disables topic through edit form", %{conn: conn} do
-      {:ok, topic} = Quiz.create_topic(%{name: "Toggle Me"})
-
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics")
-
-      view
-      |> element("div#topics-#{topic.id} a", "Bearbeiten")
-      |> render_click()
-
-      view
-      |> form("#topic-form", topic: %{enabled: false})
-      |> render_submit()
-
-      assert has_element?(view, "div#topics-#{topic.id} .badge-ghost", "Deaktiviert")
-
-      reloaded = Quiz.get_topic!(topic.id)
-      assert reloaded.enabled == false
-    end
-
-    test "enables topic through edit form", %{conn: conn} do
-      {:ok, topic} = Quiz.create_topic(%{name: "Off", enabled: false})
-
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics")
-
-      view
-      |> element("div#topics-#{topic.id} a", "Bearbeiten")
-      |> render_click()
-
-      view
-      |> form("#topic-form", topic: %{enabled: true})
-      |> render_submit()
-
-      assert has_element?(view, "div#topics-#{topic.id} .badge-success", "Aktiv")
-
-      reloaded = Quiz.get_topic!(topic.id)
-      assert reloaded.enabled == true
     end
   end
 end

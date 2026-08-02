@@ -84,30 +84,34 @@
             <div class="p-1">
               <%= cond do %>
                 <% url = @image_preview_url -> %>
-                  <div class="relative inline-block">
-                    <img
-                      src={url}
-                      data-main-image-preview
-                      class="rounded-lg max-h-36 sm:max-h-56 w-full object-contain"
-                    />
-                    <%= if ref = List.first(@uploads.image.entries) && List.first(@uploads.image.entries).ref do %>
-                      <button
-                        type="button"
-                        phx-click="cancel_upload"
-                        phx-value-ref={ref}
-                        class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
-                      >×</button>
-                    <% end %>
+                  <div class="flex justify-center">
+                    <div class="relative inline-block">
+                      <img
+                        src={url}
+                        data-main-image-preview
+                        class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain"
+                      />
+                      <%= if ref = List.first(@uploads.image.entries) && List.first(@uploads.image.entries).ref do %>
+                        <button
+                          type="button"
+                          phx-click="cancel_upload"
+                          phx-value-ref={ref}
+                          class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
+                        >×</button>
+                      <% end %>
+                    </div>
                   </div>
                 <% img = @question.image -> %>
-                  <img
-                    src={img}
-                    data-main-image-preview
-                    alt="Aktuelles Bild"
-                    phx-click="view_image"
-                    phx-value-url={img}
-                    class="rounded-lg max-h-36 sm:max-h-56 w-full object-contain cursor-zoom-in"
-                  />
+                  <div class="flex justify-center">
+                    <img
+                      src={img}
+                      data-main-image-preview
+                      alt="Aktuelles Bild"
+                      phx-click="view_image"
+                      phx-value-url={img}
+                      class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain cursor-zoom-in"
+                    />
+                  </div>
                 <% true -> %>
                   <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-1.5 sm:py-2 text-base-content/40">
                     <.icon name="hero-photo" class="size-5 sm:size-6" />
