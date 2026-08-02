@@ -83,7 +83,7 @@
           phx-hook="AutoResize"
           class="w-full text-lg sm:text-2xl font-semibold leading-relaxed bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none placeholder:text-base-content/30 focus:outline-none px-3 py-2 whitespace-pre-wrap"
           placeholder="Wie lautet die Frage?"
-          rows="2"
+          rows="3"
         ><%= @form[:prompt].value || "" %></textarea>
 
         <div
@@ -96,7 +96,7 @@
             @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30"
           ]}
         >
-          <div class="p-2 sm:p-3">
+          <div class="p-1">
             <%= cond do %>
               <% @image_preview_url -> %>
                 <div class="relative">
@@ -107,13 +107,13 @@
                   />
                 </div>
               <% true -> %>
-                <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-2 sm:py-6 text-base-content/40">
-                  <.icon name="hero-photo" class="size-5 sm:size-8" />
+                <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-1.5 sm:py-2 text-base-content/40">
+                  <.icon name="hero-photo" class="size-5 sm:size-6" />
                   <span class="text-xs">Kein Bild ausgewählt</span>
                 </div>
             <% end %>
           </div>
-          <label class="flex items-center justify-center gap-2 p-3 cursor-pointer text-xs text-base-content/70 hover:text-base-content hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300 select-none">
+          <label class="flex items-center justify-center gap-2 px-3 py-1.5 cursor-pointer text-xs text-base-content/70 hover:text-base-content hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300 select-none">
             <.icon name="hero-photo" class="size-4" />
             <span>Bild auswählen</span>
             <.live_file_input upload={@uploads.image} class="sr-only" />
