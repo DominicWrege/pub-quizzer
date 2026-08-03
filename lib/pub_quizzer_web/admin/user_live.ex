@@ -18,7 +18,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
         {:ok,
          socket
          |> put_flash(:error, "Keine Berechtigung für diesen Bereich.")
-          |> redirect(to: "/admin/topics")}
+         |> redirect(to: "/admin/topics")}
 
       true ->
         users = Accounts.list_users()

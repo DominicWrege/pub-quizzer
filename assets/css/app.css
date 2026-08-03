@@ -66,12 +66,6 @@ select:focus {
   box-shadow: none !important;
 }
 
-input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
-textarea,
-select {
-  background-color: #f3f3f3;
-}
-
 .presentation-exit {
   display: none;
 }

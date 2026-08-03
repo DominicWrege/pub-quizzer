@@ -28,18 +28,26 @@ function startAdminShell(): void {
 
   const scrollTop = (): number => (desktop.matches ? main.scrollTop : window.scrollY)
 
+  const setHeaderHeight = (): void => {
+    const height = `${header.offsetHeight}px`
+    // No-op unless the value drifted: iOS Safari can apply
+    // env(safe-area-inset-top) to the header *after* first measurement, which
+    // would otherwise leave sticky toolbars pinned too high, tucked under the
+    // header. Re-measuring on scroll self-heals within one frame.
+    if (shell.style.getPropertyValue("--header-h") !== height) {
+      shell.style.setProperty("--header-h", height)
+    }
+  }
+
   const onScroll = (): void => {
     if (ticking) return
     ticking = true
     requestAnimationFrame(() => {
       ticking = false
+      setHeaderHeight()
       document.body.classList.toggle("app-scrolled", scrollTop() > 4)
       sessionStorage.setItem(scrollKey(), String(scrollTop()))
     })
-  }
-
-  const setHeaderHeight = (): void => {
-    shell.style.setProperty("--header-h", `${header.offsetHeight}px`)
   }
 
   const setScrollTop = (top: number): void => {
@@ -55,6 +63,9 @@ function startAdminShell(): void {
   main.addEventListener("scroll", onScroll, { passive: true })
   window.addEventListener("scroll", onScroll, { passive: true })
   window.addEventListener("resize", setHeaderHeight)
+  window.addEventListener("load", setHeaderHeight)
+  window.addEventListener("pageshow", setHeaderHeight)
+  document.fonts?.ready.then(() => setHeaderHeight())
   desktop.addEventListener("change", () => {
     setHeaderHeight()
     onScroll()
