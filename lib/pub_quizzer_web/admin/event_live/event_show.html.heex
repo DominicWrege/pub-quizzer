@@ -6,9 +6,7 @@
 >
   <.header>
     <:back>
-      <.link navigate={~p"/admin/events"} class="btn btn-sm btn-soft">
-        <.icon name="hero-chevron-left" class="size-4" /> Zurück
-      </.link>
+      <.back_link navigate={~p"/admin/events"} />
     </:back>
     <%= if @event.name && @event.name != "" do %>
       {@event.name}

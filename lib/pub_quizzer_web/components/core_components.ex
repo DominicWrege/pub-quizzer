@@ -388,6 +388,22 @@ defmodule PubQuizzerWeb.CoreComponents do
   end
 
   @doc """
+  Consistent back-navigation button: icon-only on mobile, icon + label from
+  `sm:` up. Use for every admin back link so they never drift apart in style.
+  """
+  attr :navigate, :string, required: true
+  attr :label, :string, default: "Zurück"
+
+  def back_link(assigns) do
+    ~H"""
+    <.link navigate={@navigate} aria-label={@label} class="btn btn-sm btn-soft gap-1">
+      <.icon name="hero-arrow-left" class="size-4" />
+      <span class="hidden sm:inline">{@label}</span>
+    </.link>
+    """
+  end
+
+  @doc """
   Renders a table with generic styling.
 
   ## Examples
