@@ -117,6 +117,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:questions_count, length(questions))
     |> assign(:editing_topic, false)
     |> assign(:topic_form, nil)
+    |> assign(:first_question_id, questions |> List.first() |> then(&(&1 && &1.id)))
+    |> assign(:last_question_id, questions |> List.last() |> then(&(&1 && &1.id)))
     |> stream(:questions, questions)
   end
 
@@ -174,6 +176,27 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
      socket
      |> assign(:confirm_action, :delete_question)
      |> assign(:pending_delete_id, String.to_integer(id))}
+  end
+
+  def handle_event("move_up", %{"id" => id}, socket) do
+    {:noreply, move_question(socket, id, -1)}
+  end
+
+  def handle_event("move_down", %{"id" => id}, socket) do
+    {:noreply, move_question(socket, id, 1)}
+  end
+
+  def handle_event("reorder", %{"ids" => ids}, socket) do
+    if socket.assigns.search != "" do
+      {:noreply, socket}
+    else
+      ordered_ids = Enum.map(ids, &String.to_integer/1)
+
+      case Quiz.reorder_questions(socket.assigns.topic.id, ordered_ids) do
+        {:ok, _questions} -> {:noreply, restream_questions(socket)}
+        {:error, :mismatch} -> {:noreply, restream_questions(socket)}
+      end
+    end
   end
 
   def handle_event("toggle_preview", _params, socket) do
@@ -538,6 +561,34 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     end
   end
 
+  defp move_question(socket, _id, _delta) when socket.assigns.search != "", do: socket
+
+  defp move_question(socket, id, delta) do
+    topic_id = socket.assigns.topic.id
+    ids = Quiz.list_questions_for_topic(topic_id) |> Enum.map(& &1.id)
+    question_id = String.to_integer(id)
+    index = Enum.find_index(ids, &(&1 == question_id))
+    target = index && index + delta
+
+    cond do
+      is_nil(index) or target < 0 or target >= length(ids) ->
+        socket
+
+      true ->
+        moved = Enum.at(ids, index)
+
+        new_ids =
+          ids
+          |> List.replace_at(index, Enum.at(ids, target))
+          |> List.replace_at(target, moved)
+
+        case Quiz.reorder_questions(topic_id, new_ids) do
+          {:ok, _questions} -> restream_questions(socket)
+          {:error, :mismatch} -> restream_questions(socket)
+        end
+    end
+  end
+
   defp restream_questions(socket) do
     questions =
       if socket.assigns.search == "" do
@@ -548,6 +599,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
     socket
     |> assign(:questions_count, length(questions))
+    |> assign(:first_question_id, questions |> List.first() |> then(&(&1 && &1.id)))
+    |> assign(:last_question_id, questions |> List.last() |> then(&(&1 && &1.id)))
     |> stream(:questions, questions, reset: true)
   end
 

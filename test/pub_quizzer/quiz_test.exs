@@ -152,6 +152,36 @@ defmodule PubQuizzer.QuizTest do
              ]
     end
 
+    test "create_question/1 appends increasing positions per topic", %{topic: topic} do
+      {:ok, other_topic} = Quiz.create_topic(%{name: "Other"})
+
+      {:ok, q1} = create_simple_question(topic, "First")
+      {:ok, q2} = create_simple_question(topic, "Second")
+      {:ok, q3} = create_simple_question(other_topic, "Other topic")
+
+      assert q1.position == 0
+      assert q2.position == 1
+      assert q3.position == 0
+    end
+
+    test "reorder_questions/2 sets positions to the given order", %{topic: topic} do
+      {:ok, q1} = create_simple_question(topic, "First")
+      {:ok, q2} = create_simple_question(topic, "Second")
+      {:ok, q3} = create_simple_question(topic, "Third")
+
+      assert {:ok, _questions} = Quiz.reorder_questions(topic.id, [q3.id, q1.id, q2.id])
+
+      prompts = Enum.map(Quiz.list_questions_for_topic(topic.id), & &1.prompt)
+      assert prompts == ["Third", "First", "Second"]
+    end
+
+    test "reorder_questions/2 returns mismatch when ids do not match", %{topic: topic} do
+      {:ok, q1} = create_simple_question(topic, "First")
+
+      assert {:error, :mismatch} = Quiz.reorder_questions(topic.id, [q1.id, -1])
+      assert {:error, :mismatch} = Quiz.reorder_questions(topic.id, [])
+    end
+
     test "list_topic_names/0 excludes topics that only have draft questions" do
       {:ok, draft_topic} = Quiz.create_topic(%{name: "Draft Only"})
       {:ok, live_topic} = Quiz.create_topic(%{name: "Has Published"})
@@ -177,6 +207,15 @@ defmodule PubQuizzer.QuizTest do
       assert live_topic.id in ids
       refute draft_topic.id in ids
     end
+  end
+
+  defp create_simple_question(topic, prompt) do
+    Quiz.create_question(%{
+      prompt: prompt,
+      options: ["A", "B", "C", "D"],
+      correct_index: 0,
+      topic_id: topic.id
+    })
   end
 
   defp insert_question(topic) do

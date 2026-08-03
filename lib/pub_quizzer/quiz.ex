@@ -153,7 +153,43 @@ defmodule PubQuizzer.Quiz do
     %Question{}
     |> Question.changeset(Map.drop(attrs, ["topic_id", :topic_id]) |> normalize_option_strings())
     |> Ecto.Changeset.put_change(:topic_id, topic_id)
+    |> Ecto.Changeset.put_change(:position, next_question_position(topic_id))
     |> Repo.insert()
+  end
+
+  defp next_question_position(nil), do: 0
+
+  defp next_question_position(topic_id) do
+    case Repo.one(from q in Question, where: q.topic_id == ^topic_id, select: max(q.position)) do
+      nil -> 0
+      max -> max + 1
+    end
+  end
+
+  @doc """
+  Reorders all questions of a topic. `ordered_ids` must contain exactly the
+  ids of the topic's questions; each question's position is set to its index
+  in the list. Returns `{:ok, questions}` or `{:error, :mismatch}`.
+  """
+  def reorder_questions(topic_id, ordered_ids) when is_list(ordered_ids) do
+    current_ids =
+      from(q in Question, where: q.topic_id == ^topic_id, select: q.id)
+      |> Repo.all()
+
+    if Enum.sort(current_ids) == Enum.sort(ordered_ids) do
+      Repo.transaction(fn ->
+        ordered_ids
+        |> Enum.with_index()
+        |> Enum.each(fn {id, index} ->
+          from(q in Question, where: q.id == ^id, update: [set: [position: ^index]])
+          |> Repo.update_all([])
+        end)
+
+        list_questions_for_topic(topic_id)
+      end)
+    else
+      {:error, :mismatch}
+    end
   end
 
   def update_question(question, attrs) do

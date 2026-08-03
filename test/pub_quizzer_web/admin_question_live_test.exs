@@ -357,6 +357,118 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
     end
   end
 
+  describe "reorder questions" do
+    defp create_three_questions(topic) do
+      {:ok, q1} = create_question(topic, "Q1")
+      {:ok, q2} = create_question(topic, "Q2")
+      {:ok, q3} = create_question(topic, "Q3")
+      {q1, q2, q3}
+    end
+
+    defp create_question(topic, prompt) do
+      Quiz.create_question(%{
+        prompt: prompt,
+        options: ["A", "B", "C", "D"],
+        correct_index: 0,
+        topic_id: topic.id
+      })
+    end
+
+    defp prompts_in_order(topic_id) do
+      Quiz.list_questions_for_topic(topic_id) |> Enum.map(& &1.prompt)
+    end
+
+    test "move_down swaps a question with its neighbor", %{conn: conn} do
+      topic = create_topic()
+      {q1, _q2, _q3} = create_three_questions(topic)
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view
+      |> element("#questions-#{q1.id} button[phx-click='move_down']")
+      |> render_click()
+
+      assert prompts_in_order(topic.id) == ["Q2", "Q1", "Q3"]
+    end
+
+    test "move_up moves a question up", %{conn: conn} do
+      topic = create_topic()
+      {_q1, _q2, q3} = create_three_questions(topic)
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view
+      |> element("#questions-#{q3.id} button[phx-click='move_up']")
+      |> render_click()
+
+      assert prompts_in_order(topic.id) == ["Q1", "Q3", "Q2"]
+    end
+
+    test "up button is disabled on the first question, down on the last", %{conn: conn} do
+      topic = create_topic()
+      {q1, _q2, q3} = create_three_questions(topic)
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      assert has_element?(view, "#questions-#{q1.id} button[phx-click='move_up'][disabled]")
+      assert has_element?(view, "#questions-#{q3.id} button[phx-click='move_down'][disabled]")
+      refute has_element?(view, "#questions-#{q1.id} button[phx-click='move_down'][disabled]")
+      refute has_element?(view, "#questions-#{q3.id} button[phx-click='move_up'][disabled]")
+    end
+
+    test "reorder event applies the full given order", %{conn: conn} do
+      topic = create_topic()
+      {q1, q2, q3} = create_three_questions(topic)
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      render_hook(view, "reorder", %{"ids" => ["#{q3.id}", "#{q1.id}", "#{q2.id}"]})
+
+      assert prompts_in_order(topic.id) == ["Q3", "Q1", "Q2"]
+    end
+
+    test "reorder event with mismatched ids keeps the current order", %{conn: conn} do
+      topic = create_topic()
+      {_q1, _q2, _q3} = create_three_questions(topic)
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      render_hook(view, "reorder", %{"ids" => ["999999"]})
+
+      assert prompts_in_order(topic.id) == ["Q1", "Q2", "Q3"]
+    end
+
+    test "reorder controls are hidden while searching", %{conn: conn} do
+      topic = create_topic()
+      {_q1, _q2, _q3} = create_three_questions(topic)
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      html = render_change(view, "search", %{"search" => "Q1"})
+
+      refute html =~ "move_up"
+      refute html =~ "drag-handle"
+    end
+  end
+
   describe "form status toggle" do
     test "creates a published question when the toggle is on", %{conn: conn} do
       topic = create_topic()

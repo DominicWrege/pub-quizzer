@@ -349,6 +349,144 @@ const OptionSorter = {
   }
 } satisfies Partial<ViewHook>
 
+interface QuestionSorterHook extends ViewHook {
+  _fromEl: HTMLElement | null
+  _clone: HTMLElement | null
+  _onMove: ((ev: MouseEvent) => void) | null
+  _onUp: ((ev: MouseEvent) => void) | null
+}
+
+const QuestionSorter = {
+  mounted(this: QuestionSorterHook) {
+    this._fromEl = null
+    this._clone = null
+    this._onMove = null
+    this._onUp = null
+
+    const coarse = window.matchMedia('(pointer: coarse)').matches
+    const narrow = window.matchMedia('(max-width: 1023px)').matches
+    if (coarse || narrow) return
+
+    this.el.addEventListener('mousedown', (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const handle = target.closest('.drag-handle')
+      if (!handle) return
+      e.preventDefault()
+      this._startDrag(e.clientX, e.clientY, handle)
+    })
+  },
+
+  destroyed(this: QuestionSorterHook) {
+    this._cleanup()
+  },
+
+  _startDrag(this: QuestionSorterHook, cx: number, cy: number, handle: Element) {
+    const card = handle.closest('.q-card') as HTMLElement | null
+    if (!card) return
+    this._fromEl = card
+
+    this._clone = card.cloneNode(true) as HTMLElement
+    this._clone.style.position = 'fixed'
+    this._clone.style.pointerEvents = 'none'
+    this._clone.style.zIndex = '50'
+    this._clone.style.width = card.offsetWidth + 'px'
+    this._clone.style.opacity = '0.92'
+    this._clone.style.boxShadow = '0 8px 28px oklch(0 0 0 / 0.18)'
+    this._clone.style.borderRadius = '0.75rem'
+    this._clone.style.transition = 'none'
+    document.body.appendChild(this._clone)
+    this._positionClone(cx, cy)
+
+    card.classList.add('opacity-15')
+
+    this._onMove = (ev: MouseEvent) => {
+      ev.preventDefault()
+      this._positionClone(ev.clientX, ev.clientY)
+      this._highlightAt(ev.clientX, ev.clientY)
+    }
+    this._onUp = (ev: MouseEvent) => {
+      this._endDrag(ev.clientX, ev.clientY)
+    }
+
+    document.addEventListener('mousemove', this._onMove)
+    document.addEventListener('mouseup', this._onUp)
+  },
+
+  _positionClone(this: QuestionSorterHook, cx: number, cy: number) {
+    if (!this._clone) return
+    this._clone.style.left = (cx + 14) + 'px'
+    this._clone.style.top = (cy + 10) + 'px'
+  },
+
+  _cards(this: QuestionSorterHook): HTMLElement[] {
+    return Array.from(this.el.querySelectorAll<HTMLElement>('.q-card'))
+  },
+
+  _highlightAt(this: QuestionSorterHook, cx: number, cy: number) {
+    const target = this._resolveTarget(cx, cy)
+    this._cards().forEach((c) => c.classList.remove('border-primary'))
+    if (target) target.card.classList.add('border-primary')
+  },
+
+  _resolveTarget(
+    this: QuestionSorterHook,
+    cx: number,
+    cy: number
+  ): { card: HTMLElement, before: boolean } | null {
+    const cards = this._cards().filter((c) => c !== this._fromEl)
+    if (cards.length === 0) return null
+
+    let closest = cards[0]
+    let minDist = Infinity
+    for (const c of cards) {
+      const rect = c.getBoundingClientRect()
+      const dist = Math.hypot(cx - (rect.left + rect.width / 2), cy - (rect.top + rect.height / 2))
+      if (dist < minDist) { minDist = dist; closest = c }
+    }
+
+    const rect = closest.getBoundingClientRect()
+    const withinRow = cy >= rect.top && cy <= rect.bottom
+    const before = withinRow
+      ? cx < rect.left + rect.width / 2
+      : cy < rect.top + rect.height / 2
+
+    return { card: closest, before }
+  },
+
+  _endDrag(this: QuestionSorterHook, cx: number, cy: number) {
+    this._cleanupClone()
+
+    const moving = this._fromEl
+    const target = this._resolveTarget(cx, cy)
+
+    this._cards().forEach((c) => c.classList.remove('border-primary', 'opacity-15'))
+    this._fromEl = null
+
+    if (!moving || !target) return
+
+    if (target.before) {
+      target.card.parentNode?.insertBefore(moving, target.card)
+    } else {
+      target.card.parentNode?.insertBefore(moving, target.card.nextSibling)
+    }
+
+    const ids = this._cards().map((c) => c.id.replace(/^questions-/, ''))
+    this.pushEvent('reorder', { ids })
+  },
+
+  _cleanupClone(this: QuestionSorterHook) {
+    if (this._clone) { this._clone.remove(); this._clone = null }
+    if (this._onMove) { document.removeEventListener('mousemove', this._onMove); this._onMove = null }
+    if (this._onUp) { document.removeEventListener('mouseup', this._onUp); this._onUp = null }
+  },
+
+  _cleanup(this: QuestionSorterHook) {
+    this._cleanupClone()
+    this._cards().forEach((c) => c.classList.remove('border-primary', 'opacity-15'))
+    this._fromEl = null
+  }
+} satisfies Partial<ViewHook>
+
 interface DialogHook extends ViewHook {
   _onClose: () => void
 }
@@ -401,6 +539,7 @@ const liveSocket = new LiveSocket("/live", Socket, {
     ClipboardCopy,
     ScrollToBottom,
     OptionSorter,
+    QuestionSorter,
     Dialog
   }
 })
