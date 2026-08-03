@@ -188,7 +188,9 @@ defmodule PubQuizzerWeb.Layouts do
         </aside>
       </div>
     <% else %>
-      <header class="navbar pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] lg:pl-[calc(env(safe-area-inset-left)+2rem)] lg:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[env(safe-area-inset-top)] border-b border-base-300">
+      <%!-- min-h-0: daisyUI's .navbar min-height (4rem) leaves ~19px of dead
+          bottom space vs the logged-in header --%>
+      <header class="navbar min-h-0 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] lg:pl-[calc(env(safe-area-inset-left)+2rem)] lg:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[env(safe-area-inset-top)] pb-2 border-b border-base-300">
         <div class="flex-1">
           <a href="/" class="flex-1 flex w-fit items-center gap-2">
             <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
