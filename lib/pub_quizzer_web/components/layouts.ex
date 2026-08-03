@@ -145,7 +145,9 @@ defmodule PubQuizzerWeb.Layouts do
             </div>
           </main>
         </div>
-        <aside class="fixed inset-x-0 top-0 z-50 max-h-[var(--app-height)] overflow-y-auto bg-base-100 border-b border-base-300 shadow-xl -translate-y-full peer-checked:translate-y-0 transition-transform duration-200 sm:hidden flex flex-col">
+        <%!-- shadow only while open: a shadow on the translated-off-screen drawer
+            bleeds into the top of the viewport when closed --%>
+        <aside class="fixed inset-x-0 top-0 z-50 max-h-[var(--app-height)] overflow-y-auto bg-base-100 border-b border-base-300 -translate-y-full peer-checked:translate-y-0 peer-checked:shadow-xl transition-[transform,box-shadow] duration-200 sm:hidden flex flex-col">
           <div class="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4 border-b border-base-300">
             <span class="font-semibold">Navigation</span>
             <label
