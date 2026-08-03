@@ -50,10 +50,16 @@ defmodule PubQuizzerWeb.Layouts do
   def app(assigns) do
     ~H"""
     <%= if @current_scope && @current_scope[:user] do %>
-      <div class="flex h-[var(--app-height)] flex-col overflow-hidden" data-app-shell>
+      <%!-- Below lg the document scrolls naturally so iOS Safari's floating URL
+          bar collapses on scroll instead of permanently clipping the shell's
+          bottom; lg+ keeps the viewport-locked shell with <main> as scroller. --%>
+      <div
+        class="flex min-h-[var(--app-height)] flex-col lg:h-[var(--app-height)] lg:overflow-hidden"
+        data-app-shell
+      >
         <input type="checkbox" id="nav-drawer-toggle" class="peer hidden" />
         <header
-          class="shrink-0 bg-base-200 border-b border-base-300 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-0"
+          class="sticky top-0 z-20 shrink-0 bg-base-200 border-b border-base-300 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-0"
           data-guide-seen={"#{@current_scope.user.guide_seen}"}
           data-guide-role={@current_scope.user.role}
         >
@@ -128,7 +134,7 @@ defmodule PubQuizzerWeb.Layouts do
           class="fixed inset-x-0 top-0 z-40 h-[var(--app-height)] bg-black/50 opacity-0 invisible pointer-events-none peer-checked:opacity-100 peer-checked:visible peer-checked:pointer-events-auto transition-[opacity,visibility] duration-200 sm:hidden"
         ></label>
         <div class="flex min-h-0 flex-1">
-          <main class={["flex-1 overflow-y-auto overscroll-contain", @main_class]}>
+          <main class={["flex-1 lg:overflow-y-auto lg:overscroll-contain", @main_class]}>
             <%!-- Top padding lives here (not on <main>) so sticky toolbars pin
               flush with the header instead of being inset by main's padding. --%>
             <div class={[
