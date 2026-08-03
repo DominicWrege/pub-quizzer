@@ -188,59 +188,63 @@ defmodule PubQuizzerWeb.Layouts do
         </aside>
       </div>
     <% else %>
-      <%!-- min-h-0: daisyUI's .navbar min-height (4rem) leaves ~19px of dead
-          bottom space vs the logged-in header; explicit top padding replaces
-          the space the min-height used to provide --%>
-      <header class="navbar min-h-0 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] lg:pl-[calc(env(safe-area-inset-left)+2rem)] lg:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300">
-        <div class="flex-1">
-          <a href="/" class="flex-1 flex w-fit items-center gap-2">
-            <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
-          </a>
-        </div>
-        <%= unless @hide_nav_actions do %>
-          <div class="flex-none hidden sm:flex">
-            <ul class="flex px-1 space-x-4 items-center">
-              <%= if @current_scope && @current_scope[:user] do %>
-                <li>
-                  <.link navigate={~p"/admin/events"} class="btn btn-primary btn-sm">
-                    Verwaltung <span aria-hidden="true">&rarr;</span>
-                  </.link>
-                </li>
-              <% else %>
-                <li>
-                  <.link navigate={~p"/admin/login"} class="btn btn-soft btn-sm">Moderator</.link>
-                </li>
-              <% end %>
-            </ul>
+      <%!-- Flex column fills the viewport so <main> (and any bg it carries,
+          e.g. the login page) always reaches the bottom edge. min-h-0 on the
+          navbar: daisyUI's .navbar min-height (4rem) leaves dead bottom space
+          vs the logged-in header; explicit top padding replaces the space the
+          min-height used to provide. --%>
+      <div class="flex min-h-svh flex-col">
+        <header class="navbar min-h-0 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] lg:pl-[calc(env(safe-area-inset-left)+2rem)] lg:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300">
+          <div class="flex-1">
+            <a href="/" class="flex-1 flex w-fit items-center gap-2">
+              <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
+            </a>
           </div>
-          <div class="flex-none sm:hidden">
-            <div class="dropdown dropdown-end">
-              <button tabindex="0" class="btn btn-sm btn-square" aria-label="Menü">
-                <.icon name="hero-bars-3" class="size-6" />
-              </button>
-              <ul
-                tabindex="0"
-                class="dropdown-content menu bg-base-200 rounded-box w-52 shadow-lg z-50 mt-2"
-              >
+          <%= unless @hide_nav_actions do %>
+            <div class="flex-none hidden sm:flex">
+              <ul class="flex px-1 space-x-4 items-center">
                 <%= if @current_scope && @current_scope[:user] do %>
                   <li>
-                    <.link navigate={~p"/admin/events"}>Verwaltung &rarr;</.link>
+                    <.link navigate={~p"/admin/events"} class="btn btn-primary btn-sm">
+                      Verwaltung <span aria-hidden="true">&rarr;</span>
+                    </.link>
                   </li>
                 <% else %>
                   <li>
-                    <.link navigate={~p"/admin/login"}>Moderator</.link>
+                    <.link navigate={~p"/admin/login"} class="btn btn-soft btn-sm">Moderator</.link>
                   </li>
                 <% end %>
               </ul>
             </div>
+            <div class="flex-none sm:hidden">
+              <div class="dropdown dropdown-end">
+                <button tabindex="0" class="btn btn-sm btn-square" aria-label="Menü">
+                  <.icon name="hero-bars-3" class="size-6" />
+                </button>
+                <ul
+                  tabindex="0"
+                  class="dropdown-content menu bg-base-200 rounded-box w-52 shadow-lg z-50 mt-2"
+                >
+                  <%= if @current_scope && @current_scope[:user] do %>
+                    <li>
+                      <.link navigate={~p"/admin/events"}>Verwaltung &rarr;</.link>
+                    </li>
+                  <% else %>
+                    <li>
+                      <.link navigate={~p"/admin/login"}>Moderator</.link>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
+          <% end %>
+        </header>
+        <main class={["flex-1", @main_class]}>
+          <div class={["mx-auto space-y-4 pb-[env(safe-area-inset-bottom)]", @max_width]}>
+            {render_slot(@inner_block)}
           </div>
-        <% end %>
-      </header>
-      <main class={@main_class}>
-        <div class={["mx-auto space-y-4 pb-[env(safe-area-inset-bottom)]", @max_width]}>
-          {render_slot(@inner_block)}
-        </div>
-      </main>
+        </main>
+      </div>
     <% end %>
 
     <.flash_group flash={@flash} />
