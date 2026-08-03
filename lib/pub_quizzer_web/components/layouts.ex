@@ -53,7 +53,7 @@ defmodule PubQuizzerWeb.Layouts do
       <div class="flex h-dvh flex-col overflow-hidden" data-app-shell>
         <input type="checkbox" id="nav-drawer-toggle" class="peer hidden" />
         <header
-          class="shrink-0 bg-base-200 border-b border-base-300 px-4 sm:px-6 pt-2 pb-0"
+          class="shrink-0 bg-base-200 border-b border-base-300 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-0"
           data-guide-seen={"#{@current_scope.user.guide_seen}"}
           data-guide-role={@current_scope.user.role}
         >
@@ -132,7 +132,7 @@ defmodule PubQuizzerWeb.Layouts do
             <%!-- Top padding lives here (not on <main>) so sticky toolbars pin
               flush with the header instead of being inset by main's padding. --%>
             <div class={[
-              "mx-auto space-y-3 sm:space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-4",
+              "mx-auto space-y-3 sm:space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-4 pb-[env(safe-area-inset-bottom)]",
               @max_width
             ]}>
               {render_slot(@inner_block)}
@@ -140,7 +140,7 @@ defmodule PubQuizzerWeb.Layouts do
           </main>
         </div>
         <aside class="fixed top-0 left-0 z-50 h-dvh w-72 max-w-[80vw] bg-base-100 border-r border-base-300 shadow-xl -translate-x-full peer-checked:translate-x-0 transition-transform duration-200 sm:hidden flex flex-col">
-          <div class="flex items-center justify-between p-4 border-b border-base-300">
+            <div class="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4 border-b border-base-300">
             <span class="font-semibold">Navigation</span>
             <label
               for="nav-drawer-toggle"
@@ -172,7 +172,7 @@ defmodule PubQuizzerWeb.Layouts do
               </.link>
             <% end %>
           </nav>
-          <div class="p-4 border-t border-base-300">
+          <div class="px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] border-t border-base-300">
             <.link navigate={~p"/admin/logout"} class="btn btn-soft btn-sm w-full justify-start gap-2">
               <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
             </.link>
@@ -180,7 +180,7 @@ defmodule PubQuizzerWeb.Layouts do
         </aside>
       </div>
     <% else %>
-      <header class="navbar px-4 sm:px-6 lg:px-8 border-b border-base-300">
+      <header class="navbar pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] lg:pl-[calc(env(safe-area-inset-left)+2rem)] lg:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[env(safe-area-inset-top)] border-b border-base-300">
         <div class="flex-1">
           <a href="/" class="flex-1 flex w-fit items-center gap-2">
             <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
@@ -226,7 +226,7 @@ defmodule PubQuizzerWeb.Layouts do
         <% end %>
       </header>
       <main class={@main_class}>
-        <div class={["mx-auto space-y-4", @max_width]}>
+        <div class={["mx-auto space-y-4 pb-[env(safe-area-inset-bottom)]", @max_width]}>
           {render_slot(@inner_block)}
         </div>
       </main>

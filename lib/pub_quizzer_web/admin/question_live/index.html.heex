@@ -164,7 +164,7 @@
   <.link
     navigate={~p"/admin/topics/#{@topic.id}/questions/new"}
     aria-label="Neue Frage"
-    class="btn btn-primary border-none fixed bottom-2 right-5 z-40 rounded-full pl-4 pr-5 gap-2 shadow-lg shadow-primary/40 active:scale-95 lg:hidden"
+    class="btn btn-primary border-none fixed bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] right-[calc(env(safe-area-inset-right)+1.25rem)] z-40 rounded-full pl-4 pr-5 gap-2 shadow-lg shadow-primary/40 active:scale-95 lg:hidden"
   >
     <.icon name="hero-plus" class="size-5" />
     <span class="font-semibold">Neue Frage</span>
