@@ -139,12 +139,47 @@ defmodule PubQuizzer.Accounts do
   # --- Auth helpers ---
 
   def sign_in_user(%User{} = user) do
-    user
-    |> User.changeset(%{
-      active: true,
-      last_signed_in_at: DateTime.utc_now() |> DateTime.truncate(:second)
-    })
-    |> Repo.update()
+    first_login? = is_nil(user.last_signed_in_at)
+
+    result =
+      user
+      |> User.changeset(%{
+        active: true,
+        last_signed_in_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      })
+      |> Repo.update()
+
+    if first_login? and user.role == "moderator" do
+      with {:ok, updated} <- result do
+        notify_admins_of_first_moderator_login(updated)
+      end
+    end
+
+    result
+  end
+
+  def list_superadmins do
+    Repo.all(from u in User, where: u.role == "superadmin")
+  end
+
+  defp notify_admins_of_first_moderator_login(%User{} = moderator) do
+    admins = list_superadmins()
+
+    if admins != [] do
+      Task.Supervisor.start_child(PubQuizzer.TaskSupervisor, fn ->
+        case AuthEmail.deliver_first_login_notice(moderator, admins) do
+          {:ok, _} ->
+            :ok
+
+          {:error, reason} ->
+            Logger.error(
+              "Failed to deliver first-login notice for #{moderator.email}: #{inspect(reason)}"
+            )
+        end
+      end)
+    end
+
+    :ok
   end
 
   def mark_guide_seen(%User{} = user) do

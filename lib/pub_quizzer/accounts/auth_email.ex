@@ -1,6 +1,7 @@
 defmodule PubQuizzer.Accounts.AuthEmail do
   @moduledoc """
-  Email composition and delivery for authentication (magic links).
+  Email composition and delivery for authentication (magic links)
+  and account notifications (first moderator login).
   """
 
   import Swoosh.Email
@@ -17,6 +18,18 @@ defmodule PubQuizzer.Accounts.AuthEmail do
     |> subject("Dein Quiz for a better life Login-Link")
     |> html_body(rendered_html(user.name, url))
     |> text_body(plain_text(user.name, url))
+    |> Mailer.deliver()
+  end
+
+  def deliver_first_login_notice(%User{} = moderator, admins) do
+    {name, email} = from_email()
+
+    new()
+    |> to(Enum.map(admins, &{&1.name, &1.email}))
+    |> from({name, email})
+    |> subject("#{moderator.name} hat sich zum ersten Mal angemeldet")
+    |> html_body(notice_html(moderator))
+    |> text_body(notice_text(moderator))
     |> Mailer.deliver()
   end
 
@@ -55,5 +68,26 @@ defmodule PubQuizzer.Accounts.AuthEmail do
 
   defp plain_text(name, url) do
     "Moin #{name}!\n\nLogin-Link: #{url}\nDer Link ist 10 Minuten gültig."
+  end
+
+  defp notice_html(%User{} = moderator) do
+    """
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #333;">
+      <h2 style="font-size: 22px; margin-bottom: 8px;">🏆 Quiz for a better life</h2>
+      <p style="font-size: 16px; line-height: 1.5;">
+        Moin!<br>
+        <strong>#{moderator.name}</strong> (#{moderator.email}) hat sich soeben
+        zum ersten Mal als Moderator angemeldet.
+      </p>
+      <p style="color: #666; font-size: 14px; line-height: 1.5;">
+        Diese Benachrichtigung geht an alle Administrator:innen,
+        damit neue Moderatoren willkommen geheißen werden können.
+      </p>
+    </div>
+    """
+  end
+
+  defp notice_text(%User{} = moderator) do
+    "Moin!\n\n#{moderator.name} (#{moderator.email}) hat sich soeben zum ersten Mal als Moderator angemeldet."
   end
 end
