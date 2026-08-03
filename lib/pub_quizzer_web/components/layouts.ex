@@ -139,7 +139,7 @@ defmodule PubQuizzerWeb.Layouts do
             </div>
           </main>
         </div>
-        <aside class="fixed top-0 left-0 z-50 h-[var(--app-height)] w-72 max-w-[80vw] bg-base-100 border-r border-base-300 shadow-xl -translate-x-full peer-checked:translate-x-0 transition-transform duration-200 sm:hidden flex flex-col">
+        <aside class="fixed inset-x-0 top-0 z-50 max-h-[var(--app-height)] overflow-y-auto bg-base-100 border-b border-base-300 shadow-xl -translate-y-full peer-checked:translate-y-0 transition-transform duration-200 sm:hidden flex flex-col">
           <div class="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4 border-b border-base-300">
             <span class="font-semibold">Navigation</span>
             <label
@@ -150,7 +150,7 @@ defmodule PubQuizzerWeb.Layouts do
               <.icon name="hero-x-mark" class="size-5" />
             </label>
           </div>
-          <nav class="menu menu-md p-4 gap-1 flex-1">
+          <nav class="menu menu-md p-4 gap-1">
             <.link
               navigate={~p"/admin/events"}
               class={drawer_link_class(@current_path, "/admin/events")}
