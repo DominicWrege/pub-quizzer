@@ -50,7 +50,7 @@ defmodule PubQuizzerWeb.Layouts do
   def app(assigns) do
     ~H"""
     <%= if @current_scope && @current_scope[:user] do %>
-      <div class="flex h-dvh flex-col overflow-hidden" data-app-shell>
+      <div class="flex h-[var(--app-height)] flex-col overflow-hidden" data-app-shell>
         <input type="checkbox" id="nav-drawer-toggle" class="peer hidden" />
         <header
           class="shrink-0 bg-base-200 border-b border-base-300 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-0"
@@ -132,15 +132,15 @@ defmodule PubQuizzerWeb.Layouts do
             <%!-- Top padding lives here (not on <main>) so sticky toolbars pin
               flush with the header instead of being inset by main's padding. --%>
             <div class={[
-              "mx-auto space-y-3 sm:space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-4 pb-[env(safe-area-inset-bottom)]",
+              "mx-auto space-y-2 sm:space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-4 pb-[env(safe-area-inset-bottom)]",
               @max_width
             ]}>
               {render_slot(@inner_block)}
             </div>
           </main>
         </div>
-        <aside class="fixed top-0 left-0 z-50 h-dvh w-72 max-w-[80vw] bg-base-100 border-r border-base-300 shadow-xl -translate-x-full peer-checked:translate-x-0 transition-transform duration-200 sm:hidden flex flex-col">
-            <div class="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4 border-b border-base-300">
+        <aside class="fixed top-0 left-0 z-50 h-[var(--app-height)] w-72 max-w-[80vw] bg-base-100 border-r border-base-300 shadow-xl -translate-x-full peer-checked:translate-x-0 transition-transform duration-200 sm:hidden flex flex-col">
+          <div class="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4 border-b border-base-300">
             <span class="font-semibold">Navigation</span>
             <label
               for="nav-drawer-toggle"

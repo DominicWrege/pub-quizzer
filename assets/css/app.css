@@ -47,6 +47,12 @@ html {
   font-size: 19px;
 }
 
+/* Fallback until assets/js/viewport-height.ts sets the real visible-viewport
+   height (iOS Safari's bottom URL bar makes the *vh units unreliable). */
+:root {
+  --app-height: 100dvh;
+}
+
 *:focus-visible {
   outline-width: 0 !important;
   outline-style: none !important;
