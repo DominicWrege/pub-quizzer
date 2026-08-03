@@ -11,7 +11,7 @@ defmodule PubQuizzerWeb.MagicLinkController do
         conn
         |> put_session(:user_id, user.id)
         |> put_flash(:info, "Willkommen, #{user.name}!")
-        |> redirect(to: "/admin/events")
+        |> redirect(to: "/admin/topics")
 
       {:error, :expired} ->
         conn

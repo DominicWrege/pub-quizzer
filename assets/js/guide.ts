@@ -47,15 +47,6 @@ function startGuide(): void {
         },
       },
       {
-        element: 'a[href="/admin/events"]',
-        popover: {
-          title: "Quiz-Events",
-          description: "Hier erstellst du neue Quiz-Events, startest sie und siehst die Ergebnisse.",
-          side: "bottom",
-          align: "start",
-        },
-      },
-      {
         element: 'a[href="/admin/topics"]',
         popover: {
           title: "Themen & Fragen",
@@ -65,19 +56,19 @@ function startGuide(): void {
         },
       },
       {
-        element: "#new-event-btn",
+        element: 'a[href="/admin/events"]',
         popover: {
-          title: "Neues Quiz erstellen",
-          description: "Klicke hier, um ein neues Event zu erstellen. Teams treten dann mit dem 4-stelligen Code bei.",
+          title: "Quiz-Events",
+          description: "Hier erstellst du neue Quiz-Events, startest sie und siehst die Ergebnisse.",
           side: "bottom",
-          align: "end",
+          align: "start",
         },
       },
       {
         popover: {
           title: "So läuft ein Quiz ab",
           description:
-            "Event erstellen → Teams beitreten mit Code → Quiz starten → Thema wählen → Teams antworten → Antworten auflösen → Ergebnisse anzeigen!",
+            "Themen & Fragen anlegen → Event erstellen → Teams beitreten mit Code → Quiz starten → Thema wählen → Teams antworten → Antworten auflösen → Ergebnisse anzeigen!",
         },
       },
     ],
@@ -91,12 +82,11 @@ function maybeStartGuide(): void {
   if (header?.getAttribute("data-guide-seen") === "true") return
   // The onboarding tour is for moderators only — superadmins know the ropes.
   if (header?.getAttribute("data-guide-role") === "superadmin") return
-  if (!window.location.pathname.startsWith("/admin/events")) return
+  if (!window.location.pathname.startsWith("/admin/topics")) return
 
   const check = setInterval(() => {
-    const navTab = document.querySelector('a[href="/admin/events"]')
-    const newBtn = document.querySelector("#new-event-btn")
-    if (navTab && newBtn) {
+    const navTab = document.querySelector('a[href="/admin/topics"]')
+    if (navTab) {
       clearInterval(check)
       startGuide()
     }

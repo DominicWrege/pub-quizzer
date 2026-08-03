@@ -30,7 +30,7 @@ defmodule PubQuizzerWeb.DevAuthController do
 
         conn
         |> put_session(:user_id, user.id)
-        |> redirect(to: "/admin/events")
+        |> redirect(to: "/admin/topics")
     end
   end
 

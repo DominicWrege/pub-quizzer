@@ -79,10 +79,10 @@ defmodule PubQuizzerWeb.Admin.UserLiveTest do
   end
 
   describe "authorization" do
-    test "non-superadmin is redirected to events", %{conn: conn} do
+    test "non-superadmin is redirected to topics", %{conn: conn} do
       conn = log_in_user(conn)
 
-      assert {:error, {:redirect, %{to: "/admin/events"}}} =
+      assert {:error, {:redirect, %{to: "/admin/topics"}}} =
                live(conn, ~p"/admin/users")
     end
   end

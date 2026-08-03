@@ -11,7 +11,7 @@ defmodule PubQuizzerWeb.Admin.ProfileLive do
       {:ok,
        socket
        |> put_flash(:error, "Keine Berechtigung für diesen Bereich.")
-       |> redirect(to: "/admin/events")}
+        |> redirect(to: "/admin/topics")}
     else
       form = to_form(Accounts.change_user(user))
       {:ok, assign(socket, page_title: "Profil", form: form)}

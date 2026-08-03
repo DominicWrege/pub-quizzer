@@ -35,7 +35,7 @@ async function waitForLiveView(page: Page): Promise<void> {
 /** Log in as moderator/superadmin via the dev auth backdoor. */
 async function loginAsHost(page: Page): Promise<void> {
   await page.goto(`/dev/login-as/${encodeURIComponent(ADMIN_EMAIL)}`)
-  await page.waitForURL("**/admin/events", { timeout: 10_000 })
+  await page.waitForURL("**/admin/topics", { timeout: 10_000 })
   await waitForLiveView(page)
 }
 

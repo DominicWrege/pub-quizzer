@@ -23,7 +23,7 @@ defmodule PubQuizzerWeb.Admin.ProfileLiveTest do
     end
 
     test "moderator is redirected away from profile", %{conn: conn} do
-      assert {:error, {:redirect, %{to: "/admin/events"}}} =
+      assert {:error, {:redirect, %{to: "/admin/topics"}}} =
                conn
                |> log_in_user()
                |> live(~p"/admin/profile")

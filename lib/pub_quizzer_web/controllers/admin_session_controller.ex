@@ -12,7 +12,7 @@ defmodule PubQuizzerWeb.AdminSessionController do
           |> render(:new)
 
         _user_id ->
-          redirect(conn, to: "/admin/events")
+          redirect(conn, to: "/admin/topics")
       end
     else
       redirect(conn, to: "/setup")

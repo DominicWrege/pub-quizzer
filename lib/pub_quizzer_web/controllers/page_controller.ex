@@ -7,7 +7,7 @@ defmodule PubQuizzerWeb.PageController do
   def home(conn, _params) do
     case load_current_scope(conn) do
       %{user: _user} ->
-        redirect(conn, to: "/admin/events")
+        redirect(conn, to: "/admin/topics")
 
       nil ->
         if not Accounts.has_users?() do

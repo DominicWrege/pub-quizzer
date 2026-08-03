@@ -9,9 +9,9 @@ test.describe("first-login guide", () => {
     // The onboarding guide only shows for moderators, not superadmins.
     // Reset guide_seen to false so the guide always appears.
     await page.goto(`/dev/login-as/mod-e2e@localhost.test?reset_guide=true`)
-    await page.waitForURL("**/admin/events", { timeout: 10_000 })
+    await page.waitForURL("**/admin/topics", { timeout: 10_000 })
 
-    // Guide popover appears on /admin/events
+    // Guide popover appears on /admin/topics
     await expect(page.locator(".driver-popover-title")).toBeVisible({ timeout: 10_000 })
     await expect(page.locator(".driver-popover-title")).toHaveText(/Willkommen/)
 

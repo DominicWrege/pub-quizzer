@@ -19,7 +19,7 @@ defmodule PubQuizzerWeb.AdminAuthTest do
       assert redirected_to(conn) == "/setup"
     end
 
-    test "GET /admin/login when already authed redirects to events", %{conn: conn} do
+    test "GET /admin/login when already authed redirects to topics", %{conn: conn} do
       {:ok, _} =
         Accounts.create_user(%{email: "admin@test.com", name: "Admin", role: "superadmin"})
 
@@ -28,7 +28,7 @@ defmodule PubQuizzerWeb.AdminAuthTest do
         |> log_in_user()
         |> get(~p"/admin/login")
 
-      assert redirected_to(conn) == "/admin/events"
+      assert redirected_to(conn) == "/admin/topics"
     end
 
     test "POST /admin/login with known email renders link sent page", %{conn: conn} do
@@ -74,7 +74,7 @@ defmodule PubQuizzerWeb.AdminAuthTest do
 
       conn = get(conn, ~p"/admin/magic?token=#{raw_token}")
 
-      assert redirected_to(conn) == "/admin/events"
+      assert redirected_to(conn) == "/admin/topics"
       assert get_session(conn, :user_id) == user.id
     end
 
@@ -114,7 +114,7 @@ defmodule PubQuizzerWeb.AdminAuthTest do
       {:ok, raw_token} = Accounts.generate_invite_link(user)
 
       conn1 = get(conn, ~p"/admin/magic?token=#{raw_token}")
-      assert redirected_to(conn1) == "/admin/events"
+      assert redirected_to(conn1) == "/admin/topics"
 
       conn2 = get(build_conn(), ~p"/admin/magic?token=#{raw_token}")
       assert redirected_to(conn2) == "/admin/login"
@@ -144,7 +144,7 @@ defmodule PubQuizzerWeb.AdminAuthTest do
         |> log_in_user()
         |> get(~p"/admin/users")
 
-      assert redirected_to(conn) == "/admin/events"
+      assert redirected_to(conn) == "/admin/topics"
     end
 
     test "superadmin can access /admin/users", %{conn: conn} do

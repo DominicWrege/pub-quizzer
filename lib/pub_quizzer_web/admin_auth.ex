@@ -27,7 +27,7 @@ defmodule PubQuizzerWeb.AdminAuth do
         else
           conn
           |> put_flash(:error, "Keine Berechtigung für diesen Bereich.")
-          |> redirect(to: "/admin/events")
+          |> redirect(to: "/admin/topics")
           |> halt()
         end
 
