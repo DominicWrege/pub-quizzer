@@ -91,10 +91,15 @@ body.presentation-mode header.bg-base-200 {
   --btn-fg: var(--color-base-content);
   --btn-color: var(--color-base-content);
 }
-.btn-soft:hover {
-  --btn-bg: var(--color-base-content);
-  --btn-border: var(--color-base-content);
-  --btn-fg: var(--color-base-100);
+/* Gated to hover-capable devices: iOS Safari keeps :hover stuck on the last
+   tapped element (e.g. after back-navigation reuses the DOM node), which
+   would otherwise render btn-soft buttons as dark blobs. */
+@media (hover: hover) {
+  .btn-soft:hover {
+    --btn-bg: var(--color-base-content);
+    --btn-border: var(--color-base-content);
+    --btn-fg: var(--color-base-100);
+  }
 }
 
 /* Elevation for sticky admin toolbars once their list has scrolled. Toggled by
@@ -110,9 +115,11 @@ body.app-scrolled [data-sticky-bar] {
   --btn-fg: var(--color-error);
   --btn-color: var(--color-error);
 }
-.btn-danger-soft:hover {
-  --btn-bg: color-mix(in oklch, var(--color-error) 20%, var(--color-base-100));
-  --btn-border: color-mix(in oklch, var(--color-error) 50%, var(--color-base-100));
+@media (hover: hover) {
+  .btn-danger-soft:hover {
+    --btn-bg: color-mix(in oklch, var(--color-error) 20%, var(--color-base-100));
+    --btn-border: color-mix(in oklch, var(--color-error) 50%, var(--color-base-100));
+  }
 }
 
 /* Suppress daisyUI focus rings on soft/danger-soft buttons */
@@ -206,17 +213,21 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
   color: var(--color-error-content);
   font-weight: 600;
 }
-.driver-popover.pubquiz-guide .pubquiz-skip-btn:hover {
-  background-color: color-mix(in oklch, var(--color-error) 80%, black);
+@media (hover: hover) {
+  .driver-popover.pubquiz-guide .pubquiz-skip-btn:hover {
+    background-color: color-mix(in oklch, var(--color-error) 80%, black);
+  }
 }
 .driver-popover.pubquiz-guide .driver-popover-prev-btn,
 .driver-popover.pubquiz-guide .driver-popover-next-btn {
   background-color: var(--color-primary);
   color: var(--color-primary-content);
 }
-.driver-popover.pubquiz-guide .driver-popover-prev-btn:hover,
-.driver-popover.pubquiz-guide .driver-popover-next-btn:hover {
-  background-color: color-mix(in oklch, var(--color-primary) 85%, black);
+@media (hover: hover) {
+  .driver-popover.pubquiz-guide .driver-popover-prev-btn:hover,
+  .driver-popover.pubquiz-guide .driver-popover-next-btn:hover {
+    background-color: color-mix(in oklch, var(--color-primary) 85%, black);
+  }
 }
 .driver-popover.pubquiz-guide .driver-popover-prev-btn.driver-popover-btn-disabled {
   opacity: 0.4;
