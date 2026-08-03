@@ -64,7 +64,7 @@ defmodule PubQuizzerWeb.Layouts do
                 class="btn btn-sm btn-soft btn-square sm:hidden shrink-0"
                 aria-label="Menü"
               >
-                <span class="text-lg leading-none">&#9776;</span>
+                <.icon name="hero-bars-3" class="size-6" />
               </label>
               <a href="/" class="flex items-center gap-2 min-w-0">
                 <span class="text-sm sm:text-xl font-semibold truncate">Quiz for a better life</span>
@@ -204,8 +204,8 @@ defmodule PubQuizzerWeb.Layouts do
           </div>
           <div class="flex-none sm:hidden">
             <div class="dropdown dropdown-end">
-              <button tabindex="0" class="btn btn-sm text-lg leading-none">
-                &#9776;
+              <button tabindex="0" class="btn btn-sm btn-square" aria-label="Menü">
+                <.icon name="hero-bars-3" class="size-6" />
               </button>
               <ul
                 tabindex="0"

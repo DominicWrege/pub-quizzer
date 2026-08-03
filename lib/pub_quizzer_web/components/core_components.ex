@@ -670,6 +670,9 @@ defmodule PubQuizzerWeb.CoreComponents do
 
       "arrow-down" ->
         ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>)
+
+      "bars-3" ->
+        ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>)
     end
   end
 
