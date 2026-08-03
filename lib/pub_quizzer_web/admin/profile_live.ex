@@ -6,9 +6,16 @@ defmodule PubQuizzerWeb.Admin.ProfileLive do
   @impl true
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    form = to_form(Accounts.change_user(user))
 
-    {:ok, assign(socket, page_title: "Profil", form: form)}
+    if user.role != "superadmin" do
+      {:ok,
+       socket
+       |> put_flash(:error, "Keine Berechtigung für diesen Bereich.")
+       |> redirect(to: "/admin/events")}
+    else
+      form = to_form(Accounts.change_user(user))
+      {:ok, assign(socket, page_title: "Profil", form: form)}
+    end
   end
 
   @impl true

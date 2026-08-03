@@ -31,6 +31,8 @@ defmodule PubQuizzerWeb.Admin.UserLive do
          |> assign(:form, to_form(%{"email" => "", "name" => ""}))
          |> assign(:confirm_action, nil)
          |> assign(:pending_delete_id, nil)
+         |> assign(:editing_user, nil)
+         |> assign(:edit_form, nil)
          |> assign(:base_url, base_url)}
     end
   end
@@ -82,6 +84,37 @@ defmodule PubQuizzerWeb.Admin.UserLive do
 
   def handle_event("cancel_confirm", _params, socket) do
     {:noreply, socket |> assign(:confirm_action, nil) |> assign(:pending_delete_id, nil)}
+  end
+
+  def handle_event("start_edit_user", %{"id" => id}, socket) do
+    user = Accounts.get_user!(id)
+
+    {:noreply,
+     socket
+     |> assign(:editing_user, user)
+     |> assign(:edit_form, to_form(Accounts.change_user(user)))}
+  end
+
+  def handle_event("cancel_edit_user", _params, socket) do
+    {:noreply, socket |> assign(:editing_user, nil) |> assign(:edit_form, nil)}
+  end
+
+  def handle_event("save_edit_user", %{"user" => user_params}, socket) do
+    socket =
+      case Accounts.update_user(socket.assigns.editing_user, user_params) do
+        {:ok, _updated} ->
+          socket
+          |> assign(:users, Accounts.list_users())
+          |> assign(:editing_user, nil)
+          |> assign(:edit_form, nil)
+          |> put_flash(:info, "Benutzer aktualisiert.")
+
+        {:error, changeset} ->
+          socket
+          |> assign(:edit_form, to_form(changeset, action: :update))
+      end
+
+    {:noreply, socket}
   end
 
   def handle_event("confirm_delete", _params, socket) do
@@ -203,6 +236,14 @@ defmodule PubQuizzerWeb.Admin.UserLive do
             <% end %>
           </div>
           <div class="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-base-300">
+            <button
+              phx-click="start_edit_user"
+              phx-value-id={user.id}
+              class="btn btn-xs btn-soft gap-1"
+              title="Bearbeiten"
+            >
+              <.icon name="hero-pencil" class="size-3.5" />
+            </button>
             <%= if user.id != @current_scope.user.id do %>
               <button
                 phx-click="resend_link"
@@ -269,6 +310,15 @@ defmodule PubQuizzerWeb.Admin.UserLive do
               </td>
               <td class="text-right">
                 <div class="flex gap-1 justify-end">
+                  <button
+                    phx-click="start_edit_user"
+                    phx-value-id={user.id}
+                    class="btn btn-xs btn-soft gap-1"
+                    title="Bearbeiten"
+                  >
+                    <.icon name="hero-pencil" class="size-3.5" />
+                    <span class="hidden sm:inline">Bearbeiten</span>
+                  </button>
                   <%= if user.id != @current_scope.user.id do %>
                     <button
                       phx-click="resend_link"
@@ -302,6 +352,34 @@ defmodule PubQuizzerWeb.Admin.UserLive do
         confirm_event="confirm_delete"
         cancel_event="cancel_confirm"
       />
+
+      <%= if @editing_user do %>
+        <dialog
+          id="edit-user-modal"
+          phx-hook="Dialog"
+          data-cancel-event="cancel_edit_user"
+          class="m-auto rounded-box bg-base-100 p-4 sm:p-6 shadow-xl max-w-lg w-[calc(100%-2rem)] sm:w-full max-h-[90vh] overflow-y-auto"
+        >
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <h3 class="text-lg font-bold">Benutzer bearbeiten</h3>
+            <button
+              type="button"
+              phx-click="cancel_edit_user"
+              aria-label="Schließen"
+              class="btn btn-circle btn-ghost btn-sm shrink-0"
+            >
+              <.icon name="hero-x-mark" class="size-5" />
+            </button>
+          </div>
+          <.form for={@edit_form} id="edit-user-form" phx-submit="save_edit_user">
+            <.input field={@edit_form[:name]} type="text" label="Name" />
+            <.input field={@edit_form[:email]} type="email" label="E-Mail" />
+            <div class="flex justify-end mt-6">
+              <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
+            </div>
+          </.form>
+        </dialog>
+      <% end %>
     </Layouts.app>
     """
   end

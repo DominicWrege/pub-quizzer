@@ -51,15 +51,25 @@ defmodule PubQuizzerWeb.Layouts do
     ~H"""
     <%= if @current_scope && @current_scope[:user] do %>
       <div class="flex h-dvh flex-col overflow-hidden" data-app-shell>
+        <input type="checkbox" id="nav-drawer-toggle" class="peer hidden" />
         <header
           class="shrink-0 bg-base-200 border-b border-base-300 px-4 sm:px-6 pt-2 pb-0"
           data-guide-seen={"#{@current_scope.user.guide_seen}"}
           data-guide-role={@current_scope.user.role}
         >
           <div class="flex items-center justify-between mb-1.5">
-            <a href="/" class="flex items-center gap-2">
-              <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
-            </a>
+            <div class="flex items-center gap-2 min-w-0">
+              <label
+                for="nav-drawer-toggle"
+                class="btn btn-sm btn-soft btn-square sm:hidden shrink-0"
+                aria-label="Menü"
+              >
+                <span class="text-lg leading-none">&#9776;</span>
+              </label>
+              <a href="/" class="flex items-center gap-2 min-w-0">
+                <span class="text-sm sm:text-xl font-semibold truncate">Quiz for a better life</span>
+              </a>
+            </div>
             <div class="flex-none flex items-center gap-4">
               <details
                 class="dropdown dropdown-end"
@@ -73,11 +83,13 @@ defmodule PubQuizzerWeb.Layouts do
                   </div>
                 </summary>
                 <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg min-w-40 p-2 mt-2 z-50 border border-base-200">
-                  <li>
-                    <.link navigate={~p"/admin/profile"} class="text-sm">
-                      <span class="truncate max-w-32">{@current_scope.user.name || "Profil"}</span>
-                    </.link>
-                  </li>
+                  <%= if @current_scope.user.role == "superadmin" do %>
+                    <li>
+                      <.link navigate={~p"/admin/profile"} class="text-sm">
+                        <span class="truncate max-w-32">{@current_scope.user.name || "Profil"}</span>
+                      </.link>
+                    </li>
+                  <% end %>
                   <li>
                     <.link navigate={~p"/admin/logout"} class="text-sm">
                       <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
@@ -87,7 +99,7 @@ defmodule PubQuizzerWeb.Layouts do
               </details>
             </div>
           </div>
-          <div class="flex items-center gap-0 sm:gap-1 overflow-x-auto">
+          <div class="hidden sm:flex items-center gap-1 overflow-x-auto">
             <.link
               navigate={~p"/admin/events"}
               class={nav_tab_class(@current_path, "/admin/events")}
@@ -110,15 +122,62 @@ defmodule PubQuizzerWeb.Layouts do
             <% end %>
           </div>
         </header>
+        <label
+          for="nav-drawer-toggle"
+          aria-hidden="true"
+          class="fixed inset-0 z-40 bg-black/50 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-200 sm:hidden"
+        ></label>
         <div class="flex min-h-0 flex-1">
           <main class={["flex-1 overflow-y-auto overscroll-contain", @main_class]}>
             <%!-- Top padding lives here (not on <main>) so sticky toolbars pin
               flush with the header instead of being inset by main's padding. --%>
-            <div class={["mx-auto space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-4", @max_width]}>
+            <div class={[
+              "mx-auto space-y-3 sm:space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-4",
+              @max_width
+            ]}>
               {render_slot(@inner_block)}
             </div>
           </main>
         </div>
+        <aside class="fixed top-0 left-0 z-50 h-dvh w-72 max-w-[80vw] bg-base-100 border-r border-base-300 shadow-xl -translate-x-full peer-checked:translate-x-0 transition-transform duration-200 sm:hidden flex flex-col">
+          <div class="flex items-center justify-between p-4 border-b border-base-300">
+            <span class="font-semibold">Navigation</span>
+            <label
+              for="nav-drawer-toggle"
+              class="btn btn-ghost btn-sm btn-square"
+              aria-label="Schließen"
+            >
+              <.icon name="hero-x-mark" class="size-5" />
+            </label>
+          </div>
+          <nav class="menu menu-md p-4 gap-1 flex-1">
+            <.link
+              navigate={~p"/admin/events"}
+              class={drawer_link_class(@current_path, "/admin/events")}
+            >
+              <.icon name="hero-play" class="size-4" /> Quiz
+            </.link>
+            <.link
+              navigate={~p"/admin/topics"}
+              class={drawer_link_class(@current_path, "/admin/topics")}
+            >
+              <.icon name="hero-bookmark" class="size-4" /> Themen verwalten
+            </.link>
+            <%= if @current_scope.user.role == "superadmin" do %>
+              <.link
+                navigate={~p"/admin/users"}
+                class={drawer_link_class(@current_path, "/admin/users")}
+              >
+                <.icon name="hero-key" class="size-4" /> Benutzer
+              </.link>
+            <% end %>
+          </nav>
+          <div class="p-4 border-t border-base-300">
+            <.link navigate={~p"/admin/logout"} class="btn btn-soft btn-sm w-full justify-start gap-2">
+              <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
+            </.link>
+          </div>
+        </aside>
       </div>
     <% else %>
       <header class="navbar px-4 sm:px-6 lg:px-8 border-b border-base-300">
@@ -190,6 +249,18 @@ defmodule PubQuizzerWeb.Layouts do
       "border-transparent text-base-content/60 hover:text-base-content hover:border-base-content/20"
 
     if active, do: [base, active_styles], else: [base, inactive_styles]
+  end
+
+  defp drawer_link_class(current_path, prefix) do
+    active = String.starts_with?(current_path, prefix)
+
+    base = "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
+
+    if active do
+      [base, "bg-primary text-primary-content font-semibold"]
+    else
+      [base, "text-base-content hover:bg-base-200"]
+    end
   end
 
   @doc """

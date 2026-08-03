@@ -15,7 +15,7 @@ defmodule PubQuizzer.Accounts do
 
   def list_users do
     User
-    |> order_by(asc: :email)
+    |> order_by(asc: :name, asc: :email)
     |> Repo.all()
   end
 
