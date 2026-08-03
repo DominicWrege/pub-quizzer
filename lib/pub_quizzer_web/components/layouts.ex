@@ -125,7 +125,7 @@ defmodule PubQuizzerWeb.Layouts do
         <label
           for="nav-drawer-toggle"
           aria-hidden="true"
-          class="fixed inset-0 z-40 bg-black/50 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-200 sm:hidden"
+          class="fixed inset-x-0 top-0 z-40 h-[var(--app-height)] bg-black/50 opacity-0 invisible pointer-events-none peer-checked:opacity-100 peer-checked:visible peer-checked:pointer-events-auto transition-[opacity,visibility] duration-200 sm:hidden"
         ></label>
         <div class="flex min-h-0 flex-1">
           <main class={["flex-1 overflow-y-auto overscroll-contain", @main_class]}>
