@@ -39,7 +39,7 @@
     <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
 
     <div class={[
-      "rounded-xl border p-4 transition-colors",
+      "rounded-xl border px-4 py-2 sm:p-4 transition-colors",
       if(@form[:status].value == "published",
         do: "border-success/40 bg-success/10",
         else: "border-warning/40 bg-warning/10"
