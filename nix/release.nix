@@ -30,7 +30,7 @@ let
         in
         name == "package.json" || name == "package-lock.json";
     };
-    hash = "sha256-MRNFAQDSd6Yceu1zOsQ13RvT17WSnVCJ0mX++JPxnBI=";
+    hash = "sha256-9ZHcx297KjPbZGROrBlNkdHl0Ebt9OdHXqr+IfGR5UY=";
   };
 in
 beamPackages.mixRelease {

@@ -122,12 +122,12 @@
               <span class="text-sm font-semibold opacity-60">Team {team.slot_index + 1}</span>
               <%= if team.claimed_at do %>
                 <%= if team.id in @connected_team_ids do %>
-                  <span class="badge badge-success">Beigetreten</span>
+                  <span class="badge badge-success transition-colors duration-200">Beigetreten</span>
                 <% else %>
-                  <span class="badge badge-warning">Getrennt</span>
+                  <span class="badge badge-warning transition-colors duration-200">Getrennt</span>
                 <% end %>
               <% else %>
-                <span class="badge badge-neutral">Wartend</span>
+                <span class="badge badge-neutral transition-colors duration-200">Wartend</span>
               <% end %>
             </div>
             <input
@@ -180,12 +180,12 @@
             <:col :let={team} label="Status">
               <%= if team.claimed_at do %>
                 <%= if team.id in @connected_team_ids do %>
-                  <span class="badge badge-lg badge-success">Beigetreten</span>
+                  <span class="badge badge-lg badge-success transition-colors duration-200">Beigetreten</span>
                 <% else %>
-                  <span class="badge badge-lg badge-warning">Getrennt</span>
+                  <span class="badge badge-lg badge-warning transition-colors duration-200">Getrennt</span>
                 <% end %>
               <% else %>
-                <span class="badge badge-lg badge-neutral">Wartend</span>
+                <span class="badge badge-lg badge-neutral transition-colors duration-200">Wartend</span>
               <% end %>
             </:col>
             <:action :let={team}>

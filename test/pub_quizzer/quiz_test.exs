@@ -117,7 +117,7 @@ defmodule PubQuizzer.QuizTest do
       assert loaded.last_editor_name == nil
     end
 
-    test "create_question/1 defaults new questions to draft", %{topic: topic} do
+    test "create_question/1 defaults new questions to published", %{topic: topic} do
       {:ok, q} =
         Quiz.create_question(%{
           prompt: "New question",
@@ -126,7 +126,7 @@ defmodule PubQuizzer.QuizTest do
           topic_id: topic.id
         })
 
-      assert q.status == "draft"
+      assert q.status == "published"
     end
 
     test "list_published_questions_for_topic/1 excludes drafts", %{topic: topic} do
@@ -135,7 +135,8 @@ defmodule PubQuizzer.QuizTest do
           prompt: "Draft",
           options: ["A", "B"],
           correct_index: 0,
-          topic_id: topic.id
+          topic_id: topic.id,
+          status: "draft"
         })
 
       {:ok, published} =
@@ -191,7 +192,8 @@ defmodule PubQuizzer.QuizTest do
           prompt: "Draft q",
           options: ["A", "B"],
           correct_index: 0,
-          topic_id: draft_topic.id
+          topic_id: draft_topic.id,
+          status: "draft"
         })
 
       {:ok, _} =

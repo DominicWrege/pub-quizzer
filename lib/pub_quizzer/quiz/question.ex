@@ -12,7 +12,7 @@ defmodule PubQuizzer.Quiz.Question do
     field :position, :integer, default: 0
     field :image, :string
     field :image_position, :string, default: "left"
-    field :status, :string, default: "draft"
+    field :status, :string, default: "published"
 
     belongs_to :topic, PubQuizzer.Quiz.Topic
 

@@ -508,6 +508,46 @@ const Dialog = {
   }
 }
 
+// Brand palette (mirrors `@plugin "daisyui/theme"` in app.css) so confetti
+// matches the pub-quizzer identity instead of the lib's default rainbow.
+const CONFETTI_COLORS = [
+  "oklch(0.52 0.16 55)",   // primary (warm orange)
+  "oklch(0.68 0.16 75)",   // warning (gold)
+  "oklch(0.5 0.13 155)",   // success (green)
+  "oklch(0.62 0.09 75)",   // secondary (peach)
+  "oklch(0.52 0.18 35)"    // accent (red)
+]
+
+// Fires a confetti burst on mount. Used on the final-winner alert in both
+// host lobby (data-intensity="big", sustained projector burst) and team
+// lobby (default, single burst — the conditional phx-hook means only the
+// winning team attaches it). canvas-confetti is dynamically imported so the
+// ~10kb lib is only fetched by clients that actually reach a winner reveal.
+const Confetti = {
+  mounted(this: ViewHook) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const intensity = this.el.dataset.intensity ?? "normal"
+
+    void import("canvas-confetti").then(({ default: confetti }) => {
+      if (intensity === "big") {
+        // Sustained two-sided burst over ~1.4s — the host projector moment.
+        const end = Date.now() + 1400
+        const frame = () => {
+          confetti({ particleCount: 40, spread: 80, startVelocity: 45,
+                     origin: { x: 0.2, y: 0.6 }, colors: CONFETTI_COLORS })
+          confetti({ particleCount: 40, spread: 80, startVelocity: 45,
+                     origin: { x: 0.8, y: 0.6 }, colors: CONFETTI_COLORS })
+          if (Date.now() < end) requestAnimationFrame(frame)
+        }
+        frame()
+      } else {
+        confetti({ particleCount: 80, spread: 70, startVelocity: 40,
+                   origin: { y: 0.6 }, colors: CONFETTI_COLORS })
+      }
+    })
+  }
+}
+
 // --- LiveSocket init ---
 
 const csrfMeta = document.querySelector("meta[name='csrf-token']")
@@ -540,7 +580,8 @@ const liveSocket = new LiveSocket("/live", Socket, {
     ScrollToBottom,
     OptionSorter,
     QuestionSorter,
-    Dialog
+    Dialog,
+    Confetti
   }
 })
 

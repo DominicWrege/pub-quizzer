@@ -62,6 +62,16 @@ defmodule PubQuizzerWeb.CoreComponents do
       id={@id}
       data-flash
       phx-hook="AutoDismiss"
+      phx-mounted={
+        JS.show(
+          to: :this,
+          time: 300,
+          transition:
+            {"transition-all ease-out duration-300",
+             "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95",
+             "opacity-100 translate-y-0 sm:scale-100"}
+        )
+      }
       data-duration={extract_duration(flash_raw)}
       role="alert"
       class="toast toast-end z-50"
@@ -829,7 +839,7 @@ defmodule PubQuizzerWeb.CoreComponents do
     <div
       id={@id}
       class={[
-        "flex items-center gap-6 rounded-2xl px-8 py-6 shadow-lg",
+        "flex items-center gap-6 rounded-2xl px-8 py-6 shadow-lg transition-colors duration-300",
         @size == "sm" && "gap-3 rounded-lg px-4 py-3 shadow-sm",
         @rank == 0 && "bg-warning/20 border-2 border-warning",
         @rank == 0 && @size == "sm" && "bg-warning/20 border border-warning",

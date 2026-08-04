@@ -267,3 +267,57 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
     height: 1.05rem;
   }
 }
+
+/* --- Animation pass: keyframes, helper classes, reduced-motion guard ------- */
+
+@keyframes pq-fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pq-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Correct-answer reveal: row mounts without success bg, keyframe animates it
+   in. Fixes the no-op `transition-all duration-500` that previously never
+   fired (each revealed row was a fresh mount, not an in-place class change). */
+@keyframes pq-correct-flash {
+  0% {
+    background-color: transparent;
+    border-color: transparent;
+  }
+  100% {
+    background-color: color-mix(in oklch, var(--color-success) 30%, transparent);
+    border-color: var(--color-success);
+  }
+}
+
+/* `both` fill-mode keeps the pre-state hidden during morphdom's patch window,
+   avoiding a flash of un-animated content on phase transitions. */
+.animate-fade-in-up { animation: pq-fade-in-up 300ms ease-out both; }
+.animate-fade-in    { animation: pq-fade-in 250ms ease-out both; }
+
+/* Applied to the correct option div during round reveal. The static
+   bg-success/border-success classes are dropped from the template in favor
+   of this single animation-driven class so the highlight visibly flashes. */
+.pq-reveal-correct {
+  animation: pq-correct-flash 500ms ease-out forwards;
+}
+
+/* Honor the user's OS-level motion preference. Disables every animation and
+   transition introduced above (and any Tailwind transition-* utilities on
+   the elements we touched). The Confetti JS hook independently bails on this
+   same media query. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-fade-in,
+  .pq-reveal-correct {
+    animation: none;
+  }
+  .pq-reveal-correct {
+    background-color: color-mix(in oklch, var(--color-success) 30%, transparent);
+    border: 2px solid var(--color-success);
+  }
+}

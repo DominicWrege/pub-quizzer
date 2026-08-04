@@ -11,7 +11,7 @@
 
   <%!-- Lobby: waiting for start --%>
   <%= if @engine_state.status == :lobby do %>
-    <div class="text-center max-w-xs mx-auto">
+    <div class="text-center max-w-xs mx-auto animate-fade-in">
       <div class="alert shadow-md text-base border border-base-300 px-4 py-3">
         <.icon name="hero-clock" class="size-4" />
         <span class="font-semibold">Warte auf den Quiz-Start</span>
@@ -24,7 +24,7 @@
 
   <%!-- Topic selection: team votes or waits --%>
   <%= if @engine_state.status == :topic_selection do %>
-    <div class="text-center mb-4 mt-8">
+    <div class="text-center mb-4 mt-8 animate-fade-in">
       <%= if @engine_state.current_chooser_team_id == @team.id do %>
         <div class="alert alert-success mb-3 text-sm px-3 py-2">
           <.icon name="hero-trophy" class="size-4" />
@@ -57,7 +57,7 @@
     <% our_answer =
       Map.get(Map.get(@engine_state.answers, @engine_state.question_index, %{}), @team.id) %>
 
-    <div class="mb-4">
+    <div class="mb-4 animate-fade-in">
       <div class="flex items-center justify-between mb-3">
         <div>
           <h3 class="text-sm font-semibold">
@@ -84,7 +84,7 @@
             phx-click="select_answer"
             phx-value-index={shuffled_idx}
             class={[
-              "btn h-auto w-full py-4 justify-center text-center shadow-lg border text-xl font-bold",
+              "btn h-auto w-full py-4 justify-center text-center shadow-lg border text-xl font-bold transition-[color,background-color,border-color,transform] duration-200 ease-out active:scale-[0.98]",
               is_selected && "btn-primary",
               !is_selected &&
                 "bg-base-200 border-[3px] border-base-content/40 hover:bg-base-300 hover:border-base-content/70"
@@ -113,7 +113,7 @@
       @engine_state.reveal_answer_index >= length(@engine_state.current_questions) %>
 
     <%= if all_revealed do %>
-      <div class="mb-3">
+      <div class="mb-3 animate-fade-in">
         <%= if @engine_state.current_winner_team_id == @team.id do %>
           <div class="alert alert-success text-sm px-3 py-2">
             <.icon name="hero-trophy" class="size-4" />
@@ -170,7 +170,7 @@
 
   <%!-- Finished phase --%>
   <%= if @engine_state.status == :finished do %>
-    <div class="text-center mb-4">
+    <div class="text-center mb-4 animate-fade-in">
       <.icon name="hero-trophy" class="size-12 mx-auto text-warning" />
       <h2 class="text-lg font-bold mt-2">Quiz beendet!</h2>
     </div>
@@ -178,8 +178,13 @@
     <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
       <%= if @standings != [] do %>
         <% [first | _rest] = @standings %>
-        <% {_, winner_name, winner_score} = first %>
-        <div class="alert alert-success mb-3 text-sm px-3 py-2">
+        <% {winner_id, winner_name, winner_score} = first %>
+        <div
+          id="team-winner-alert"
+          class="alert alert-success mb-3 text-sm px-3 py-2"
+          phx-hook={if @team.id == winner_id, do: "Confetti"}
+          data-intensity="normal"
+        >
           <.icon name="hero-star" class="size-4" />
           <span><strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!</span>
         </div>
