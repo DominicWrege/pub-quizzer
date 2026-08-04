@@ -7,8 +7,6 @@ defmodule PubQuizzer.Quiz.Engine do
 
   use GenServer
 
-  import Ecto.Query
-
   alias PubQuizzer.Quiz.{EngineState, Round, Answer}
   alias PubQuizzer.Repo
 
@@ -221,7 +219,10 @@ defmodule PubQuizzer.Quiz.Engine do
 
     case EngineState.choose_topic(state.engine_state, topic_id, chooser_team_id) do
       {:ok, new_es} ->
-        persist_round(new_es)
+        # Persist the round row and capture its DB id so later answer/winner
+        # writes don't have to look the round up by (event_id, round_number).
+        round = persist_round(new_es)
+        new_es = %{new_es | current_round_id: round.id}
         persist_event_status(new_es)
         broadcast(new_es)
         {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
@@ -361,8 +362,20 @@ defmodule PubQuizzer.Quiz.Engine do
         EngineState.new(event, event.teams, topics, max_rounds: 7)
 
       status ->
-        rebuild_state(event, topics, String.to_atom(status))
+        rebuild_state(event, topics, status_to_atom(status))
     end
+  end
+
+  @status_atoms %{
+    "lobby" => :lobby,
+    "topic_selection" => :topic_selection,
+    "question" => :question,
+    "round_reveal" => :round_reveal,
+    "finished" => :finished
+  }
+
+  defp status_to_atom(status) when is_binary(status) do
+    Map.fetch!(@status_atoms, status)
   end
 
   defp rebuild_state(event, topics, status) do
@@ -420,7 +433,7 @@ defmodule PubQuizzer.Quiz.Engine do
 
       :question ->
         round = current_round
-        questions = load_questions_for_topic(round.topic_id)
+        questions = Quiz.load_questions_for_engine(round.topic_id)
         answers = load_answers_map(round.id, questions)
 
         %{
@@ -428,12 +441,13 @@ defmodule PubQuizzer.Quiz.Engine do
           | current_topic_id: round.topic_id,
             current_questions: questions,
             current_chooser_team_id: round.chosen_by_team_id,
+            current_round_id: round.id,
             answers: answers
         }
 
       :round_reveal ->
         round = current_round
-        questions = load_questions_for_topic(round.topic_id)
+        questions = Quiz.load_questions_for_engine(round.topic_id)
         answers = load_answers_map(round.id, questions)
 
         %{
@@ -442,6 +456,7 @@ defmodule PubQuizzer.Quiz.Engine do
             current_questions: questions,
             current_chooser_team_id: round.chosen_by_team_id,
             current_winner_team_id: round.winner_team_id,
+            current_round_id: round.id,
             answers: answers
         }
 
@@ -453,19 +468,8 @@ defmodule PubQuizzer.Quiz.Engine do
   defp compute_standings_from_answers(rounds) do
     alias PubQuizzer.Quiz
 
-    # Load all answers for these rounds and compute scores
-    rounds
-    |> Enum.reduce(%{}, fn round, acc ->
-      answers = Quiz.list_answers_for_round(round.id)
-
-      Enum.reduce(answers, acc, fn answer, acc2 ->
-        if answer.selected_index == answer.question.correct_index do
-          Map.update(acc2, answer.team_id, 1, &(&1 + 1))
-        else
-          Map.put_new(acc2, answer.team_id, 0)
-        end
-      end)
-    end)
+    round_ids = Enum.map(rounds, & &1.id)
+    Quiz.count_correct_answers_for_rounds(round_ids)
   end
 
   defp init_standings(teams, scores) do
@@ -492,30 +496,6 @@ defmodule PubQuizzer.Quiz.Engine do
       end
     end)
   end
-
-  defp load_questions_for_topic(topic_id) do
-    alias PubQuizzer.Quiz
-
-    Quiz.list_published_questions_for_topic(topic_id)
-    |> Enum.with_index()
-    |> Enum.map(fn {q, idx} ->
-      %{
-        id: q.id,
-        prompt: q.prompt,
-        options: q.options,
-        correct_index: q.correct_index,
-        position: idx,
-        image: nil_if_blank(q.image),
-        image_position: q.image_position || "left"
-      }
-    end)
-  end
-
-  defp nil_if_blank(value) when is_binary(value) do
-    if String.trim(value) == "", do: nil, else: value
-  end
-
-  defp nil_if_blank(value), do: value
 
   defp persist_event_status(state) do
     event = PubQuizzer.Repo.get(PubQuizzer.Quiz.QuizEvent, state.event_id)
@@ -570,14 +550,8 @@ defmodule PubQuizzer.Quiz.Engine do
   end
 
   defp persist_round_winner(state) do
-    round =
-      Repo.one(
-        from r in Round,
-          where: r.quiz_event_id == ^state.event_id and r.round_number == ^state.round_number
-      )
-
-    if round do
-      round
+    if state.current_round_id do
+      Repo.get(Round, state.current_round_id)
       |> Round.changeset(%{winner_team_id: state.current_winner_team_id})
       |> Repo.update!()
     end
@@ -586,26 +560,18 @@ defmodule PubQuizzer.Quiz.Engine do
   defp persist_answer(state, team_id, selected_index) do
     question = EngineState.current_question(state)
 
-    if question do
-      round =
-        Repo.one(
-          from r in Round,
-            where: r.quiz_event_id == ^state.event_id and r.round_number == ^state.round_number
-        )
-
-      if round do
-        %Answer{}
-        |> Answer.changeset(%{
-          selected_index: selected_index,
-          question_id: question.id,
-          round_id: round.id,
-          team_id: team_id
-        })
-        |> Repo.insert(
-          on_conflict: {:replace, [:selected_index]},
-          conflict_target: [:round_id, :question_id, :team_id]
-        )
-      end
+    if question != nil and state.current_round_id do
+      %Answer{}
+      |> Answer.changeset(%{
+        selected_index: selected_index,
+        question_id: question.id,
+        round_id: state.current_round_id,
+        team_id: team_id
+      })
+      |> Repo.insert(
+        on_conflict: {:replace, [:selected_index]},
+        conflict_target: [:round_id, :question_id, :team_id]
+      )
     end
   end
 

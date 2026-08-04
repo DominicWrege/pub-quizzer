@@ -822,6 +822,33 @@ defmodule PubQuizzerWeb.CoreComponents do
 
   def thumbnail_url(other), do: other
 
+  attr :question, :map, required: true
+
+  @doc """
+  Renders the answer-option rows for a question (large, beamer-friendly).
+  Shared between the "with image" and "no image" layouts in the host console
+  question phase so the option markup lives in one place.
+  """
+  def question_options(assigns) do
+    ~H"""
+    <%= for {option, idx} <- Enum.with_index(@question.options) do %>
+      <div class="p-6 rounded-lg bg-base-300 text-3xl qa-option flex items-center gap-4">
+        <span class="font-mono font-bold shrink-0">{letter_for_index(idx)}.</span>
+        <span class="break-words flex-1"><.multiline_text text={option["text"]} /></span>
+        <%= if opt_img = option["image"] do %>
+          <img
+            src={thumbnail_url(opt_img)}
+            srcset={thumbnail_url(opt_img) <> " 480w, " <> opt_img <> " 1280w"}
+            sizes="80px"
+            alt=""
+            class="h-20 w-20 object-cover rounded shrink-0"
+          />
+        <% end %>
+      </div>
+    <% end %>
+    """
+  end
+
   attr :rank, :integer, required: true
   attr :id, :any, required: true
   attr :name, :string, required: true

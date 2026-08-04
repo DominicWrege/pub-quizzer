@@ -103,6 +103,53 @@ defmodule PubQuizzer.Quiz do
     |> Repo.all()
   end
 
+  @doc """
+  Loads the published questions for a topic, shaped into the lightweight maps
+  the quiz engine consumes (with `position` set from order, blank images
+  normalized to nil). Shared by `EngineState.choose_topic/3` and
+  `Engine` state recovery so the two never drift.
+  """
+  def load_questions_for_engine(topic_id) do
+    list_published_questions_for_topic(topic_id)
+    |> Enum.with_index()
+    |> Enum.map(fn {q, idx} ->
+      %{
+        id: q.id,
+        prompt: q.prompt,
+        options: q.options,
+        correct_index: q.correct_index,
+        position: idx,
+        image: nil_if_blank(q.image),
+        image_position: q.image_position || "left"
+      }
+    end)
+  end
+
+  defp nil_if_blank(value) when is_binary(value) do
+    if String.trim(value) == "", do: nil, else: value
+  end
+
+  defp nil_if_blank(value), do: value
+
+  @doc """
+  Loads questions for several topics in a single query (plus one batched
+  last-editor query), grouped by `topic_id`. Used by the results page to avoid
+  an N+1 per round.
+  """
+  def list_questions_for_topics(topic_ids) do
+    topic_ids = Enum.reject(topic_ids, &is_nil/1)
+
+    questions =
+      from(q in Question,
+        where: q.topic_id in ^topic_ids,
+        order_by: [asc: q.topic_id, asc: q.position]
+      )
+      |> Repo.all()
+      |> attach_last_editor()
+
+    Enum.group_by(questions, & &1.topic_id)
+  end
+
   def search_questions_for_topic(topic_id, query) when is_binary(query) do
     pattern = "%#{query}%"
 
@@ -503,6 +550,22 @@ defmodule PubQuizzer.Quiz do
     |> Repo.all()
   end
 
+  @doc """
+  Returns `%{team_id => correct_count}` for all correct answers across the
+  given rounds in a single query. Used by engine state recovery to rebuild
+  standings without an N+1 over rounds.
+  """
+  def count_correct_answers_for_rounds(round_ids) do
+    Answer
+    |> join(:inner, [a], q in assoc(a, :question))
+    |> where([a], a.round_id in ^round_ids)
+    |> where([a, q], a.selected_index == q.correct_index)
+    |> group_by([a], a.team_id)
+    |> select([a], {a.team_id, count(a.id)})
+    |> Repo.all()
+    |> Map.new()
+  end
+
   # --- Results ---
 
   def get_event_results(event_id) do
@@ -518,6 +581,9 @@ defmodule PubQuizzer.Quiz do
 
     answers = list_answers_for_event(event_id)
 
+    topic_ids = Enum.map(rounds, & &1.topic_id)
+    questions_by_topic = list_questions_for_topics(topic_ids)
+
     answer_lookup =
       Enum.reduce(answers, %{}, fn answer, acc ->
         Map.put(acc, {answer.round_id, answer.question_id, answer.team_id}, answer.selected_index)
@@ -525,7 +591,7 @@ defmodule PubQuizzer.Quiz do
 
     rounds_data =
       Enum.map(rounds, fn round ->
-        %{round: round, questions: list_questions_for_topic(round.topic_id)}
+        %{round: round, questions: Map.get(questions_by_topic, round.topic_id, [])}
       end)
 
     standings =

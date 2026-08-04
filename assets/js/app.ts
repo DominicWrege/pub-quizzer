@@ -2,6 +2,7 @@ import "phoenix_html"
 import { Socket } from "phoenix"
 import { LiveSocket, type ViewHook } from "phoenix_live_view"
 import { restorePresentationMode } from "./presentation"
+import { restoreFontSize } from "./font-size"
 
 // Phoenix LiveView hooks accept plain object literals — `this` is bound to the
 // hook instance at runtime. We type `this: ViewHook` on each method so TS knows
@@ -131,12 +132,7 @@ const ClipboardCopy = {
 const ScrollToBottom = {
   mounted(this: ViewHook) {
     restorePresentationMode()
-    const qfz = parseInt(localStorage.getItem("qfz") ?? "") || 0
-    document.body.dataset.quizFontSize = String(qfz)
-    const label = document.getElementById("qfz-label")
-    if (label) {
-      label.textContent = ["80%","90%","100%","125%","150%","200%"][qfz + 2]
-    }
+    restoreFontSize()
     this.handleEvent("scroll_to_bottom", () => {
       requestAnimationFrame(() => {
         this.el.scrollIntoView({ behavior: "smooth", block: "end" })

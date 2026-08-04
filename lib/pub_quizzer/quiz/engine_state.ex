@@ -18,6 +18,9 @@ defmodule PubQuizzer.Quiz.EngineState do
     current_questions: [],
     current_chooser_team_id: nil,
     current_winner_team_id: nil,
+    # DB id of the Round row for the in-progress/current round. Set by the
+    # engine after persisting the round; nil in lobby/topic_selection/finished.
+    current_round_id: nil,
     reveal_answer_index: 0,
     standings_revealed: false,
     final_results_revealed: false,
@@ -93,7 +96,7 @@ defmodule PubQuizzer.Quiz.EngineState do
         {:error, :topic_not_available}
 
       _topic ->
-        questions = load_questions_for_topic(topic_id)
+        questions = PubQuizzer.Quiz.load_questions_for_engine(topic_id)
 
         if questions == [] do
           {:error, :topic_has_no_questions}
@@ -219,10 +222,10 @@ defmodule PubQuizzer.Quiz.EngineState do
 
     cond do
       remaining_topics == [] ->
-        {:ok, %{state | status: :finished}}
+        {:ok, %{state | status: :finished, current_round_id: nil}}
 
       next_round_number >= state.max_rounds ->
-        {:ok, %{state | status: :finished}}
+        {:ok, %{state | status: :finished, current_round_id: nil}}
 
       state.current_winner_team_id == nil ->
         # No winner (e.g. no correct answers) — host picks
@@ -236,7 +239,8 @@ defmodule PubQuizzer.Quiz.EngineState do
              answers: %{},
              current_questions: [],
              current_topic_id: nil,
-             current_winner_team_id: nil
+             current_winner_team_id: nil,
+             current_round_id: nil
          }}
 
       true ->
@@ -250,7 +254,8 @@ defmodule PubQuizzer.Quiz.EngineState do
              answers: %{},
              current_questions: [],
              current_topic_id: nil,
-             current_winner_team_id: nil
+             current_winner_team_id: nil,
+             current_round_id: nil
          }}
     end
   end
@@ -316,9 +321,9 @@ defmodule PubQuizzer.Quiz.EngineState do
   @doc """
   Returns the name of the currently selected topic, or nil.
   """
-  def current_topic_name(%__MODULE__{current_topic_id: nil}, _state), do: nil
+  def current_topic_name(%__MODULE__{current_topic_id: nil}), do: nil
 
-  def current_topic_name(%__MODULE__{current_topic_id: id}, %__MODULE__{available_topics: topics}) do
+  def current_topic_name(%__MODULE__{current_topic_id: id, available_topics: topics}) do
     Enum.find_value(topics, fn t -> if t.id == id, do: t.name end)
   end
 
@@ -350,28 +355,6 @@ defmodule PubQuizzer.Quiz.EngineState do
     question = current_question(state)
     question != nil and selected_index >= 0 and selected_index < length(question.options)
   end
-
-  defp load_questions_for_topic(topic_id) do
-    PubQuizzer.Quiz.list_published_questions_for_topic(topic_id)
-    |> Enum.with_index()
-    |> Enum.map(fn {q, idx} ->
-      %{
-        id: q.id,
-        prompt: q.prompt,
-        options: q.options,
-        correct_index: q.correct_index,
-        image: nil_if_blank(q.image),
-        image_position: q.image_position || "left",
-        position: idx
-      }
-    end)
-  end
-
-  defp nil_if_blank(value) when is_binary(value) do
-    if String.trim(value) == "", do: nil, else: value
-  end
-
-  defp nil_if_blank(value), do: value
 
   defp compute_round_scores(state) do
     # For each question in the round, check if each team's answer is correct.

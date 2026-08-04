@@ -42,7 +42,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
               |> assign(:available_topics, [])
               |> assign_standings(state)
               |> assign_available_topics(state)
-              |> assign(:current_topic_name, EngineState.current_topic_name(state, state))
+              |> assign(:current_topic_name, EngineState.current_topic_name(state))
               |> assign(:shuffle_map, shuffle_map)
               |> assign(:shuffled_options, shuffled_options)
               |> assign(:selected_index, nil)
@@ -95,7 +95,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
      |> assign(:engine_state, team_state)
      |> assign_standings(state)
      |> assign_available_topics(state)
-     |> assign(:current_topic_name, EngineState.current_topic_name(state, state))
+     |> assign(:current_topic_name, EngineState.current_topic_name(state))
      |> assign(:shuffle_map, shuffle_map)
      |> assign(:shuffled_options, shuffled_options)
      |> assign(:selected_index, selected_index)}
@@ -162,19 +162,17 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
     # Debounce the disconnect broadcast: on flaky 4G the WS drops briefly and
     # the LV remounts within seconds. Wait 3s, then check presence — if the
     # team is still gone, broadcast; otherwise they reconnected, do nothing.
-    spawn(fn ->
+    # Run under the TaskSupervisor so the process is supervised (a bare spawn
+    # here would be unlinked and unsupervised) and survives the LV's death.
+    Task.Supervisor.start_child(PubQuizzer.TaskSupervisor, fn ->
       Process.sleep(3_000)
 
-      case Registry.lookup(PubQuizzer.TeamPresence, team_id) do
-        [] ->
-          Phoenix.PubSub.broadcast(
-            PubQuizzer.PubSub,
-            "quiz:event:#{event_id}",
-            {:team_disconnected, team_id}
-          )
-
-        _ ->
-          :ok
+      if Registry.lookup(PubQuizzer.TeamPresence, team_id) == [] do
+        Phoenix.PubSub.broadcast(
+          PubQuizzer.PubSub,
+          "quiz:event:#{event_id}",
+          {:team_disconnected, team_id}
+        )
       end
     end)
 

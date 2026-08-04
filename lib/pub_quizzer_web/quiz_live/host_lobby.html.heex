@@ -20,7 +20,7 @@
         <%= if @engine_state.status != :finished do %>
           <div class="flex items-center gap-1">
             <button
-              onclick="var s=parseInt(localStorage.getItem('qfz')||'0')-1;s=Math.max(-2,Math.min(3,s));localStorage.setItem('qfz',s);document.body.dataset.quizFontSize=s;document.getElementById('qfz-label').textContent=['80%','90%','100%','125%','150%','200%'][s+2]"
+              onclick="adjustFontSize(-1)"
               class="btn btn-sm btn-soft btn-square transition-colors duration-150"
               title="Kleine Schrift"
             >A−</button>
@@ -29,7 +29,7 @@
               class="text-xs w-10 text-center tabular-nums text-base-content/70"
             >100%</span>
             <button
-              onclick="var s=parseInt(localStorage.getItem('qfz')||'0')+1;s=Math.max(-2,Math.min(3,s));localStorage.setItem('qfz',s);document.body.dataset.quizFontSize=s;document.getElementById('qfz-label').textContent=['80%','90%','100%','125%','150%','200%'][s+2]"
+              onclick="adjustFontSize(1)"
               class="btn btn-sm btn-soft btn-square transition-colors duration-150"
               title="Große Schrift"
             >A+</button>
@@ -140,21 +140,7 @@
                 <span class="w-full min-w-0"><.multiline_text text={question.prompt} /></span>
               </h4>
               <div class={["space-y-4", position == "left" && "sm:order-2"]}>
-                <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                  <div class="p-6 rounded-lg bg-base-300 text-3xl qa-option flex items-center gap-4">
-                    <span class="font-mono font-bold shrink-0">{letter_for_index(idx)}.</span>
-                    <span class="break-words flex-1"><.multiline_text text={option["text"]} /></span>
-                    <%= if opt_img = option["image"] do %>
-                      <img
-                        src={thumbnail_url(opt_img)}
-                        srcset={thumbnail_url(opt_img) <> " 480w, " <> opt_img <> " 1280w"}
-                        sizes="80px"
-                        alt=""
-                        class="h-20 w-20 object-cover rounded shrink-0"
-                      />
-                    <% end %>
-                  </div>
-                <% end %>
+                <.question_options question={question} />
               </div>
               <div class={["flex items-start", position == "left" && "sm:order-1"]}>
                 <img
@@ -171,21 +157,7 @@
               <span class="w-full min-w-0"><.multiline_text text={question.prompt} /></span>
             </h4>
             <div class="space-y-4 mt-6">
-              <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                <div class="p-6 rounded-lg bg-base-300 text-3xl qa-option flex items-center gap-4">
-                  <span class="font-mono font-bold shrink-0">{letter_for_index(idx)}.</span>
-                  <span class="break-words flex-1"><.multiline_text text={option["text"]} /></span>
-                  <%= if opt_img = option["image"] do %>
-                    <img
-                      src={thumbnail_url(opt_img)}
-                      srcset={thumbnail_url(opt_img) <> " 480w, " <> opt_img <> " 1280w"}
-                      sizes="80px"
-                      alt=""
-                      class="h-20 w-20 object-cover rounded shrink-0"
-                    />
-                  <% end %>
-                </div>
-              <% end %>
+              <.question_options question={question} />
             </div>
           <% end %>
         </div>
