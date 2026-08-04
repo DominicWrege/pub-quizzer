@@ -239,7 +239,11 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
 @media (max-width: 639px) {
   #admin-login-wrap {
     align-items: flex-start;
-    min-height: calc(100svh - 4rem);
+    /* Fill the *dynamic* viewport so <main>'s bg-base-200/50 always reaches
+       the bottom edge — avoids the lighter base-100 seam that appeared when
+       iOS Safari's URL bar collapsed and min-h-svh no longer covered the
+       now-taller visible area. dvh tracks the URL bar; svh did not. */
+    min-height: 100dvh;
   }
 
   #admin-login-card {
