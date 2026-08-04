@@ -235,15 +235,14 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
 }
 
 /* Admin login: on mobile the card chrome is removed and the form is tucked
-   higher so the on-screen keyboard never covers it. Desktop keeps the card. */
+   higher so the on-screen keyboard never covers it. Desktop keeps the card.
+   The wrap sizes to its content (min-height: 0) — the viewport fill + bg
+   coverage come from <main> in the --app-height flex column shell, so there
+   is no forced-tall wrapper creating empty-bg scroll. */
 @media (max-width: 639px) {
   #admin-login-wrap {
     align-items: flex-start;
-    /* Fill the *dynamic* viewport so <main>'s bg-base-200/50 always reaches
-       the bottom edge — avoids the lighter base-100 seam that appeared when
-       iOS Safari's URL bar collapsed and min-h-svh no longer covered the
-       now-taller visible area. dvh tracks the URL bar; svh did not. */
-    min-height: 100dvh;
+    min-height: 0;
   }
 
   #admin-login-card {

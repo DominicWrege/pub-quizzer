@@ -188,13 +188,16 @@ defmodule PubQuizzerWeb.Layouts do
         </aside>
       </div>
     <% else %>
-      <%!-- Flex column fills the viewport so <main> (and any bg it carries,
-          e.g. the login page) always reaches the bottom edge. min-h-0 on the
-          navbar: daisyUI's .navbar min-height (4rem) leaves dead bottom space
-          vs the logged-in header; explicit top padding replaces the space the
-          min-height used to provide. --%>
-      <div class="flex min-h-svh flex-col">
-        <header class="navbar min-h-0 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] lg:pl-[calc(env(safe-area-inset-left)+2rem)] lg:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300">
+      <%!-- Flex column fills the *real* visible viewport (via --app-height,
+          which assets/js/viewport-height.ts mirrors from window.innerHeight)
+          so <main> and any bg it carries always reaches the bottom edge with
+          no seam when iOS Safari's URL bar collapses. min-h-0 on the navbar:
+          daisyUI's .navbar min-height (4rem) leaves dead bottom space vs the
+          logged-in header; explicit top padding replaces it. The header is
+          sticky on mobile so the brand/menu stay visible while page content
+          scrolls (matching the logged-in header behavior). --%>
+      <div class="flex min-h-[var(--app-height)] flex-col">
+        <header class="navbar min-h-0 shrink-0 bg-base-100 max-sm:sticky max-sm:top-0 max-sm:z-20 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] lg:pl-[calc(env(safe-area-inset-left)+2rem)] lg:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300">
           <div class="flex-1">
             <a href="/" class="flex-1 flex w-fit items-center gap-2">
               <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
