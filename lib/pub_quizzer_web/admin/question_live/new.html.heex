@@ -162,11 +162,18 @@
           <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
             Bildposition
           </span>
-          <div class="inline-flex bg-base-200 rounded-lg p-0.5">
+          <div class="relative grid grid-cols-2 bg-base-200 rounded-lg p-0.5">
+            <span
+              aria-hidden="true"
+              class={[
+                "absolute inset-y-0.5 left-0.5 w-[calc(50%-0.125rem)] rounded-md bg-base-100 shadow-sm transition-transform duration-200 ease-out",
+                (@form[:image_position].value || "left") == "right" && "translate-x-full"
+              ]}
+            ></span>
             <label class={[
-              "px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-all",
+              "relative z-10 px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors text-center",
               (@form[:image_position].value || "left") == "left" &&
-                "bg-base-100 shadow-sm text-base-content",
+                "text-base-content",
               (@form[:image_position].value || "left") != "left" &&
                 "text-base-content/60 hover:text-base-content"
             ]}>
@@ -179,9 +186,9 @@
               /> Links
             </label>
             <label class={[
-              "px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-all",
+              "relative z-10 px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors text-center",
               (@form[:image_position].value || "left") == "right" &&
-                "bg-base-100 shadow-sm text-base-content",
+                "text-base-content",
               (@form[:image_position].value || "left") != "right" &&
                 "text-base-content/60 hover:text-base-content"
             ]}>
