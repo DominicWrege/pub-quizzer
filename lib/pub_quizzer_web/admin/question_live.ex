@@ -368,7 +368,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
     question_params =
       consume_uploaded_entries(socket, :image, fn %{path: tmp_path}, _entry ->
-        store_compressed(tmp_path)
+        PubQuizzer.Uploads.store_compressed(tmp_path)
       end)
       |> List.first()
       |> then(fn image_path ->
@@ -457,7 +457,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     for i <- 0..(@option_count - 1) do
       path =
         consume_uploaded_entries(socket, :"option_image_#{i}", fn %{path: tmp_path}, _entry ->
-          store_compressed(tmp_path)
+          PubQuizzer.Uploads.store_compressed(tmp_path)
         end)
         |> List.first()
 
@@ -481,91 +481,11 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     end
   end
 
-  defp store_compressed(tmp_path) do
-    dir = PubQuizzer.upload_dir()
-    File.mkdir_p!(dir)
-    base = content_hash(tmp_path)
-
-    if System.find_executable("ffmpeg") do
-      filename = base <> ".jpg"
-      dest = Path.join(dir, filename)
-      thumb_dest = Path.join(dir, "thumb_" <> filename)
-      compress_with_ffmpeg(tmp_path, dest, thumb_dest)
-    else
-      Logger.warning("ffmpeg not found, copying original file")
-      filename = base <> source_extension(tmp_path)
-      dest = Path.join(dir, filename)
-      File.cp!(tmp_path, dest)
-      {:ok, "/uploads/#{filename}"}
-    end
-  end
-
-  # Names uploads by a SHA-256 hash of their content: collision-free, stable
-  # across re-uploads, and safe to cache immutably (same bytes => same URL).
-  defp content_hash(path) do
-    path
-    |> File.stream!([], 65_536)
-    |> Enum.reduce(:crypto.hash_init(:sha256), &:crypto.hash_update(&2, &1))
-    |> :crypto.hash_final()
-    |> Base.url_encode64(padding: false)
-  end
-
-  defp source_extension(path) do
-    case path |> Path.extname() |> String.downcase() do
-      "" -> ".jpg"
-      ext -> ext
-    end
-  end
-
-  defp compress_with_ffmpeg(tmp_path, dest, thumb_dest) do
-    filename = Path.basename(dest)
-
-    args = [
-      "-y",
-      "-i",
-      tmp_path,
-      "-vf",
-      "scale=w=1280:h=1280:force_original_aspect_ratio=decrease",
-      "-q:v",
-      "10",
-      dest
-    ]
-
-    thumb_args = [
-      "-y",
-      "-i",
-      tmp_path,
-      "-vf",
-      "scale=w=480:h=480:force_original_aspect_ratio=decrease",
-      "-q:v",
-      "15",
-      thumb_dest
-    ]
-
-    case System.cmd("ffmpeg", args, stderr_to_stdout: true) do
-      {_output, 0} ->
-        case System.cmd("ffmpeg", thumb_args, stderr_to_stdout: true) do
-          {_thumb_output, 0} ->
-            :ok
-
-          {thumb_output, _} ->
-            Logger.warning("thumbnail generation failed: #{thumb_output}")
-        end
-
-        {:ok, "/uploads/#{filename}"}
-
-      {output, _exit_code} ->
-        Logger.warning("ffmpeg compression failed, using original: #{output}")
-        File.cp!(tmp_path, dest)
-        {:ok, "/uploads/#{filename}"}
-    end
-  end
-
   defp move_question(socket, _id, _delta) when socket.assigns.search != "", do: socket
 
   defp move_question(socket, id, delta) do
     topic_id = socket.assigns.topic.id
-    ids = Quiz.list_questions_for_topic(topic_id) |> Enum.map(& &1.id)
+    ids = Quiz.list_question_ids_for_topic(topic_id)
     question_id = String.to_integer(id)
     index = Enum.find_index(ids, &(&1 == question_id))
     target = index && index + delta
@@ -645,7 +565,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     case result do
       {:ok, saved_question} ->
         version_action = if question, do: "updated", else: "created"
-        Quiz.create_question_version!(saved_question, user, version_action)
+        record_version(saved_question, user, version_action)
 
         flash = if question, do: "Frage aktualisiert.", else: "Frage erstellt."
 
@@ -660,6 +580,19 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
          socket
          |> assign(:form_submitted, true)
          |> assign(:form, to_form(changeset, action: action))}
+    end
+  end
+
+  # The version row is best-effort history: the question is already persisted
+  # at this point, so a version-insert failure must not turn a successful save
+  # into a 500. Log and move on.
+  defp record_version(question, user, action) do
+    case Quiz.create_question_version(question, user, action) do
+      {:ok, _} ->
+        :ok
+
+      {:error, changeset} ->
+        Logger.warning("failed to record question version: #{inspect(changeset.errors)}")
     end
   end
 end

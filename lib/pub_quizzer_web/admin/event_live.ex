@@ -93,18 +93,23 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   end
 
   def handle_event("save", %{"team_count" => team_count} = params, socket) do
-    team_count = String.to_integer(team_count)
     name = Map.get(params, "name", "")
 
-    case Quiz.create_event(%{team_count: team_count, name: name}) do
-      {:ok, event} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Event erstellt mit Code #{event.code}.")
-         |> push_navigate(to: ~p"/admin/events/#{event.id}")}
+    with {count, ""} <- Integer.parse(team_count),
+         true <- count > 0 do
+      case Quiz.create_event(%{team_count: count, name: name}) do
+        {:ok, event} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Event erstellt mit Code #{event.code}.")
+           |> push_navigate(to: ~p"/admin/events/#{event.id}")}
 
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Event konnte nicht erstellt werden.")}
+        {:error, _changeset} ->
+          {:noreply, put_flash(socket, :error, "Event konnte nicht erstellt werden.")}
+      end
+    else
+      _ ->
+        {:noreply, put_flash(socket, :error, "Ungültige Team-Anzahl.")}
     end
   end
 
@@ -140,29 +145,13 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   end
 
   def handle_event("remove_team", %{"team_id" => team_id}, socket) do
-    event_id = socket.assigns.event.id
+    # Route through Quiz.delete_team/1 so team_count stays consistent and the
+    # broadcast fires — a bare Repo.delete! here left event.team_count stale.
+    team = Repo.get!(Team, String.to_integer(team_id))
+    Quiz.delete_team(team)
 
-    _team = Repo.get!(Team, String.to_integer(team_id)) |> Repo.delete!()
-
-    Phoenix.PubSub.broadcast(
-      PubQuizzer.PubSub,
-      "quiz:event:#{event_id}",
-      {:team_update, event_id}
-    )
-
-    event = Quiz.get_event_with_teams!(event_id)
-
-    claimed_ids =
-      event.teams
-      |> Enum.filter(& &1.claimed_at)
-      |> Enum.map(& &1.id)
-      |> MapSet.new()
-
-    {:noreply,
-     socket
-     |> assign(:event, event)
-     |> assign(:connected_team_ids, claimed_ids)
-     |> assign(:all_teams_connected, false)}
+    event = Quiz.get_event_with_teams!(socket.assigns.event.id)
+    {:noreply, reconcile_connections(socket, event)}
   end
 
   def handle_event("kick_team", %{"team_id" => team_id}, socket) do
@@ -180,20 +169,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     Quiz.unclaim_team(team_id)
 
     event = Quiz.get_event_with_teams!(event_id)
-
-    claimed_ids =
-      event.teams
-      |> Enum.filter(& &1.claimed_at)
-      |> Enum.map(& &1.id)
-      |> MapSet.new()
-
-    connected_ids = MapSet.intersection(socket.assigns.connected_team_ids, claimed_ids)
-
-    {:noreply,
-     socket
-     |> assign(:event, event)
-     |> assign(:connected_team_ids, connected_ids)
-     |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))}
+    {:noreply, reconcile_connections(socket, event)}
   end
 
   # Show page confirmations
@@ -271,22 +247,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   @impl true
   def handle_info({:team_update, _event_id}, socket) do
     event = Quiz.get_event_with_teams!(socket.assigns.event.id)
-
-    claimed_ids =
-      event.teams
-      |> Enum.filter(& &1.claimed_at)
-      |> Enum.map(& &1.id)
-      |> MapSet.new()
-
-    connected_ids =
-      MapSet.new(socket.assigns.connected_team_ids)
-      |> MapSet.intersection(claimed_ids)
-
-    {:noreply,
-     socket
-     |> assign(:event, event)
-     |> assign(:connected_team_ids, connected_ids)
-     |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))}
+    {:noreply, reconcile_connections(socket, event)}
   end
 
   def handle_info({:engine_state, _state}, socket), do: {:noreply, socket}
@@ -316,6 +277,22 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     |> Enum.filter(& &1.claimed_at)
     |> Enum.map(& &1.id)
     |> MapSet.new()
+  end
+
+  # Refreshes the event + connected/claimed tracking in one place. Used by the
+  # handlers that mutate team membership (remove_team, kick_team) and the
+  # :team_update broadcast so the recompute logic isn't triplicated.
+  defp reconcile_connections(socket, event) do
+    claimed_ids = claimed_team_ids(event.teams)
+
+    connected_ids =
+      MapSet.new(socket.assigns.connected_team_ids)
+      |> MapSet.intersection(claimed_ids)
+
+    socket
+    |> assign(:event, event)
+    |> assign(:connected_team_ids, connected_ids)
+    |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))
   end
 
   defp all_claimed_connected?(claimed_ids, connected_ids) do
@@ -348,7 +325,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
           <% end %>
           <span class={[
             "text-xs font-semibold",
-            @event.status in ["topic_selection", "question", "round_reveal"] && "text-primary",
+            Quiz.status_active?(@event.status) && "text-primary",
             @event.status == "finished" && "text-success",
             @event.status == "lobby" && "text-base-content/40"
           ]}>
@@ -363,7 +340,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
 
         <div class="card-actions justify-end mt-2">
           <%= cond do %>
-            <% @event.status in ["topic_selection", "question", "round_reveal"] -> %>
+            <% Quiz.status_active?(@event.status) -> %>
               <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator</.link>
               <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-soft">Live-Ergebnisse</.link>
             <% @event.status == "lobby" -> %>

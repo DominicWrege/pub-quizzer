@@ -96,6 +96,20 @@ defmodule PubQuizzer.Quiz do
     |> attach_last_editor()
   end
 
+  @doc """
+  Returns just the question ids for a topic, in position order. Cheaper than
+  `list_questions_for_topic/1` (no row data, no last-editor join) — use when
+  only the ordering is needed, e.g. computing a reorder.
+  """
+  def list_question_ids_for_topic(topic_id) do
+    from(q in Question,
+      where: q.topic_id == ^topic_id,
+      order_by: [asc: q.position],
+      select: q.id
+    )
+    |> Repo.all()
+  end
+
   def list_published_questions_for_topic(topic_id) do
     Question
     |> where(topic_id: ^topic_id, status: "published")
@@ -282,6 +296,25 @@ defmodule PubQuizzer.Quiz do
     |> Repo.insert!()
   end
 
+  @doc """
+  Non-raising version of `create_question_version!/3`. Returns
+  `{:ok, version}` | `{:error, changeset}` so callers that have already
+  persisted the question don't crash on a best-effort history row.
+  """
+  def create_question_version(question, user, action) do
+    %QuestionVersion{}
+    |> QuestionVersion.changeset(%{
+      question_id: question.id,
+      user_id: user && user.id,
+      prompt: question.prompt,
+      options: question.options,
+      correct_index: question.correct_index,
+      image: question.image,
+      action: action
+    })
+    |> Repo.insert()
+  end
+
   def list_question_versions(question_id) do
     QuestionVersion
     |> where(question_id: ^question_id)
@@ -291,6 +324,14 @@ defmodule PubQuizzer.Quiz do
   end
 
   # --- Quiz Events ---
+
+  @active_statuses ~w(topic_selection question round_reveal)
+
+  @doc "Statuses that mean a quiz is actively in progress (lobby/finished excluded)."
+  def active_statuses, do: @active_statuses
+
+  @doc "True when the event status is one of `active_statuses/0`."
+  def status_active?(status) when is_binary(status), do: status in @active_statuses
 
   def list_events do
     QuizEvent
