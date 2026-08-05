@@ -176,13 +176,11 @@
                 <%= if (question[:images] || []) != [] do %>
                   <div class="flex flex-wrap justify-center gap-4 mb-2">
                     <%= for img <- question[:images] do %>
-                      <img
-                        src={img}
-                        srcset={thumbnail_url(img) <> " 480w, " <> img <> " 1280w"}
+                      <.question_image
+                        img={img}
+                        class="max-h-64"
                         sizes="(max-width: 640px) 100vw, 256px"
-                        alt="Fragebild"
                         loading="lazy"
-                        class="rounded-lg max-h-64"
                       />
                     <% end %>
                   </div>

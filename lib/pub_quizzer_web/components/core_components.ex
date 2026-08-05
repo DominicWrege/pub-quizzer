@@ -896,6 +896,29 @@ defmodule PubQuizzerWeb.CoreComponents do
     """
   end
 
+  attr :img, :string, required: true
+  attr :class, :string, default: nil
+  attr :sizes, :string, default: "(max-width: 640px) 100vw, 288px"
+  attr :rest, :global, include: ~w(loading)
+
+  @doc """
+  Renders a single question image with a responsive thumbnail srcset.
+  Shared across the slide layouts and the review list so the srcset/alt
+  markup lives in exactly one place.
+  """
+  def question_image(assigns) do
+    ~H"""
+    <img
+      src={@img}
+      srcset={thumbnail_url(@img) <> " 480w, " <> @img <> " 1280w"}
+      sizes={@sizes}
+      alt="Fragebild"
+      class={["rounded-lg", @class]}
+      {@rest}
+    />
+    """
+  end
+
   attr :question, :map, required: true
   attr :id, :string, default: nil
   attr :class, :string, default: nil
@@ -930,13 +953,7 @@ defmodule PubQuizzerWeb.CoreComponents do
               </div>
               <div class={["flex flex-col gap-4 sm:col-span-1", position == "left" && "sm:order-1"]}>
                 <%= for img <- q_images do %>
-                  <img
-                    src={img}
-                    srcset={thumbnail_url(img) <> " 480w, " <> img <> " 1280w"}
-                    sizes="(max-width: 640px) 100vw, 288px"
-                    alt="Fragebild"
-                    class="rounded-lg max-h-72 w-auto"
-                  />
+                  <.question_image img={img} class="max-h-72 w-auto" />
                 <% end %>
               </div>
             </div>
@@ -944,13 +961,7 @@ defmodule PubQuizzerWeb.CoreComponents do
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center mb-6">
               <div class="sm:col-span-1 flex flex-col gap-4">
                 <%= for img <- q_images do %>
-                  <img
-                    src={img}
-                    srcset={thumbnail_url(img) <> " 480w, " <> img <> " 1280w"}
-                    sizes="(max-width: 640px) 100vw, 288px"
-                    alt="Fragebild"
-                    class="rounded-lg w-full object-contain"
-                  />
+                  <.question_image img={img} class="w-full object-contain" />
                 <% end %>
               </div>
               <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-2">
