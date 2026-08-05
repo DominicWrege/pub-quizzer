@@ -849,6 +849,131 @@ defmodule PubQuizzerWeb.CoreComponents do
     """
   end
 
+  attr :options, :list, required: true
+  attr :correct_index, :integer, default: nil
+  attr :image_overrides, :map, default: %{}
+  attr :class, :string, default: nil
+
+  @doc """
+  Renders answer options as a responsive grid of image cards for the
+  "answer_cards" slide layout. Each card shows the option's image (or a
+  placeholder) with the letter + text below. Shared between the host console
+  and the editor preview. Pass `correct_index` to highlight the right answer
+  (preview only — the host question phase omits it).
+  """
+  def answer_cards(assigns) do
+    ~H"""
+    <div class={["grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6", @class]}>
+      <%= for {option, idx} <- Enum.with_index(@options) do %>
+        <% is_correct = @correct_index == idx %>
+        <% opt_img = Map.get(@image_overrides, idx) || option["image"] %>
+        <div class="flex flex-col gap-2 sm:gap-3">
+          <%= if opt_img do %>
+            <div class={[
+              "aspect-[3/4] rounded overflow-hidden",
+              is_correct && "ring-4 ring-success"
+            ]}>
+              <img src={opt_img} alt="" class="w-full h-full object-cover" />
+            </div>
+          <% else %>
+            <div class={[
+              "aspect-[3/4] rounded bg-base-300/60 flex items-center justify-center text-base-content/30",
+              is_correct && "ring-4 ring-success"
+            ]}>
+              <.icon name="hero-photo" class="size-10 sm:size-12" />
+            </div>
+          <% end %>
+          <div class={[
+            "text-xl sm:text-2xl flex items-start gap-2",
+            is_correct && "text-success font-semibold"
+          ]}>
+            <span class="font-mono font-bold shrink-0">{letter_for_index(idx)}</span>
+            <span class="break-words flex-1"><.multiline_text text={option["text"]} /></span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
+  attr :question, :map, required: true
+  attr :id, :string, default: nil
+  attr :class, :string, default: nil
+
+  @doc """
+  Renders the question slide exactly as the host beamer shows it during the
+  question phase. Shared between the host console and the editor preview so
+  the two can never drift. Never highlights the correct answer.
+  """
+  def question_slide(assigns) do
+    ~H"""
+    <div class={["card bg-base-200 overflow-hidden", @class]}>
+      <div class="card-body" id={@id}>
+        <% layout = @question[:layout] || "classic" %>
+        <% q_images = @question[:images] || [] %>
+        <% effective_layout =
+          if layout in ["image_side", "image_top"] and q_images == [], do: "classic", else: layout %>
+
+        <%= cond do %>
+          <% effective_layout == "answer_cards" -> %>
+            <h4 class="card-title text-3xl break-words leading-relaxed mb-4">
+              <span class="w-full min-w-0"><.multiline_text text={@question.prompt} /></span>
+            </h4>
+            <.answer_cards options={@question.options} />
+          <% effective_layout == "image_side" -> %>
+            <% position = @question[:image_position] || "left" %>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-3">
+                <span class="w-full min-w-0"><.multiline_text text={@question.prompt} /></span>
+              </h4>
+              <div class={["space-y-4 sm:col-span-2", position == "left" && "sm:order-2"]}>
+                <.question_options question={@question} />
+              </div>
+              <div class={["flex flex-col gap-4 sm:col-span-1", position == "left" && "sm:order-1"]}>
+                <%= for img <- q_images do %>
+                  <img
+                    src={img}
+                    srcset={thumbnail_url(img) <> " 480w, " <> img <> " 1280w"}
+                    sizes="(max-width: 640px) 100vw, 288px"
+                    alt="Fragebild"
+                    class="rounded-lg max-h-72 w-auto"
+                  />
+                <% end %>
+              </div>
+            </div>
+          <% effective_layout == "image_top" -> %>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center mb-6">
+              <div class="sm:col-span-1 flex flex-col gap-4">
+                <%= for img <- q_images do %>
+                  <img
+                    src={img}
+                    srcset={thumbnail_url(img) <> " 480w, " <> img <> " 1280w"}
+                    sizes="(max-width: 640px) 100vw, 288px"
+                    alt="Fragebild"
+                    class="rounded-lg w-full object-contain"
+                  />
+                <% end %>
+              </div>
+              <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-2">
+                <span class="w-full min-w-0"><.multiline_text text={@question.prompt} /></span>
+              </h4>
+            </div>
+            <div class="space-y-4">
+              <.question_options question={@question} />
+            </div>
+          <% true -> %>
+            <h4 class="card-title text-3xl break-words leading-relaxed">
+              <span class="w-full min-w-0"><.multiline_text text={@question.prompt} /></span>
+            </h4>
+            <div class="space-y-4 mt-6">
+              <.question_options question={@question} />
+            </div>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
+
   attr :rank, :integer, required: true
   attr :id, :any, required: true
   attr :name, :string, required: true

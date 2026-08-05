@@ -89,9 +89,9 @@
             {if q.status == "published", do: "Live", else: "Entwurf"}
           </span>
         </div>
-        <%= if q.image do %>
+        <%= if (q.images || []) != [] do %>
           <span class="badge badge-ghost badge-xs gap-1">
-            <.icon name="hero-photo" class="size-3" /> Bild
+            <.icon name="hero-photo" class="size-3" /> {length(q.images)}
           </span>
         <% end %>
       </div>

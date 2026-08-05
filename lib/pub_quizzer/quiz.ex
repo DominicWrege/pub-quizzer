@@ -133,17 +133,12 @@ defmodule PubQuizzer.Quiz do
         options: q.options,
         correct_index: q.correct_index,
         position: idx,
-        image: nil_if_blank(q.image),
-        image_position: q.image_position || "left"
+        images: Enum.reject(q.images || [], &(&1 in [nil, ""])),
+        image_position: q.image_position || "left",
+        layout: q.layout || "classic"
       }
     end)
   end
-
-  defp nil_if_blank(value) when is_binary(value) do
-    if String.trim(value) == "", do: nil, else: value
-  end
-
-  defp nil_if_blank(value), do: value
 
   @doc """
   Loads questions for several topics in a single query (plus one batched
@@ -290,7 +285,8 @@ defmodule PubQuizzer.Quiz do
       prompt: question.prompt,
       options: question.options,
       correct_index: question.correct_index,
-      image: question.image,
+      images: question.images,
+      layout: question.layout,
       action: action
     })
     |> Repo.insert!()
@@ -309,7 +305,8 @@ defmodule PubQuizzer.Quiz do
       prompt: question.prompt,
       options: question.options,
       correct_index: question.correct_index,
-      image: question.image,
+      images: question.images,
+      layout: question.layout,
       action: action
     })
     |> Repo.insert()

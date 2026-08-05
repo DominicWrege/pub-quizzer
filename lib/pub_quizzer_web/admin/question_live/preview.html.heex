@@ -2,7 +2,7 @@
   id="question-preview-modal"
   phx-hook="Dialog"
   data-cancel-event="close_preview"
-  class="m-auto rounded-box bg-base-100 p-0 shadow-xl max-w-4xl w-[calc(100%-2rem)] sm:w-full"
+  class="m-auto rounded-box bg-base-100 p-0 shadow-xl max-w-6xl w-[calc(100%-2rem)] sm:w-full"
 >
   <div class="flex items-center justify-between p-5 border-b border-base-300">
     <div>
@@ -21,66 +21,27 @@
 
   <div class="p-4 sm:p-6 max-h-[80vh] overflow-y-auto">
     <% prompt_text = @form[:prompt].value || "" %>
-    <% options = Phoenix.HTML.Form.input_value(@form, :options) || [] %>
-    <% correct_index = @form[:correct_index].value %>
-    <% main_image = @image_preview_url || (@question && @question.image) %>
+    <% form_options = Phoenix.HTML.Form.input_value(@form, :options) || [] %>
+    <% main_images = ((@question && @question.images) || []) ++ Map.values(@preview_uploads) %>
 
-    <div class="card bg-base-200 overflow-hidden">
-      <div class="card-body">
-        <%= if main_image do %>
-          <% position = @form[:image_position].value || "left" %>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-2">
-              <span class="w-full min-w-0"><.multiline_text text={prompt_text} /></span>
-            </h4>
-            <div class={["space-y-4", position == "left" && "sm:order-2"]}>
-              <%= for {option, idx} <- Enum.with_index(options) do %>
-                <% is_correct = correct_index == idx %>
-                <div class={[
-                  "p-3 sm:p-6 rounded-lg text-2xl sm:text-3xl flex items-center gap-4",
-                  is_correct && "bg-success/20 border-2 border-success",
-                  !is_correct && "bg-base-300"
-                ]}>
-                  <span class="font-mono font-bold shrink-0">{letter_for_index(idx)}.</span>
-                  <span class="break-words flex-1"><.multiline_text text={option["text"]} /></span>
-                  <%= if opt_img = (@option_image_previews[idx] || option["image"]) do %>
-                    <img src={opt_img} alt="" class="h-20 w-20 object-cover rounded shrink-0" />
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-            <div class={["flex items-start", position == "left" && "sm:order-1"]}>
-              <img src={main_image} alt="Fragebild" class="rounded-lg max-h-72 w-auto" />
-            </div>
-          </div>
-        <% else %>
-          <h4 class="card-title text-3xl break-words leading-relaxed">
-            <span class="w-full min-w-0"><.multiline_text text={prompt_text} /></span>
-          </h4>
-          <div class="space-y-4 mt-6">
-            <%= for {option, idx} <- Enum.with_index(options) do %>
-              <% is_correct = correct_index == idx %>
-              <div class={[
-                "p-3 sm:p-6 rounded-lg text-2xl sm:text-3xl flex items-center gap-4",
-                is_correct && "bg-success/20 border-2 border-success",
-                !is_correct && "bg-base-300"
-              ]}>
-                <span class="font-mono font-bold shrink-0">{letter_for_index(idx)}.</span>
-                <span class="break-words flex-1"><.multiline_text text={option["text"]} /></span>
-                <%= if opt_img = (@option_image_previews[idx] || option["image"]) do %>
-                  <img src={opt_img} alt="" class="h-20 w-20 object-cover rounded shrink-0" />
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    </div>
+    <% options =
+      form_options
+      |> Enum.with_index()
+      |> Enum.map(fn {opt, idx} ->
+        case Map.get(@option_image_previews, idx) do
+          nil -> opt
+          url -> Map.put(opt || %{}, "image", url)
+        end
+      end) %>
 
-    <%= if correct_index == nil do %>
-      <p class="mt-4 text-sm text-base-content/60 italic text-center">
-        Keine richtige Antwort ausgewählt — in der Vorschau wird keine hervorgehoben.
-      </p>
-    <% end %>
+    <% preview_question = %{
+      prompt: prompt_text,
+      options: options,
+      images: main_images,
+      layout: @form[:layout].value || "classic",
+      image_position: @form[:image_position].value || "left"
+    } %>
+
+    <.question_slide question={preview_question} />
   </div>
 </dialog>

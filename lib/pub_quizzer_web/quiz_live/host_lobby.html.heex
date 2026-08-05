@@ -131,37 +131,7 @@
         </div>
       </div>
 
-      <div class="card bg-base-200 mb-4 overflow-hidden animate-fade-in">
-        <div class="card-body" id="quiz-qa-area">
-          <%= if question[:image] do %>
-            <% position = question[:image_position] || "left" %>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-2">
-                <span class="w-full min-w-0"><.multiline_text text={question.prompt} /></span>
-              </h4>
-              <div class={["space-y-4", position == "left" && "sm:order-2"]}>
-                <.question_options question={question} />
-              </div>
-              <div class={["flex items-start", position == "left" && "sm:order-1"]}>
-                <img
-                  src={question.image}
-                  srcset={thumbnail_url(question.image) <> " 480w, " <> question.image <> " 1280w"}
-                  sizes="(max-width: 640px) 100vw, 288px"
-                  alt="Fragebild"
-                  class="rounded-lg max-h-72 w-auto"
-                />
-              </div>
-            </div>
-          <% else %>
-            <h4 class="card-title text-3xl break-words leading-relaxed">
-              <span class="w-full min-w-0"><.multiline_text text={question.prompt} /></span>
-            </h4>
-            <div class="space-y-4 mt-6">
-              <.question_options question={question} />
-            </div>
-          <% end %>
-        </div>
-      </div>
+      <.question_slide question={question} id="quiz-qa-area" class="mb-4 animate-fade-in" />
 
       <% all_answered = MapSet.size(answered) == total_teams %>
 
@@ -203,15 +173,19 @@
                   <span class="w-full min-w-0">Frage {q_idx + 1}:
                   <.multiline_text text={question.prompt} /></span>
                 </h4>
-                <%= if question[:image] do %>
-                  <img
-                    src={question.image}
-                    srcset={thumbnail_url(question.image) <> " 480w, " <> question.image <> " 1280w"}
-                    sizes="(max-width: 640px) 100vw, 256px"
-                    alt="Fragebild"
-                    loading="lazy"
-                    class="rounded-lg max-h-64 mx-auto mb-2"
-                  />
+                <%= if (question[:images] || []) != [] do %>
+                  <div class="flex flex-wrap justify-center gap-4 mb-2">
+                    <%= for img <- question[:images] do %>
+                      <img
+                        src={img}
+                        srcset={thumbnail_url(img) <> " 480w, " <> img <> " 1280w"}
+                        sizes="(max-width: 640px) 100vw, 256px"
+                        alt="Fragebild"
+                        loading="lazy"
+                        class="rounded-lg max-h-64"
+                      />
+                    <% end %>
+                  </div>
                 <% end %>
                 <div class="space-y-2">
                   <%= for {option, idx} <- Enum.with_index(question.options) do %>

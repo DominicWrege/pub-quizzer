@@ -72,6 +72,147 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     """
   end
 
+  @doc "Slide-layout picker: chooses how the question renders on the beamer."
+  attr :form, :any, required: true
+
+  def layout_picker(assigns) do
+    ~H"""
+    <div class="space-y-3">
+      <div class="flex items-center justify-between gap-3 px-3 sm:px-0">
+        <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+          Layout
+        </span>
+        <div class="flex items-center gap-1.5" role="radiogroup" aria-label="Layout">
+          <% current = @form[:layout].value || "classic" %>
+
+          <.layout_thumb current={current} value="classic" label="Text">
+            <div class="h-1.5 w-full rounded-sm bg-current opacity-70"></div>
+            <div class="mt-1 space-y-0.5">
+              <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
+              <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
+              <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
+            </div>
+          </.layout_thumb>
+
+          <.layout_thumb current={current} value="image_side" label="Bild + Text">
+            <div class="flex gap-0.5 h-full">
+              <div class="w-1/2 rounded-sm bg-current opacity-30"></div>
+              <div class="w-1/2 flex flex-col gap-0.5 justify-center">
+                <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
+                <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
+                <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
+              </div>
+            </div>
+          </.layout_thumb>
+
+          <.layout_thumb current={current} value="answer_cards" label="Antwort-Bilder">
+            <div class="h-1.5 w-full rounded-sm bg-current opacity-70"></div>
+            <div class="mt-1 grid grid-cols-4 gap-0.5 flex-1">
+              <div class="rounded-sm bg-current opacity-30"></div>
+              <div class="rounded-sm bg-current opacity-30"></div>
+              <div class="rounded-sm bg-current opacity-30"></div>
+              <div class="rounded-sm bg-current opacity-30"></div>
+            </div>
+          </.layout_thumb>
+
+          <.layout_thumb current={current} value="image_top" label="Bild oben">
+            <div class="flex gap-0.5">
+              <div class="w-1/3 h-4 rounded-sm bg-current opacity-30"></div>
+              <div class="w-2/3 flex flex-col gap-0.5 justify-center">
+                <div class="h-1 w-full rounded-sm bg-current opacity-70"></div>
+                <div class="h-1 w-full rounded-sm bg-current opacity-70"></div>
+              </div>
+            </div>
+            <div class="mt-1 space-y-0.5">
+              <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
+              <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
+            </div>
+          </.layout_thumb>
+        </div>
+      </div>
+
+      <%= if (@form[:layout].value || "classic") == "image_side" do %>
+        <div class="flex items-center justify-between px-3 sm:px-0">
+          <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+            Bildposition
+          </span>
+          <% position = @form[:image_position].value || "left" %>
+          <div class="relative grid grid-cols-2 bg-base-200 rounded-lg p-0.5">
+            <span
+              aria-hidden="true"
+              class={[
+                "absolute inset-y-0.5 left-0.5 w-[calc(50%-0.125rem)] rounded-md bg-base-100 shadow-sm transition-transform duration-200 ease-out",
+                position == "right" && "translate-x-full"
+              ]}
+            ></span>
+            <label class={[
+              "relative z-10 px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors text-center",
+              position == "left" && "text-base-content",
+              position != "left" && "text-base-content/60 hover:text-base-content"
+            ]}>
+              <input
+                type="radio"
+                name="question[image_position]"
+                value="left"
+                class="sr-only"
+                checked={position == "left"}
+              /> Links
+            </label>
+            <label class={[
+              "relative z-10 px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors text-center",
+              position == "right" && "text-base-content",
+              position != "right" && "text-base-content/60 hover:text-base-content"
+            ]}>
+              <input
+                type="radio"
+                name="question[image_position]"
+                value="right"
+                class="sr-only"
+                checked={position == "right"}
+              /> Rechts
+            </label>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
+  attr :current, :string, required: true
+  attr :value, :string, required: true
+  attr :label, :string, required: true
+  slot :inner_block, required: true
+
+  def layout_thumb(assigns) do
+    ~H"""
+    <label class={[
+      "flex flex-col items-center gap-1 cursor-pointer rounded-lg p-1.5 transition-colors",
+      @current == @value && "bg-base-200 ring-2 ring-primary/60",
+      @current != @value && "hover:bg-base-200/60"
+    ]}>
+      <input
+        type="radio"
+        name="question[layout]"
+        value={@value}
+        class="sr-only"
+        checked={@current == @value}
+      />
+      <div class={[
+        "w-16 h-10 rounded border bg-base-100 p-1 flex flex-col text-base-content",
+        @current == @value && "border-primary/50",
+        @current != @value && "border-base-content/20"
+      ]}>
+        {render_slot(@inner_block)}
+      </div>
+      <span class={[
+        "text-[10px] font-medium leading-none",
+        @current == @value && "text-base-content",
+        @current != @value && "text-base-content/60"
+      ]}>{@label}</span>
+    </label>
+    """
+  end
+
   @impl true
   def mount(_params, _session, socket) do
     socket =
@@ -80,11 +221,12 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       |> assign(:pending_delete_id, nil)
       |> assign(:search, "")
       |> assign(:option_image_previews, %{})
+      |> assign(:preview_uploads, %{})
       |> assign(:show_preview, false)
       |> assign(:viewing_image, nil)
       |> allow_upload(:image,
         accept: ~w(.jpg .jpeg .png .gif .webp),
-        max_entries: 1,
+        max_entries: 4,
         max_file_size: 20_000_000,
         auto_upload: true
       )
@@ -132,8 +274,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:page_title, "Neue Frage")
     |> assign(:form, to_form(changeset))
     |> assign(:form_submitted, false)
-    |> assign(:image_preview_url, nil)
     |> assign(:option_image_previews, %{})
+    |> assign(:preview_uploads, %{})
     |> assign(:show_preview, false)
   end
 
@@ -149,8 +291,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> assign(:page_title, "Frage bearbeiten – #{topic.name}")
     |> assign(:form, to_form(changeset))
     |> assign(:form_submitted, false)
-    |> assign(:image_preview_url, nil)
     |> assign(:option_image_previews, %{})
+    |> assign(:preview_uploads, %{})
     |> assign(:show_preview, false)
     |> assign(:versions, compute_version_diffs(versions))
   end
@@ -283,11 +425,31 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     {:noreply,
      socket
      |> cancel_upload(:image, ref)
-     |> assign(:image_preview_url, nil)}
+     |> assign(:preview_uploads, Map.delete(socket.assigns.preview_uploads, ref))}
   end
 
-  def handle_event("image_preview", %{"data_url" => data_url}, socket) do
-    {:noreply, assign(socket, :image_preview_url, data_url)}
+  # Duplicate preview URLs are ignored, but refs are unique per entry so it is safe.
+  def handle_event("question_preview_upload", %{"ref" => ref, "url" => url}, socket) do
+    previews = Map.put(socket.assigns.preview_uploads, ref, url)
+    {:noreply, assign(socket, :preview_uploads, previews)}
+  end
+
+  def handle_event("remove_image", %{"index" => index}, socket) do
+    index = String.to_integer(index)
+
+    case socket.assigns[:question] do
+      nil ->
+        {:noreply, socket}
+
+      q ->
+        updated_q = %{q | images: List.delete_at(q.images || [], index)}
+        changeset = Question.changeset(updated_q, %{})
+
+        {:noreply,
+         socket
+         |> assign(:question, updated_q)
+         |> assign(:form, to_form(changeset))}
+    end
   end
 
   def handle_event("option_image_preview", %{"index" => index, "data_url" => data_url}, socket) do
@@ -346,7 +508,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       "options" => current_opts,
       "prompt" => Phoenix.HTML.Form.input_value(form, :prompt),
       "status" => Phoenix.HTML.Form.input_value(form, :status),
-      "image_position" => Phoenix.HTML.Form.input_value(form, :image_position)
+      "image_position" => Phoenix.HTML.Form.input_value(form, :image_position),
+      "layout" => Phoenix.HTML.Form.input_value(form, :layout)
     }
 
     question = Map.get(socket.assigns, :question)
@@ -366,14 +529,18 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   defp do_save(socket, params) do
     question_params = normalize_params(params)
 
-    question_params =
+    new_images =
       consume_uploaded_entries(socket, :image, fn %{path: tmp_path}, _entry ->
         PubQuizzer.Uploads.store_compressed(tmp_path)
       end)
-      |> List.first()
-      |> then(fn image_path ->
-        if image_path, do: Map.put(question_params, "image", image_path), else: question_params
-      end)
+
+    existing_images =
+      case socket.assigns[:question] do
+        nil -> []
+        q -> q.images || []
+      end
+
+    question_params = Map.put(question_params, "images", existing_images ++ new_images)
 
     option_images = consume_option_images(socket)
     existing_images = existing_option_images(socket)
@@ -539,7 +706,17 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> maybe_diff(:prompt, current.prompt, prev.prompt)
     |> maybe_diff(:options, current.options, prev.options)
     |> maybe_diff(:correct_index, current.correct_index, prev.correct_index)
-    |> maybe_diff(:image, current.image, prev.image)
+    |> maybe_diff(:images, version_images(current), version_images(prev))
+    |> maybe_diff(:layout, current.layout, prev.layout)
+  end
+
+  # Old version rows only have `image`; new ones only `images`. Normalize both
+  # to a list so the history diff stays meaningful across the migration.
+  defp version_images(version) do
+    case version.images do
+      list when is_list(list) and list != [] -> list
+      _ -> if version.image in [nil, ""], do: [], else: [version.image]
+    end
   end
 
   defp maybe_diff(acc, _field, same, same), do: acc
@@ -559,7 +736,10 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
           {Quiz.create_question(Map.put(question_params, "topic_id", topic_id)), :insert}
 
         q ->
-          {Quiz.update_question(q, question_params), :update}
+          # Reload from the DB: in-memory edits (e.g. remove_image) would make
+          # the changeset see "no change" for fields whose submitted value equals
+          # the in-memory struct, silently skipping the DB write.
+          {q.id |> Quiz.get_question!() |> Quiz.update_question(question_params), :update}
       end
 
     case result do
@@ -571,7 +751,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
         {:noreply,
          socket
-         |> assign(:image_preview_url, nil)
+         |> assign(:preview_uploads, %{})
          |> put_flash(:info, flash)
          |> push_navigate(to: ~p"/admin/topics/#{topic_id}/questions")}
 

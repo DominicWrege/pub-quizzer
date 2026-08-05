@@ -7,6 +7,8 @@ defmodule PubQuizzer.Quiz.QuestionVersion do
     field :options, {:array, :map}
     field :correct_index, :integer
     field :image, :string
+    field :images, {:array, :string}
+    field :layout, :string
     field :action, :string
 
     belongs_to :question, PubQuizzer.Quiz.Question
@@ -17,7 +19,17 @@ defmodule PubQuizzer.Quiz.QuestionVersion do
 
   def changeset(question_version, attrs) do
     question_version
-    |> cast(attrs, [:prompt, :options, :correct_index, :image, :action, :question_id, :user_id])
+    |> cast(attrs, [
+      :prompt,
+      :options,
+      :correct_index,
+      :image,
+      :images,
+      :layout,
+      :action,
+      :question_id,
+      :user_id
+    ])
     |> validate_required([:prompt, :options, :correct_index, :action, :question_id])
   end
 end

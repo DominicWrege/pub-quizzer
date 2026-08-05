@@ -70,104 +70,68 @@
           <%!-- Question image upload --%>
           <div
             id="image-upload-zone"
-            phx-hook="ImagePreview"
             phx-drop-target={@uploads.image.ref}
             class={[
               "rounded-lg border-2 border-dashed transition-colors",
               @uploads.image.entries != [] && "border-primary bg-primary/5",
               @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30",
-              (@image_preview_url == nil and @question.image == nil) && "hidden sm:block"
+              (@question.images == []) && "hidden sm:block"
             ]}
           >
             <div class="p-1">
-              <%= cond do %>
-                <% url = @image_preview_url -> %>
-                  <div class="flex justify-center">
+              <%= if @question.images != [] or @uploads.image.entries != [] do %>
+                <div class="flex flex-wrap justify-center gap-2">
+                  <%= for {img, idx} <- Enum.with_index(@question.images) do %>
                     <div class="relative inline-block">
                       <img
-                        src={url}
-                        data-main-image-preview
+                        src={img}
+                        alt="Aktuelles Bild"
+                        phx-click="view_image"
+                        phx-value-url={img}
+                        class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain cursor-zoom-in"
+                      />
+                      <button
+                        type="button"
+                        phx-click="remove_image"
+                        phx-value-index={idx}
+                        class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
+                      >×</button>
+                    </div>
+                  <% end %>
+                  <%= for entry <- @uploads.image.entries do %>
+                    <div id={"upload-entry-#{entry.ref}"} phx-update="ignore" phx-hook="ReportUploadedImage" class="relative inline-block">
+                      <img
+                        id={"img-preview-#{entry.ref}"}
+                        phx-hook="Phoenix.LiveImgPreview"
+                        data-phx-entry-ref={entry.ref}
+                        data-phx-upload-ref={@uploads.image.ref}
+                        alt="Vorschau"
                         class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain"
                       />
-                      <%= if ref = List.first(@uploads.image.entries) && List.first(@uploads.image.entries).ref do %>
-                        <button
-                          type="button"
-                          phx-click="cancel_upload"
-                          phx-value-ref={ref}
-                          class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
-                        >×</button>
-                      <% end %>
+                      <button
+                        type="button"
+                        phx-click="cancel_upload"
+                        phx-value-ref={entry.ref}
+                        class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
+                      >×</button>
                     </div>
-                  </div>
-                <% img = @question.image -> %>
-                  <div class="flex justify-center">
-                    <img
-                      src={img}
-                      data-main-image-preview
-                      alt="Aktuelles Bild"
-                      phx-click="view_image"
-                      phx-value-url={img}
-                      class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain cursor-zoom-in"
-                    />
-                  </div>
-                <% true -> %>
-                  <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-1.5 sm:py-2 text-base-content/40">
-                    <.icon name="hero-photo" class="size-5 sm:size-6" />
-                    <span class="text-xs">Kein Bild ausgewählt</span>
-                  </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-1.5 sm:py-2 text-base-content/40">
+                  <.icon name="hero-photo" class="size-5 sm:size-6" />
+                  <span class="text-xs">Keine Bilder ausgewählt</span>
+                </div>
               <% end %>
             </div>
             <label class="hidden sm:flex items-center justify-center gap-2 px-3 py-1.5 cursor-pointer text-xs text-base-content/70 hover:text-base-content hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300 select-none">
               <.icon name="hero-photo" class="size-4" />
-              <span>{if @question.image, do: "Bild ersetzen", else: "Bild auswählen"}</span>
+              <span>Bilder hinzufügen</span>
               <.live_file_input upload={@uploads.image} class="sr-only" />
             </label>
           </div>
 
-          <div class="flex items-center justify-between px-3 sm:px-0">
-            <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
-              Bildposition
-            </span>
-            <div class="relative grid grid-cols-2 bg-base-200 rounded-lg p-0.5">
-              <span
-                aria-hidden="true"
-                class={[
-                  "absolute inset-y-0.5 left-0.5 w-[calc(50%-0.125rem)] rounded-md bg-base-100 shadow-sm transition-transform duration-200 ease-out",
-                  (@form[:image_position].value || "left") == "right" && "translate-x-full"
-                ]}
-              ></span>
-              <label class={[
-                "relative z-10 px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors text-center",
-                (@form[:image_position].value || "left") == "left" &&
-                  "text-base-content",
-                (@form[:image_position].value || "left") != "left" &&
-                  "text-base-content/60 hover:text-base-content"
-              ]}>
-                <input
-                  type="radio"
-                  name="question[image_position]"
-                  value="left"
-                  class="sr-only"
-                  checked={(@form[:image_position].value || "left") == "left"}
-                /> Links
-              </label>
-              <label class={[
-                "relative z-10 px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors text-center",
-                (@form[:image_position].value || "left") == "right" &&
-                  "text-base-content",
-                (@form[:image_position].value || "left") != "right" &&
-                  "text-base-content/60 hover:text-base-content"
-              ]}>
-                <input
-                  type="radio"
-                  name="question[image_position]"
-                  value="right"
-                  class="sr-only"
-                  checked={(@form[:image_position].value || "left") == "right"}
-                /> Rechts
-              </label>
-            </div>
-          </div>
+          <.layout_picker form={@form} />
         </div>
       </div>
 
@@ -427,6 +391,18 @@
                                   <% true -> %>
                                     <span class="font-semibold">Bild geändert</span>
                                 <% end %>
+                              <% :images -> %>
+                                <%= cond do %>
+                                  <% (diff.old || []) == [] and (diff.new || []) != [] -> %>
+                                    <span class="font-semibold">Bild hinzugefügt</span>
+                                  <% (diff.old || []) != [] and (diff.new || []) == [] -> %>
+                                    <span class="font-semibold">Bild entfernt</span>
+                                  <% true -> %>
+                                    <span class="font-semibold">Bilder geändert</span>
+                                <% end %>
+                              <% :layout -> %>
+                                <span class="font-semibold">Layout:</span>
+                                {diff.old || "classic"} → {diff.new}
                             <% end %>
                           </li>
                         <% end %>
