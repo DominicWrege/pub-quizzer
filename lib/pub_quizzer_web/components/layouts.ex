@@ -180,11 +180,6 @@ defmodule PubQuizzerWeb.Layouts do
               </.link>
             <% end %>
           </nav>
-          <div class="px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] border-t border-base-300">
-            <.link navigate={~p"/admin/logout"} class="btn btn-soft btn-sm w-full justify-start gap-2">
-              <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
-            </.link>
-          </div>
         </aside>
       </div>
     <% else %>
