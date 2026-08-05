@@ -135,7 +135,7 @@ defmodule PubQuizzer.Quiz do
         position: idx,
         images: Enum.reject(q.images || [], &(&1 in [nil, ""])),
         image_position: q.image_position || "left",
-        layout: q.layout || "classic"
+        layout: q.layout || "image_side"
       }
     end)
   end

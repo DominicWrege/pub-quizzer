@@ -4,7 +4,7 @@ defmodule PubQuizzer.Quiz.Question do
 
   @statuses ~w(draft published)
   @image_positions ~w(left right)
-  @layouts ~w(classic image_side answer_cards image_top)
+  @layouts ~w(image_side answer_cards image_top)
 
   schema "questions" do
     field :prompt, :string
@@ -13,7 +13,7 @@ defmodule PubQuizzer.Quiz.Question do
     field :position, :integer, default: 0
     field :images, {:array, :string}, default: []
     field :image_position, :string, default: "left"
-    field :layout, :string, default: "classic"
+    field :layout, :string, default: "image_side"
     field :status, :string, default: "published"
 
     belongs_to :topic, PubQuizzer.Quiz.Topic

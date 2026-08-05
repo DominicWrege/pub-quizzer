@@ -83,16 +83,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
           Layout
         </span>
         <div class="flex items-center gap-1.5" role="radiogroup" aria-label="Layout">
-          <% current = @form[:layout].value || "classic" %>
-
-          <.layout_thumb current={current} value="classic" label="Text">
-            <div class="h-1.5 w-full rounded-sm bg-current opacity-70"></div>
-            <div class="mt-1 space-y-0.5">
-              <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
-              <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
-              <div class="h-1 w-full rounded-sm bg-current opacity-30"></div>
-            </div>
-          </.layout_thumb>
+          <% current = @form[:layout].value || "image_side" %>
 
           <.layout_thumb current={current} value="image_side" label="Bild + Text">
             <div class="flex gap-0.5 h-full">
@@ -131,7 +122,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         </div>
       </div>
 
-      <%= if (@form[:layout].value || "classic") == "image_side" do %>
+      <%= if (@form[:layout].value || "image_side") == "image_side" do %>
         <div class="flex items-center justify-between px-3 sm:px-0">
           <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
             Bildposition

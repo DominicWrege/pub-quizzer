@@ -330,7 +330,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
   end
 
   describe "slide layout" do
-    test "new question defaults to classic layout", %{conn: conn} do
+    test "new question defaults to image_side layout", %{conn: conn} do
       topic = create_topic()
 
       {:ok, view, _html} =
@@ -338,9 +338,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
         |> auth_conn()
         |> live(~p"/admin/topics/#{topic}/questions/new")
 
-      assert has_element?(view, "input[name='question[layout]'][value='classic'][checked]")
+      assert has_element?(view, "input[name='question[layout]'][value='image_side'][checked]")
       refute has_element?(view, "input[name='question[layout]'][value='answer_cards'][checked]")
-      refute has_element?(view, "input[name='question[layout]'][value='image_side'][checked]")
     end
 
     test "layout picker renders all three options", %{conn: conn} do
@@ -351,7 +350,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
         |> auth_conn()
         |> live(~p"/admin/topics/#{topic}/questions/new")
 
-      assert html =~ "Text"
       assert html =~ "Bild + Text"
       assert html =~ "Antwort-Bilder"
       assert html =~ "Bild oben"
@@ -360,13 +358,13 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
     test "image position sub-toggle only appears for image_side layout", %{conn: conn} do
       topic = create_topic()
 
-      {:ok, q_classic} =
+      {:ok, q_top} =
         Quiz.create_question(%{
-          prompt: "Classic",
+          prompt: "Top",
           options: ["A", "B", "C", "D"],
           correct_index: 0,
           topic_id: topic.id,
-          layout: "classic"
+          layout: "image_top"
         })
 
       {:ok, q_side} =
@@ -387,10 +385,10 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
           layout: "answer_cards"
         })
 
-      {:ok, view_classic, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{q_classic}/edit")
+      {:ok, view_top, _html} =
+        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{q_top}/edit")
 
-      refute has_element?(view_classic, "input[name='question[image_position]']")
+      refute has_element?(view_top, "input[name='question[image_position]']")
 
       {:ok, view_side, _html} =
         conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{q_side}/edit")
@@ -468,7 +466,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       refute html =~ "UndefinedFunctionError"
     end
 
-    test "image_side layout without an image falls back to classic in preview", %{
+    test "image_side layout without an image falls back to text-only in preview", %{
       conn: conn
     } do
       topic = create_topic()
@@ -486,7 +484,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
         conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
 
       html = render_click(view, "toggle_preview", %{})
-      # classic fallback: single-column, no image_side grid
+      # text-only fallback: single-column, no image_side grid
       refute html =~ ~s(grid-cols-1 sm:grid-cols-3)
     end
 

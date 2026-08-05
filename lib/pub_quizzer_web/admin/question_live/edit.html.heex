@@ -75,7 +75,7 @@
               "rounded-lg border-2 border-dashed transition-colors",
               @uploads.image.entries != [] && "border-primary bg-primary/5",
               @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30",
-              (@question.images == []) && "hidden sm:block"
+              @question.images == [] && "hidden sm:block"
             ]}
           >
             <div class="p-1">
@@ -99,7 +99,12 @@
                     </div>
                   <% end %>
                   <%= for entry <- @uploads.image.entries do %>
-                    <div id={"upload-entry-#{entry.ref}"} phx-update="ignore" phx-hook="ReportUploadedImage" class="relative inline-block">
+                    <div
+                      id={"upload-entry-#{entry.ref}"}
+                      phx-update="ignore"
+                      phx-hook="ReportUploadedImage"
+                      class="relative inline-block"
+                    >
                       <img
                         id={"img-preview-#{entry.ref}"}
                         phx-hook="Phoenix.LiveImgPreview"
@@ -402,7 +407,7 @@
                                 <% end %>
                               <% :layout -> %>
                                 <span class="font-semibold">Layout:</span>
-                                {diff.old || "classic"} → {diff.new}
+                                {diff.old || "image_side"} → {diff.new}
                             <% end %>
                           </li>
                         <% end %>

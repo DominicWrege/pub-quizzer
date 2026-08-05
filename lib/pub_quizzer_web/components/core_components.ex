@@ -909,18 +909,17 @@ defmodule PubQuizzerWeb.CoreComponents do
     ~H"""
     <div class={["card bg-base-200 overflow-hidden", @class]}>
       <div class="card-body" id={@id}>
-        <% layout = @question[:layout] || "classic" %>
+        <% layout = @question[:layout] || "image_side" %>
         <% q_images = @question[:images] || [] %>
-        <% effective_layout =
-          if layout in ["image_side", "image_top"] and q_images == [], do: "classic", else: layout %>
+        <% with_images? = q_images != [] %>
 
         <%= cond do %>
-          <% effective_layout == "answer_cards" -> %>
+          <% layout == "answer_cards" -> %>
             <h4 class="card-title text-3xl break-words leading-relaxed mb-4">
               <span class="w-full min-w-0"><.multiline_text text={@question.prompt} /></span>
             </h4>
             <.answer_cards options={@question.options} />
-          <% effective_layout == "image_side" -> %>
+          <% layout == "image_side" and with_images? -> %>
             <% position = @question[:image_position] || "left" %>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-3">
@@ -941,7 +940,7 @@ defmodule PubQuizzerWeb.CoreComponents do
                 <% end %>
               </div>
             </div>
-          <% effective_layout == "image_top" -> %>
+          <% layout == "image_top" and with_images? -> %>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center mb-6">
               <div class="sm:col-span-1 flex flex-col gap-4">
                 <%= for img <- q_images do %>
