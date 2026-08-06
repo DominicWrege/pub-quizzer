@@ -3,7 +3,7 @@ defmodule PubQuizzer.Repo.Migrations.AddLayoutToQuestions do
 
   def up do
     alter table(:questions) do
-      add :layout, :string, default: "classic", null: false
+      add :layout, :string, default: "image_side", null: false
     end
 
     alter table(:question_versions) do
@@ -11,8 +11,9 @@ defmodule PubQuizzer.Repo.Migrations.AddLayoutToQuestions do
     end
 
     # Preserve current visual: any question that currently shows an image
-    # (and therefore uses the left/right split) becomes "image_side"; the
-    # rest default to "classic".
+    # (and therefore uses the left/right split) becomes "image_side". The rest
+    # also land on "image_side", which renders as plain text when no images are
+    # attached — there is no longer a separate "classic" text-only layout.
     execute "UPDATE questions SET layout = 'image_side' WHERE image IS NOT NULL AND image != ''"
   end
 

@@ -44,8 +44,13 @@ defmodule PubQuizzerWeb.AdminLayoutTest do
         |> log_in_user()
         |> live(~p"/admin/events")
 
+      # Profil link is superadmin-only
       refute has_element?(view, "a[href='/admin/profile']")
-      assert has_element?(view, "aside a[href='/admin/logout']")
+
+      # Logout lives in the avatar dropdown, not the mobile nav drawer (the
+      # drawer copy was removed to avoid accidental logouts from the menu).
+      refute has_element?(view, "aside a[href='/admin/logout']")
+      assert has_element?(view, "details a[href='/admin/logout']")
     end
   end
 end

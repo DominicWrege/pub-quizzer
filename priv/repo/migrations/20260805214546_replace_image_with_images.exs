@@ -22,9 +22,12 @@ defmodule PubQuizzer.Repo.Migrations.ReplaceImageWithImages do
       [id, image] ->
         {:ok, dumped} = Ecto.Type.dump({:array, :string}, [image])
 
+        # The update goes inside the `from` macro so the pin is valid —
+        # `repo().update_all/2` is a runtime call where `set: [images: ^v]`
+        # would be a misplaced pin (not a macro-compiled option).
         repo().update_all(
-          from(q in "questions", where: q.id == ^id),
-          set: [images: ^dumped]
+          from(q in "questions", where: q.id == ^id, update: [set: [images: ^dumped]]),
+          []
         )
     end)
 

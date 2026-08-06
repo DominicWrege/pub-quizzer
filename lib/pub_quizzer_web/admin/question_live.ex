@@ -58,13 +58,13 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     <div class="alert alert-error py-2 px-3 text-sm">
       <.icon name="hero-exclamation-circle" class="size-4" />
       <span>
-        <%= for {msg, _} <- @form.errors do %>
-          <span>{msg}</span>
-        <% end %>
         <%= for {msg, _} <- @form[:prompt].errors do %>
           <span>{msg}</span>
         <% end %>
         <%= for {msg, _} <- @form[:options].errors do %>
+          <span>{msg}</span>
+        <% end %>
+        <%= for {msg, _} <- @form[:correct_index].errors do %>
           <span>{msg}</span>
         <% end %>
       </span>
@@ -201,6 +201,317 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         @current != @value && "text-base-content/60"
       ]}>{@label}</span>
     </label>
+    """
+  end
+
+  @doc "Published/draft status toggle card. Shared by the new and edit forms."
+  attr :form, :any, required: true
+
+  def status_card(assigns) do
+    ~H"""
+    <div class={[
+      "rounded-xl border px-4 py-2 sm:p-4 transition-colors",
+      if(@form[:status].value == "published",
+        do: "border-success/40 bg-success/10",
+        else: "border-warning/40 bg-warning/10"
+      )
+    ]}>
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class={[
+            "size-9 rounded-lg grid place-items-center shrink-0 transition-colors",
+            if(@form[:status].value == "published",
+              do: "bg-success/20 text-success",
+              else: "bg-warning/20 text-warning"
+            )
+          ]}>
+            <.icon
+              name={
+                if @form[:status].value == "published",
+                  do: "hero-check-circle",
+                  else: "hero-pencil"
+              }
+              class="size-5"
+            />
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold leading-tight">
+              {if @form[:status].value == "published", do: "Veröffentlicht", else: "Entwurf"}
+            </div>
+            <div class="text-xs text-base-content/60 leading-tight mt-0.5 hidden sm:block">
+              {if @form[:status].value == "published",
+                do: "Sichtbar im Live-Quiz",
+                else: "Nicht im Live-Quiz"}
+            </div>
+          </div>
+        </div>
+        <label class="cursor-pointer shrink-0">
+          <input type="hidden" name="question[published]" value="false" />
+          <input
+            type="checkbox"
+            name="question[published]"
+            value="true"
+            checked={@form[:status].value == "published"}
+            class="toggle toggle-success"
+          />
+        </label>
+      </div>
+    </div>
+    """
+  end
+
+  @doc "Prompt textarea, question-image upload zone, and layout picker."
+  attr :form, :any, required: true
+  attr :uploads, :map, required: true
+  attr :question, :any, default: nil
+
+  def prompt_card(assigns) do
+    ~H"""
+    <% existing_images = (@question && @question.images) || [] %>
+    <div class="card sm:bg-base-100 sm:border sm:border-base-300 sm:shadow-md">
+      <div class="card-body p-0 sm:p-5 gap-3 sm:gap-4">
+        <div class="flex items-center justify-between px-3 sm:px-0">
+          <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+            Frage
+          </span>
+          <%= if @form[:correct_index].value != nil do %>
+            <span class="text-xs text-base-content/50">
+              Richtige Antwort:
+              <span class="font-mono font-bold text-success">
+                {String.capitalize(letter_for_index(@form[:correct_index].value))}
+              </span>
+            </span>
+          <% end %>
+        </div>
+        <textarea
+          name="question[prompt]"
+          id="question_prompt"
+          phx-hook="AutoResize"
+          class="w-full text-lg sm:text-2xl font-semibold leading-relaxed bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none placeholder:text-base-content/30 focus:outline-none px-3 py-2 whitespace-pre-wrap"
+          placeholder="Wie lautet die Frage?"
+          rows="3"
+        ><%= @form[:prompt].value || "" %></textarea>
+
+        <div
+          id="image-upload-zone"
+          phx-drop-target={@uploads.image.ref}
+          class={[
+            "rounded-lg border-2 border-dashed transition-colors",
+            @uploads.image.entries != [] && "border-primary bg-primary/5",
+            @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30",
+            existing_images == [] && "hidden sm:block"
+          ]}
+        >
+          <div class="p-1">
+            <%= if existing_images != [] or @uploads.image.entries != [] do %>
+              <div class="flex flex-wrap justify-center gap-2">
+                <%= for {img, idx} <- Enum.with_index(existing_images) do %>
+                  <div class="relative inline-block">
+                    <img
+                      src={img}
+                      alt="Aktuelles Bild"
+                      phx-click="view_image"
+                      phx-value-url={img}
+                      class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain cursor-zoom-in"
+                    />
+                    <button
+                      type="button"
+                      phx-click="remove_image"
+                      phx-value-index={idx}
+                      class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
+                    >×</button>
+                  </div>
+                <% end %>
+                <%= for entry <- @uploads.image.entries do %>
+                  <div
+                    id={"upload-entry-#{entry.ref}"}
+                    phx-update="ignore"
+                    phx-hook="ReportUploadedImage"
+                    class="relative inline-block"
+                  >
+                    <img
+                      id={"img-preview-#{entry.ref}"}
+                      phx-hook="Phoenix.LiveImgPreview"
+                      data-phx-entry-ref={entry.ref}
+                      data-phx-upload-ref={@uploads.image.ref}
+                      alt="Vorschau"
+                      class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain"
+                    />
+                    <button
+                      type="button"
+                      phx-click="cancel_upload"
+                      phx-value-ref={entry.ref}
+                      class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
+                    >×</button>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-1.5 sm:py-2 text-base-content/40">
+                <.icon name="hero-photo" class="size-5 sm:size-6" />
+                <span class="text-xs">Keine Bilder ausgewählt</span>
+              </div>
+            <% end %>
+          </div>
+          <label class="hidden sm:flex items-center justify-center gap-2 px-3 py-1.5 cursor-pointer text-xs text-base-content/70 hover:text-base-content hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300 select-none">
+            <.icon name="hero-photo" class="size-4" />
+            <span>Bilder hinzufügen</span>
+            <.live_file_input upload={@uploads.image} class="sr-only" />
+          </label>
+        </div>
+
+        <.layout_picker form={@form} />
+      </div>
+    </div>
+    """
+  end
+
+  @doc "The four answer-option rows with click-to-select and drag-to-sort."
+  attr :form, :any, required: true
+  attr :uploads, :map, required: true
+  attr :option_image_previews, :map, default: %{}
+
+  def option_rows(assigns) do
+    ~H"""
+    <div>
+      <div class="flex items-center justify-between mb-2 px-3 sm:px-0">
+        <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+          Antwortoptionen
+        </span>
+        <span class="text-xs text-base-content/50">
+          Klick zum Auswählen<span class="hidden sm:inline"> · Ziehen zum Sortieren</span>
+        </span>
+      </div>
+
+      <div
+        id="question-options"
+        class="space-y-2"
+        phx-hook="OptionSorter"
+        data-correct-index={@form[:correct_index].value}
+      >
+        <%= for i <- 0..3 do %>
+          <% opt_val = Phoenix.HTML.Form.input_value(@form, :options) |> Enum.at(i, %{}) %>
+          <% opt_text = (is_map(opt_val) && Map.get(opt_val, "text")) || "" %>
+          <% opt_img = (is_map(opt_val) && Map.get(opt_val, "image")) || nil %>
+          <% is_correct = @form[:correct_index].value == i %>
+          <div
+            data-index={i}
+            phx-click="select_correct"
+            phx-value-index={i}
+            class={[
+              "opt-row group relative rounded-lg sm:rounded-xl p-1.5 sm:p-4 transition-all cursor-pointer sm:border-2 sm:shadow-md",
+              is_correct && "bg-success/10 sm:border-success sm:shadow-lg",
+              !is_correct &&
+                "bg-base-100 sm:border-base-300 sm:hover:border-base-content/40 sm:hover:shadow-lg"
+            ]}
+          >
+            <div class="flex items-start gap-2 sm:gap-3">
+              <div class="hidden sm:flex flex-col items-center gap-0.5 pt-2 text-base-content/30 cursor-grab select-none drag-handle hover:text-base-content/60">
+                <span class="leading-none text-lg">⠿</span>
+              </div>
+
+              <div class={[
+                "font-mono font-bold text-lg sm:text-xl w-6 sm:w-7 pt-2 shrink-0 text-center",
+                is_correct && "text-success",
+                !is_correct && "text-base-content/50"
+              ]}>
+                {String.capitalize(letter_for_index(i))}
+              </div>
+
+              <textarea
+                name={"question[options][#{i}]"}
+                id={"question_options_#{i}"}
+                data-option-text
+                phx-hook="AutoResize"
+                onclick="event.stopPropagation()"
+                class="flex-1 min-w-0 bg-base-100 border-2 border-base-300 rounded-lg outline-none resize-none text-base sm:text-lg leading-relaxed placeholder:text-base-content/30 focus:outline-none px-2 py-1.5 min-h-[3.75rem] whitespace-pre-wrap"
+                placeholder={"Option #{String.capitalize(letter_for_index(i))}"}
+                rows="2"
+              ><%= opt_text %></textarea>
+
+              <%= if @option_image_previews[i] == nil and opt_img == nil do %>
+                <label
+                  for={live_option_upload(assigns, i).ref}
+                  onclick="event.stopPropagation()"
+                  title="Bild hinzufügen"
+                  class="hidden sm:inline-flex shrink-0 mt-2 items-center justify-center size-10 rounded-md border border-base-300 text-base-content/50 bg-base-200 hover:bg-base-300 hover:text-base-content cursor-pointer transition-colors select-none"
+                >
+                  <.icon name="hero-photo" class="size-6" />
+                </label>
+              <% end %>
+
+              <div class={[
+                "hidden sm:block pt-2 shrink-0 transition-opacity",
+                is_correct && "opacity-100",
+                !is_correct && "opacity-0 group-hover:opacity-30"
+              ]}>
+                <.icon
+                  name="hero-check-circle"
+                  class={[
+                    "size-5",
+                    is_correct && "text-success",
+                    !is_correct && "text-base-content/40"
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div
+              id={"option-image-zone-#{i}"}
+              data-option-index={i}
+              phx-hook="OptionImagePreview"
+              phx-drop-target={live_option_upload(assigns, i).ref}
+              class="mt-2 ml-8 sm:ml-16"
+            >
+              <.live_file_input upload={live_option_upload(assigns, i)} class="sr-only" />
+
+              <%= cond do %>
+                <% preview = @option_image_previews[i] -> %>
+                  <button
+                    type="button"
+                    phx-click="view_image"
+                    phx-value-url={preview}
+                    class="sm:hidden btn btn-xs btn-ghost gap-1 select-none"
+                  >
+                    <.icon name="hero-photo" class="size-4" />
+                    <span class="text-xs">Bild</span>
+                  </button>
+                  <div class="hidden sm:block relative w-fit">
+                    <img src={preview} class="h-40 max-w-full rounded border border-base-300" />
+                    <button
+                      type="button"
+                      phx-click="cancel_option_upload"
+                      phx-value-index={i}
+                      class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
+                    >×</button>
+                  </div>
+                <% img = opt_img -> %>
+                  <button
+                    type="button"
+                    phx-click="view_image"
+                    phx-value-url={img}
+                    class="sm:hidden btn btn-xs btn-ghost gap-1 select-none"
+                  >
+                    <.icon name="hero-photo" class="size-4" />
+                    <span class="text-xs">Bild</span>
+                  </button>
+                  <div class="hidden sm:block relative w-fit group">
+                    <img src={img} class="h-40 max-w-full rounded border border-base-300" />
+                    <button
+                      type="button"
+                      phx-click="remove_option_image"
+                      phx-value-index={i}
+                      class="btn btn-xs btn-circle absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 select-none"
+                    >×</button>
+                  </div>
+                <% true -> %>
+                  <% :ok %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
     """
   end
 
@@ -525,23 +836,23 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         PubQuizzer.Uploads.store_compressed(tmp_path)
       end)
 
-    existing_images =
+    existing_main_images =
       case socket.assigns[:question] do
         nil -> []
         q -> q.images || []
       end
 
-    question_params = Map.put(question_params, "images", existing_images ++ new_images)
+    question_params = Map.put(question_params, "images", existing_main_images ++ new_images)
 
-    option_images = consume_option_images(socket)
-    existing_images = existing_option_images(socket)
+    new_option_images = consume_option_images(socket)
+    existing_option_images = existing_option_images(socket)
 
     question_params =
       Map.update!(question_params, "options", fn options ->
         options
         |> Enum.with_index()
         |> Enum.map(fn {opt, idx} ->
-          img = Map.get(option_images, idx) || Map.get(existing_images, idx)
+          img = Map.get(new_option_images, idx) || Map.get(existing_option_images, idx)
           if img, do: Map.put(opt, "image", img), else: Map.delete(opt, "image")
         end)
       end)
@@ -699,6 +1010,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     |> maybe_diff(:correct_index, current.correct_index, prev.correct_index)
     |> maybe_diff(:images, version_images(current), version_images(prev))
     |> maybe_diff(:layout, current.layout, prev.layout)
+    |> Enum.reverse()
   end
 
   # Old version rows only have `image`; new ones only `images`. Normalize both
@@ -713,7 +1025,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   defp maybe_diff(acc, _field, same, same), do: acc
 
   defp maybe_diff(acc, field, current_val, prev_val) do
-    acc ++ [%{field: field, old: prev_val, new: current_val}]
+    [%{field: field, old: prev_val, new: current_val} | acc]
   end
 
   defp save_question(socket, question_params) do

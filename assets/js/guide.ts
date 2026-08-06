@@ -78,6 +78,11 @@ function startGuide(): void {
 }
 
 function maybeStartGuide(): void {
+  // The tour highlights desktop nav elements and assumes a wide viewport.
+  // Skip it on phones/tablets — without marking it seen, so a later desktop
+  // login still triggers the onboarding.
+  if (window.matchMedia("(max-width: 1023px)").matches) return
+
   const header = document.querySelector("header[data-guide-seen]")
   if (header?.getAttribute("data-guide-seen") === "true") return
   // The onboarding tour is for moderators only — superadmins know the ropes.

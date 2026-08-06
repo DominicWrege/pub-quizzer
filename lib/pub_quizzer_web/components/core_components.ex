@@ -822,6 +822,13 @@ defmodule PubQuizzerWeb.CoreComponents do
 
   def thumbnail_url(other), do: other
 
+  @doc """
+  Builds the responsive `srcset` attribute value for a question image: a 480w
+  thumbnail followed by the full 1280w original. Centralized so the offered
+  widths stay consistent across every `<img>` we render.
+  """
+  def srcset_for(url), do: "#{thumbnail_url(url)} 480w, #{url} 1280w"
+
   attr :question, :map, required: true
 
   @doc """
@@ -838,7 +845,7 @@ defmodule PubQuizzerWeb.CoreComponents do
         <%= if opt_img = option["image"] do %>
           <img
             src={thumbnail_url(opt_img)}
-            srcset={thumbnail_url(opt_img) <> " 480w, " <> opt_img <> " 1280w"}
+            srcset={srcset_for(opt_img)}
             sizes="80px"
             alt=""
             class="h-20 w-20 object-cover rounded shrink-0"
@@ -910,7 +917,7 @@ defmodule PubQuizzerWeb.CoreComponents do
     ~H"""
     <img
       src={@img}
-      srcset={thumbnail_url(@img) <> " 480w, " <> @img <> " 1280w"}
+      srcset={srcset_for(@img)}
       sizes={@sizes}
       alt="Fragebild"
       class={["rounded-lg", @class]}

@@ -197,7 +197,7 @@
                       <%= if opt_img = option["image"] do %>
                         <img
                           src={thumbnail_url(opt_img)}
-                          srcset={thumbnail_url(opt_img) <> " 480w, " <> opt_img <> " 1280w"}
+                          srcset={srcset_for(opt_img)}
                           sizes="64px"
                           alt=""
                           loading="lazy"

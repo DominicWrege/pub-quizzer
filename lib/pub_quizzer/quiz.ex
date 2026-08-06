@@ -632,16 +632,20 @@ defmodule PubQuizzer.Quiz do
         %{round: round, questions: Map.get(questions_by_topic, round.topic_id, [])}
       end)
 
+    # One pass over answers to tally correct picks per team, instead of
+    # scanning the full answer list once per team.
+    correct_by_team =
+      Enum.reduce(answers, %{}, fn answer, acc ->
+        if answer.selected_index == answer.question.correct_index do
+          Map.update(acc, answer.team_id, 1, &(&1 + 1))
+        else
+          acc
+        end
+      end)
+
     standings =
       teams
-      |> Enum.map(fn team ->
-        score =
-          Enum.count(answers, fn answer ->
-            answer.team_id == team.id and answer.selected_index == answer.question.correct_index
-          end)
-
-        {team.id, team.name, score}
-      end)
+      |> Enum.map(fn team -> {team.id, team.name, Map.get(correct_by_team, team.id, 0)} end)
       |> Enum.sort_by(&elem(&1, 2), :desc)
 
     %{
