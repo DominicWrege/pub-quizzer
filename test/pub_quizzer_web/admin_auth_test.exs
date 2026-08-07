@@ -55,11 +55,11 @@ defmodule PubQuizzerWeb.AdminAuthTest do
       assert msg =~ "nicht gefunden"
     end
 
-    test "GET /admin/logout clears session", %{conn: conn} do
+    test "POST /admin/logout clears session", %{conn: conn} do
       conn =
         conn
         |> log_in_user()
-        |> get(~p"/admin/logout")
+        |> post(~p"/admin/logout")
 
       assert redirected_to(conn) == "/admin/login"
     end

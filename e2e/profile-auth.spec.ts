@@ -28,7 +28,13 @@ test.describe("profile & auth", () => {
   test("logging out redirects to login page", async ({ hostPage }) => {
     test.setTimeout(15_000)
 
-    await hostPage.goto("/admin/logout")
+    await hostPage.goto("/admin/profile")
+    await waitForLiveView(hostPage)
+
+    // Logout is now a POST form (CSRF-protected); drive it via the UI.
+    await hostPage.locator("details.dropdown summary").click()
+    await hostPage.getByRole("button", { name: "Abmelden" }).click()
+
     await expect(hostPage).toHaveURL(/\/admin\/login$/, { timeout: 10_000 })
   })
 

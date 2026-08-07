@@ -96,14 +96,16 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
   end
 
   def handle_event("choose_topic", %{"topic_id" => topic_id}, socket) do
-    topic_id = String.to_integer(topic_id)
+    with {topic_id, ""} <- Integer.parse(topic_id) do
+      case Engine.choose_topic(socket.assigns.event.id, topic_id, nil) do
+        {:ok, _state} ->
+          {:noreply, socket}
 
-    case Engine.choose_topic(socket.assigns.event.id, topic_id, nil) do
-      {:ok, _state} ->
-        {:noreply, socket}
-
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, "Thema konnte nicht gewählt werden: #{reason}")}
+        {:error, reason} ->
+          {:noreply, put_flash(socket, :error, "Thema konnte nicht gewählt werden: #{reason}")}
+      end
+    else
+      _ -> {:noreply, socket}
     end
   end
 

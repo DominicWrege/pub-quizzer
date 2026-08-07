@@ -22,7 +22,7 @@ defmodule PubQuizzerWeb.Admin.ProfileLive do
   def handle_event("save", %{"user" => user_params}, socket) do
     user = socket.assigns.current_scope.user
 
-    case Accounts.update_user(user, user_params) do
+    case Accounts.update_profile(user, user_params) do
       {:ok, updated_user} ->
         {:noreply,
          socket

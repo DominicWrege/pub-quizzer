@@ -560,7 +560,7 @@ defmodule PubQuizzer.Quiz do
 
   defp generate_code do
     1..4
-    |> Enum.map_join(fn _ -> Integer.to_string(:rand.uniform(10) - 1) end)
+    |> Enum.map_join(fn _ -> Integer.to_string(:crypto.strong_rand_range(10)) end)
     |> String.pad_leading(4, "0")
   end
 

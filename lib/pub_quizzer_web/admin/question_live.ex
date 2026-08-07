@@ -634,7 +634,15 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     if socket.assigns.search != "" do
       {:noreply, socket}
     else
-      ordered_ids = Enum.map(ids, &String.to_integer/1)
+      # Drop any id that doesn't parse; reorder_questions rejects mismatched sets,
+      # so a tampered payload just no-ops instead of crashing.
+      ordered_ids =
+        ids
+        |> Enum.map(&Integer.parse/1)
+        |> Enum.flat_map(fn
+          {n, ""} -> [n]
+          _ -> []
+        end)
 
       case Quiz.reorder_questions(socket.assigns.topic.id, ordered_ids) do
         {:ok, _questions} -> {:noreply, restream_questions(socket)}

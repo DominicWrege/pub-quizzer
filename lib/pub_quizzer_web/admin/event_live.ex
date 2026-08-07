@@ -114,15 +114,18 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   end
 
   def handle_event("rename_team", %{"team_id" => team_id, "name" => name}, socket) do
-    team = Quiz.get_team!(team_id)
+    with {id, ""} <- Integer.parse(team_id),
+         {:ok, team} <- fetch_team_in_event(id, socket.assigns.event.id) do
+      case Quiz.update_team_name(team, name) do
+        {:ok, _team} ->
+          event = Quiz.get_event_with_teams!(socket.assigns.event.id)
+          {:noreply, assign(socket, :event, event)}
 
-    case Quiz.update_team_name(team, name) do
-      {:ok, _team} ->
-        event = Quiz.get_event_with_teams!(socket.assigns.event.id)
-        {:noreply, assign(socket, :event, event)}
-
-      {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Team konnte nicht umbenannt werden.")}
+        {:error, _changeset} ->
+          {:noreply, put_flash(socket, :error, "Team konnte nicht umbenannt werden.")}
+      end
+    else
+      _ -> {:noreply, socket}
     end
   end
 
@@ -147,29 +150,38 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   def handle_event("remove_team", %{"team_id" => team_id}, socket) do
     # Route through Quiz.delete_team/1 so team_count stays consistent and the
     # broadcast fires — a bare Repo.delete! here left event.team_count stale.
-    team = Repo.get!(Team, String.to_integer(team_id))
-    Quiz.delete_team(team)
+    event_id = socket.assigns.event.id
 
-    event = Quiz.get_event_with_teams!(socket.assigns.event.id)
-    {:noreply, reconcile_connections(socket, event)}
+    with {id, ""} <- Integer.parse(team_id),
+         {:ok, team} <- fetch_team_in_event(id, event_id) do
+      Quiz.delete_team(team)
+      event = Quiz.get_event_with_teams!(event_id)
+      {:noreply, reconcile_connections(socket, event)}
+    else
+      _ -> {:noreply, socket}
+    end
   end
 
   def handle_event("kick_team", %{"team_id" => team_id}, socket) do
-    team_id = String.to_integer(team_id)
     event_id = socket.assigns.event.id
 
-    # Broadcast kick to all team lobby clients for this team
-    Phoenix.PubSub.broadcast(
-      PubQuizzer.PubSub,
-      "quiz:event:#{event_id}",
-      {:kick_team, team_id}
-    )
+    with {id, ""} <- Integer.parse(team_id),
+         {:ok, _team} <- fetch_team_in_event(id, event_id) do
+      # Broadcast kick to all team lobby clients for this team
+      Phoenix.PubSub.broadcast(
+        PubQuizzer.PubSub,
+        "quiz:event:#{event_id}",
+        {:kick_team, id}
+      )
 
-    # Unclaim the team slot so it becomes available again
-    Quiz.unclaim_team(team_id)
+      # Unclaim the team slot so it becomes available again
+      Quiz.unclaim_team(id)
 
-    event = Quiz.get_event_with_teams!(event_id)
-    {:noreply, reconcile_connections(socket, event)}
+      event = Quiz.get_event_with_teams!(event_id)
+      {:noreply, reconcile_connections(socket, event)}
+    else
+      _ -> {:noreply, socket}
+    end
   end
 
   # Show page confirmations
@@ -277,6 +289,15 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     |> Enum.filter(& &1.claimed_at)
     |> Enum.map(& &1.id)
     |> MapSet.new()
+  end
+
+  # Loads a team only if it belongs to the current event. Prevents cross-event
+  # IDOR: without this guard a crafted team_id could affect teams in other events.
+  defp fetch_team_in_event(team_id, event_id) do
+    case Repo.get(Team, team_id) do
+      %Team{quiz_event_id: ^event_id} = team -> {:ok, team}
+      _ -> :error
+    end
   end
 
   # Refreshes the event + connected/claimed tracking in one place. Used by the

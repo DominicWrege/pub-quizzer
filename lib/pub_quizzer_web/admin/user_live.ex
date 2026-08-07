@@ -101,7 +101,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
 
   def handle_event("save_edit_user", %{"user" => user_params}, socket) do
     socket =
-      case Accounts.update_user(socket.assigns.editing_user, user_params) do
+      case Accounts.update_user_by_admin(socket.assigns.editing_user, user_params) do
         {:ok, _updated} ->
           socket
           |> assign(:users, Accounts.list_users())
