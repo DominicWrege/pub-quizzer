@@ -34,49 +34,28 @@ const AutoDismiss = {
   }
 }
 
-interface ImagePreviewHook extends ViewHook {
-  img: Element | null
+interface OptionImagePreviewHook extends ViewHook {
   currentUrl: string | null
 }
 
-const ImagePreview = {
-  mounted(this: ImagePreviewHook) {
-    this.img = null
-    this.currentUrl = null
-
-    const showPreview = (file: File | undefined | null) => {
-      if (!file) return
-      if (this.currentUrl) URL.revokeObjectURL(this.currentUrl)
-      const url = URL.createObjectURL(file)
-      this.currentUrl = url
-      if (this.img) {
-        ;(this.img as HTMLImageElement).src = url
-        this.img.classList.remove("hidden")
-      }
-      this.pushEvent("image_preview", { data_url: url })
-    }
-
-    this.el.addEventListener("change", (e: Event) => {
-      const target = e.target as HTMLInputElement
-      if (target.type !== "file") return
-      showPreview(target.files?.[0])
+// Reports an uploaded (but not yet saved) image's blob URL back to the server
+// so the "question preview" dialog can show it. Attached to the per-entry
+// container that wraps a `Phoenix.LiveImgPreview` <img>: by the time this
+// runs, the built-in hook has already resolved the blob URL onto the <img>.
+const ReportUploadedImage = {
+  mounted(this: ViewHook) {
+    requestAnimationFrame(() => {
+      const img = this.el.querySelector("img")
+      const src = img?.src
+      const ref = img?.getAttribute("data-phx-entry-ref")
+      if (!src || !src.startsWith("blob:") || !ref) return
+      this.pushEvent("question_preview_upload", { ref: ref, url: src })
     })
-    this.el.addEventListener("drop", (e: DragEvent) => {
-      const file = e.dataTransfer?.files?.[0]
-      if (file) showPreview(file)
-    })
-  },
-  updated(this: ImagePreviewHook) {
-    this.img = this.el.querySelector("[data-main-image-preview]")
   }
 } satisfies Partial<ViewHook>
 
-interface OptionPreviewHook extends ViewHook {
-  currentUrl: string | null
-}
-
 const OptionImagePreview = {
-  mounted(this: OptionPreviewHook) {
+  mounted(this: OptionImagePreviewHook) {
     this.currentUrl = null
 
     const previewFile = (file: File | undefined | null) => {
@@ -568,7 +547,7 @@ const liveSocket = new LiveSocket("/live", Socket, {
   },
   hooks: {
     AutoDismiss,
-    ImagePreview,
+    ReportUploadedImage,
     OptionImagePreview,
     AutoResize,
     CopyLink,

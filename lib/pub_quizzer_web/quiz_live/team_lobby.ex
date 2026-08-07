@@ -126,31 +126,38 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
 
   @impl true
   def handle_event("select_answer", %{"index" => index_str}, socket) do
-    index = String.to_integer(index_str)
-    original_index = OptionShuffle.to_original(socket.assigns.shuffle_map, index)
-    event_id = socket.assigns.event.id
-    team_id = socket.assigns.team.id
+    with {index, ""} <- Integer.parse(index_str) do
+      original_index = OptionShuffle.to_original(socket.assigns.shuffle_map, index)
+      event_id = socket.assigns.event.id
+      team_id = socket.assigns.team.id
 
-    case Engine.submit_answer(event_id, team_id, original_index) do
-      {:ok, _state} ->
-        {:noreply, assign(socket, :selected_index, index)}
+      case Engine.submit_answer(event_id, team_id, original_index) do
+        {:ok, _state} ->
+          {:noreply, assign(socket, :selected_index, index)}
 
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, "Antwort konnte nicht abgegeben werden: #{reason}")}
+        {:error, reason} ->
+          {:noreply,
+           put_flash(socket, :error, "Antwort konnte nicht abgegeben werden: #{reason}")}
+      end
+    else
+      _ -> {:noreply, socket}
     end
   end
 
   def handle_event("choose_topic", %{"topic_id" => topic_id}, socket) do
-    topic_id = String.to_integer(topic_id)
-    event_id = socket.assigns.event.id
-    team_id = socket.assigns.team.id
+    with {topic_id, ""} <- Integer.parse(topic_id) do
+      event_id = socket.assigns.event.id
+      team_id = socket.assigns.team.id
 
-    case Engine.choose_topic(event_id, topic_id, team_id) do
-      {:ok, _state} ->
-        {:noreply, socket}
+      case Engine.choose_topic(event_id, topic_id, team_id) do
+        {:ok, _state} ->
+          {:noreply, socket}
 
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, "Thema konnte nicht gewählt werden: #{reason}")}
+        {:error, reason} ->
+          {:noreply, put_flash(socket, :error, "Thema konnte nicht gewählt werden: #{reason}")}
+      end
+    else
+      _ -> {:noreply, socket}
     end
   end
 

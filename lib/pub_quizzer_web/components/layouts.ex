@@ -97,9 +97,12 @@ defmodule PubQuizzerWeb.Layouts do
                     </li>
                   <% end %>
                   <li>
-                    <.link navigate={~p"/admin/logout"} class="text-sm">
-                      <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
-                    </.link>
+                    <form action={~p"/admin/logout"} method="post" class="w-full">
+                      <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+                      <button type="submit" class="text-sm flex items-center gap-2 w-full">
+                        <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Abmelden
+                      </button>
+                    </form>
                   </li>
                 </ul>
               </details>

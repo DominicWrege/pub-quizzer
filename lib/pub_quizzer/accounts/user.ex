@@ -28,8 +28,35 @@ defmodule PubQuizzer.Accounts.User do
       :last_signed_in_at
     ])
     |> validate_required([:email, :name, :role])
+    |> validate_length(:name, min: 1, max: 100)
+    |> validate_length(:email, max: 254)
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
     |> validate_inclusion(:role, ["superadmin", "moderator"])
+    |> normalize_email()
+    |> unique_constraint(:email)
+  end
+
+  # Restricted changesets for user-driven edits. The full changeset above casts
+  # :role and :active (needed for setup/invite/programmatic updates); exposing
+  # those to form params would let a client set its own role. These only accept
+  # the fields the corresponding UI actually edits.
+
+  @doc "Changeset for a user editing their own profile (name only)."
+  def profile_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name])
+    |> validate_required([:name])
+    |> validate_length(:name, min: 1, max: 100)
+  end
+
+  @doc "Changeset for a superadmin editing another user's name/email."
+  def admin_edit_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name, :email])
+    |> validate_required([:name, :email])
+    |> validate_length(:name, min: 1, max: 100)
+    |> validate_length(:email, max: 254)
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
     |> normalize_email()
     |> unique_constraint(:email)
   end

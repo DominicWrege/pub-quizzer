@@ -55,9 +55,15 @@ defmodule PubQuizzer.Accounts do
     |> Repo.update()
   end
 
-  def update_user(%User{} = user, attrs) do
+  def update_profile(%User{} = user, attrs) do
     user
-    |> User.changeset(attrs)
+    |> User.profile_changeset(attrs)
+    |> Repo.update()
+  end
+
+  def update_user_by_admin(%User{} = user, attrs) do
+    user
+    |> User.admin_edit_changeset(attrs)
     |> Repo.update()
   end
 

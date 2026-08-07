@@ -46,7 +46,7 @@ defmodule PubQuizzer.Accounts.AuthEmail do
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #333;">
       <h2 style="font-size: 22px; margin-bottom: 8px;">🏆 Quiz for a better life</h2>
       <p style="font-size: 16px; line-height: 1.5;">
-        Moin #{name}! Schön, dass du da bist!<br>
+        Moin #{esc(name)}! Schön, dass du da bist!<br>
         Klicke auf den Link, um dich anzumelden:
       </p>
       <p style="margin: 28px 0;">
@@ -76,7 +76,7 @@ defmodule PubQuizzer.Accounts.AuthEmail do
       <h2 style="font-size: 22px; margin-bottom: 8px;">🏆 Quiz for a better life</h2>
       <p style="font-size: 16px; line-height: 1.5;">
         Moin!<br>
-        <strong>#{moderator.name}</strong> (#{moderator.email}) hat sich soeben
+        <strong>#{esc(moderator.name)}</strong> (#{esc(moderator.email)}) hat sich soeben
         zum ersten Mal als Moderator angemeldet.
       </p>
       <p style="color: #666; font-size: 14px; line-height: 1.5;">
@@ -85,6 +85,15 @@ defmodule PubQuizzer.Accounts.AuthEmail do
       </p>
     </div>
     """
+  end
+
+  # The HTML email bodies are built by string concatenation (no auto-escaping),
+  # and name/email are user-controlled — escape them there. The URL is trusted
+  # (crypto-safe token + configured host) so it's left as-is.
+  defp esc(string) when is_binary(string) do
+    string
+    |> Phoenix.HTML.html_escape()
+    |> Phoenix.HTML.safe_to_string()
   end
 
   defp notice_text(%User{} = moderator) do

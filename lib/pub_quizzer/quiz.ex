@@ -133,17 +133,12 @@ defmodule PubQuizzer.Quiz do
         options: q.options,
         correct_index: q.correct_index,
         position: idx,
-        image: nil_if_blank(q.image),
-        image_position: q.image_position || "left"
+        images: Enum.reject(q.images || [], &(&1 in [nil, ""])),
+        image_position: q.image_position || "left",
+        layout: q.layout || "image_side"
       }
     end)
   end
-
-  defp nil_if_blank(value) when is_binary(value) do
-    if String.trim(value) == "", do: nil, else: value
-  end
-
-  defp nil_if_blank(value), do: value
 
   @doc """
   Loads questions for several topics in a single query (plus one batched
@@ -290,7 +285,8 @@ defmodule PubQuizzer.Quiz do
       prompt: question.prompt,
       options: question.options,
       correct_index: question.correct_index,
-      image: question.image,
+      images: question.images,
+      layout: question.layout,
       action: action
     })
     |> Repo.insert!()
@@ -309,7 +305,8 @@ defmodule PubQuizzer.Quiz do
       prompt: question.prompt,
       options: question.options,
       correct_index: question.correct_index,
-      image: question.image,
+      images: question.images,
+      layout: question.layout,
       action: action
     })
     |> Repo.insert()
@@ -563,7 +560,7 @@ defmodule PubQuizzer.Quiz do
 
   defp generate_code do
     1..4
-    |> Enum.map_join(fn _ -> Integer.to_string(:rand.uniform(10) - 1) end)
+    |> Enum.map_join(fn _ -> Integer.to_string(:crypto.strong_rand_range(10)) end)
     |> String.pad_leading(4, "0")
   end
 
@@ -635,16 +632,20 @@ defmodule PubQuizzer.Quiz do
         %{round: round, questions: Map.get(questions_by_topic, round.topic_id, [])}
       end)
 
+    # One pass over answers to tally correct picks per team, instead of
+    # scanning the full answer list once per team.
+    correct_by_team =
+      Enum.reduce(answers, %{}, fn answer, acc ->
+        if answer.selected_index == answer.question.correct_index do
+          Map.update(acc, answer.team_id, 1, &(&1 + 1))
+        else
+          acc
+        end
+      end)
+
     standings =
       teams
-      |> Enum.map(fn team ->
-        score =
-          Enum.count(answers, fn answer ->
-            answer.team_id == team.id and answer.selected_index == answer.question.correct_index
-          end)
-
-        {team.id, team.name, score}
-      end)
+      |> Enum.map(fn team -> {team.id, team.name, Map.get(correct_by_team, team.id, 0)} end)
       |> Enum.sort_by(&elem(&1, 2), :desc)
 
     %{

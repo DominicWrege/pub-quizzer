@@ -20,7 +20,9 @@ defmodule PubQuizzerWeb.AdminSessionController do
   end
 
   def create(conn, %{"email" => email}) do
-    base_url = get_base_url(conn)
+    # Use the configured endpoint URL rather than the request host so a spoofed
+    # Host header can't redirect magic-link emails to an attacker-controlled domain.
+    base_url = PubQuizzerWeb.Endpoint.url()
 
     case Accounts.deliver_magic_link(email, base_url) do
       {:ok, _url} ->
@@ -45,9 +47,5 @@ defmodule PubQuizzerWeb.AdminSessionController do
     |> clear_session()
     |> put_flash(:info, "Abgemeldet.")
     |> redirect(to: "/admin/login")
-  end
-
-  defp get_base_url(conn) do
-    "#{conn.scheme}://#{conn.host}:#{conn.port}"
   end
 end

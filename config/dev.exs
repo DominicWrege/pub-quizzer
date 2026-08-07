@@ -28,6 +28,9 @@ config :pub_quizzer,
 config :pub_quizzer, PubQuizzerWeb.Endpoint,
   # Binding to 0.0.0.0 allows access from other devices on the network.
   http: [ip: {0, 0, 0, 0}],
+  # Used to build emailed magic-link URLs; must include the port in dev so
+  # links resolve to the dev server rather than :80.
+  url: [host: "localhost", port: 4000],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
