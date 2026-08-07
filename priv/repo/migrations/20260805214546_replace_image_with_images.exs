@@ -9,8 +9,10 @@ defmodule PubQuizzer.Repo.Migrations.ReplaceImageWithImages do
 
     flush()
 
-    # Schemaless queries carry no type info, so dump the array explicitly —
-    # otherwise the raw string is stored instead of a JSON array.
+    # Schemaless queries carry no type info. Encode the array to a JSON string
+    # and bind it as text — binding an Elixir list makes exqlite store a raw
+    # string, which then fails to load into the {:array, :string} field (see
+    # RepairRawQuestionImages, which fixes databases hit by that earlier bug).
     repo().all(from(q in "questions", select: [q.id, q.image]))
     |> Enum.each(fn
       [_id, nil] ->
@@ -20,13 +22,13 @@ defmodule PubQuizzer.Repo.Migrations.ReplaceImageWithImages do
         :ok
 
       [id, image] ->
-        {:ok, dumped} = Ecto.Type.dump({:array, :string}, [image])
+        json = Jason.encode!([image])
 
         # The update goes inside the `from` macro so the pin is valid —
         # `repo().update_all/2` is a runtime call where `set: [images: ^v]`
         # would be a misplaced pin (not a macro-compiled option).
         repo().update_all(
-          from(q in "questions", where: q.id == ^id, update: [set: [images: ^dumped]]),
+          from(q in "questions", where: q.id == ^id, update: [set: [images: ^json]]),
           []
         )
     end)
