@@ -91,8 +91,8 @@ test.describe("question CRUD", () => {
 
     await hostPage.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
     await hostPage.mouse.down()
-    // Drop on the right half of the second card => insert after it
-    await hostPage.mouse.move(to.x + to.width * 0.75, to.y + to.height / 2, { steps: 10 })
+    // Drop on the lower half of the second card => insert after it
+    await hostPage.mouse.move(to.x + to.width * 0.75, to.y + to.height * 0.75, { steps: 10 })
     await hostPage.mouse.up()
 
     await expect(prompts.nth(0)).toHaveText(second, { timeout: 10_000 })

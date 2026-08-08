@@ -406,7 +406,7 @@ defmodule PubQuizzerWeb.CoreComponents do
 
   def back_link(assigns) do
     ~H"""
-    <.link navigate={@navigate} aria-label={@label} class="btn btn-sm btn-soft gap-1">
+    <.link navigate={@navigate} aria-label={@label} class="btn btn-xs sm:btn-sm btn-soft gap-1">
       <.icon name="hero-arrow-left" class="size-4" />
       <span class="hidden sm:inline">{@label}</span>
     </.link>

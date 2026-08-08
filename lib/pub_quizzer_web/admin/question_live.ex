@@ -14,9 +14,9 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   @impl true
   def render(assigns) do
     case assigns.live_action do
-      :index -> index(assigns)
+      :index -> shell(assigns)
       :new -> new(assigns)
-      :edit -> edit(assigns)
+      :edit -> shell(assigns)
     end
   end
 
@@ -515,17 +515,289 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     """
   end
 
+  @doc "PowerPoint-style ordered rail: numbered, draggable question list."
+  attr :topic, :any, required: true
+  attr :questions, :any, required: true
+  attr :search, :string, required: true
+  attr :first_question_id, :any, required: true
+  attr :last_question_id, :any, required: true
+  attr :selected_id, :any, default: nil
+
+  def question_rail(assigns) do
+    ~H"""
+    <div
+      id="questions"
+      phx-update="stream"
+      phx-hook="QuestionSorter"
+      class="flex flex-col gap-1.5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1"
+    >
+      <div
+        :for={{id, q} <- @questions}
+        id={id}
+        class={[
+          "q-card relative cursor-pointer rounded-xl border-2 px-3.5 py-4 transition-all duration-150",
+          if(@selected_id == q.id,
+            do: "border-primary bg-primary/10",
+            else: "border-base-300 bg-base-200 hover:border-base-content/30 hover:bg-base-300/50"
+          )
+        ]}
+      >
+        <% selected = @selected_id == q.id %>
+        <.link
+          patch={~p"/admin/topics/#{@topic.id}/questions/#{q.id}/edit"}
+          class="absolute inset-0 z-[1] rounded-xl"
+        >
+          <span class="sr-only">Frage {q.position + 1} öffnen</span>
+        </.link>
+        <div class="flex items-start gap-2.5">
+          <span class={[
+            "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full font-mono text-xs font-semibold leading-none tabular-nums",
+            if(selected,
+              do: "bg-primary text-primary-content",
+              else: "bg-base-300 text-base-content/60"
+            )
+          ]}>
+            {q.position + 1}
+          </span>
+          <div class="min-w-0 flex-1">
+            <span class="block py-0.5 pr-1">
+              <span class="font-medium break-words line-clamp-5 text-sm leading-snug">
+                {q.prompt}
+              </span>
+            </span>
+            <div class="mt-1 flex items-center gap-1.5 text-[11px] text-base-content/50">
+              <span class={[
+                "size-1.5 rounded-full",
+                if(q.status == "published", do: "bg-success", else: "bg-warning")
+              ]}></span>
+              <span>{if q.status == "published", do: "Live", else: "Entwurf"}</span>
+              <%= if (q.images || []) != [] do %>
+                <span class="inline-flex items-center gap-0.5">
+                  <.icon name="hero-photo" class="size-3" /> {length(q.images)}
+                </span>
+              <% end %>
+              <span class="text-base-content/30">·</span>
+              <span>{Calendar.strftime(q.updated_at, "%d.%m.%y")}</span>
+            </div>
+            <div class="mt-1.5 flex items-center gap-0.5">
+              <%= if @search == "" do %>
+                <button
+                  type="button"
+                  phx-click="move_up"
+                  phx-value-id={q.id}
+                  disabled={q.id == @first_question_id}
+                  aria-label="Nach oben verschieben"
+                  class="btn btn-xs btn-ghost btn-square relative z-[2]"
+                >
+                  <.icon name="hero-arrow-up" class="size-3.5" />
+                </button>
+                <button
+                  type="button"
+                  phx-click="move_down"
+                  phx-value-id={q.id}
+                  disabled={q.id == @last_question_id}
+                  aria-label="Nach unten verschieben"
+                  class="btn btn-xs btn-ghost btn-square relative z-[2]"
+                >
+                  <.icon name="hero-arrow-down" class="size-3.5" />
+                </button>
+                <div
+                  aria-hidden="true"
+                  title="Ziehen zum Sortieren"
+                  class="drag-handle relative z-[2] hidden lg:flex flex-col items-center justify-center px-1 text-base-content/30 cursor-grab select-none hover:text-base-content/60"
+                >
+                  <span class="leading-none text-lg">⠿</span>
+                </div>
+              <% end %>
+              <div class="flex-1"></div>
+              <button
+                type="button"
+                phx-click="ask_delete"
+                phx-value-id={q.id}
+                aria-label="Löschen"
+                class="btn btn-xs btn-ghost btn-square relative z-[2] text-error hover:bg-error/10"
+              >
+                <.icon name="hero-trash" class="size-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  @doc "Editor pane: toolbar plus the question form with status/history column."
+  attr :form, :any, required: true
+  attr :question, :any, required: true
+  attr :versions, :list, required: true
+  attr :uploads, :map, required: true
+  attr :option_image_previews, :map, required: true
+  attr :form_submitted, :boolean, required: true
+  attr :meta_collapsed, :boolean, required: true
+
+  def editor_pane(assigns) do
+    ~H"""
+    <div class="mb-3 flex items-center justify-between gap-2 lg:pt-2">
+      <h2 class="min-w-0 truncate text-lg font-bold leading-tight">
+        Frage {@question.position + 1}
+      </h2>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          phx-click="toggle_meta"
+          aria-label="Status und Verlauf ein-/ausblenden"
+          title="Status und Verlauf ein-/ausblenden"
+          aria-pressed={to_string(@meta_collapsed)}
+          class="btn btn-ghost btn-sm btn-square hidden xl:inline-flex"
+        >
+          <.icon
+            name={if @meta_collapsed, do: "hero-chevron-left", else: "hero-chevron-right"}
+            class="size-4"
+          />
+        </button>
+        <button
+          type="button"
+          phx-click="toggle_preview"
+          class="btn btn-soft btn-sm gap-1 hidden sm:inline-flex"
+        >
+          <.icon name="hero-eye" class="size-4" /> Vorschau
+        </button>
+        <button type="submit" form="question-form" class="btn btn-primary btn-sm gap-1">
+          <span class="loading loading-spinner loading-xs hidden [.phx-submit-loading_&]:inline-block"></span>
+          <.icon name="hero-check-circle" class="size-4 [.phx-submit-loading_&]:hidden" /> Speichern
+        </button>
+      </div>
+    </div>
+
+    <.form
+      for={@form}
+      id="question-form"
+      phx-change="validate"
+      phx-submit="save"
+      class={[
+        "flex flex-col gap-4 xl:grid xl:gap-2 max-w-full",
+        if(@meta_collapsed, do: "xl:grid-cols-[minmax(0,1fr)]", else: "xl:grid-cols-[2fr_1fr]")
+      ]}
+    >
+      <div class="bg-base-200 rounded-2xl p-1.5 sm:p-6 space-y-5 border border-base-300 min-w-0">
+        <%!-- Hidden correct index — driven by click-to-select on option cards --%>
+        <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
+
+        <.form_errors form={@form} submitted={@form_submitted} />
+        <.prompt_card form={@form} uploads={@uploads} question={@question} />
+        <.option_rows
+          form={@form}
+          uploads={@uploads}
+          option_image_previews={@option_image_previews}
+        />
+      </div>
+
+      <%!-- Right column: status + edit history --%>
+      <div class={["min-w-0", @meta_collapsed && "xl:hidden"]}>
+        <div class="space-y-3 xl:sticky xl:top-4">
+          <.status_card form={@form} />
+
+          <section class="card bg-base-200 border border-base-300">
+            <div class="card-body p-4 gap-3">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-base-content/80">Bearbeitungsverlauf</h3>
+                <span class="text-xs text-base-content/50">{length(@versions)} Versionen</span>
+              </div>
+              <%= if @versions == [] do %>
+                <p class="text-sm text-base-content/70 italic">Noch keine Versionen.</p>
+              <% else %>
+                <div class="space-y-2">
+                  <%= for {version, diffs} <- @versions do %>
+                    <div class="rounded-lg border border-base-300 bg-base-100 px-3 py-2">
+                      <div class="flex items-center gap-2">
+                        <div class="avatar avatar-placeholder">
+                          <div class="bg-primary text-primary-content rounded-full w-7">
+                            <span class="text-xs font-semibold">
+                              {String.at((version.user && version.user.name) || "?", 0)}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <span class="font-medium text-sm block truncate">
+                            {(version.user && version.user.name) || "Unbekannt"}
+                          </span>
+                          <span class="text-xs text-base-content/70">
+                            {Calendar.strftime(version.inserted_at, "%d.%m.%y %H:%M")}
+                          </span>
+                        </div>
+                      </div>
+                      <%= if diffs != [] do %>
+                        <ul class="mt-2 space-y-1 text-xs text-base-content/80 border-t border-base-300 pt-2">
+                          <%= for diff <- diffs do %>
+                            <li class="flex items-start gap-1">
+                              <.icon
+                                name="hero-pencil"
+                                class="size-3 mt-0.5 shrink-0 text-base-content/60"
+                              />
+                              <%= case diff.field do %>
+                                <% :prompt -> %>
+                                  <span class="font-semibold">Frage geändert</span>
+                                <% :options -> %>
+                                  <span class="font-semibold">Optionen geändert</span>
+                                <% :correct_index -> %>
+                                  <span class="font-semibold">Antwort:</span>
+                                  {String.capitalize(letter_for_index(diff.old || 0))} → {String.capitalize(
+                                    letter_for_index(diff.new || 0)
+                                  )}
+                                <% :image -> %>
+                                  <%= cond do %>
+                                    <% is_nil(diff.old) and not is_nil(diff.new) -> %>
+                                      <span class="font-semibold">Bild hinzugefügt</span>
+                                    <% not is_nil(diff.old) and is_nil(diff.new) -> %>
+                                      <span class="font-semibold">Bild entfernt</span>
+                                    <% true -> %>
+                                      <span class="font-semibold">Bild geändert</span>
+                                  <% end %>
+                                <% :images -> %>
+                                  <%= cond do %>
+                                    <% (diff.old || []) == [] and (diff.new || []) != [] -> %>
+                                      <span class="font-semibold">Bild hinzugefügt</span>
+                                    <% (diff.old || []) != [] and (diff.new || []) == [] -> %>
+                                      <span class="font-semibold">Bild entfernt</span>
+                                    <% true -> %>
+                                      <span class="font-semibold">Bilder geändert</span>
+                                  <% end %>
+                                <% :layout -> %>
+                                  <span class="font-semibold">Layout:</span>
+                                  {diff.old || "image_side"} → {diff.new}
+                              <% end %>
+                            </li>
+                          <% end %>
+                        </ul>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </section>
+        </div>
+      </div>
+    </.form>
+    """
+  end
+
   @impl true
   def mount(_params, _session, socket) do
     socket =
       socket
       |> assign(:confirm_action, nil)
       |> assign(:pending_delete_id, nil)
+      |> assign(:editing_topic, false)
+      |> assign(:topic_form, nil)
       |> assign(:search, "")
       |> assign(:option_image_previews, %{})
       |> assign(:preview_uploads, %{})
       |> assign(:show_preview, false)
       |> assign(:viewing_image, nil)
+      |> assign(:rail_collapsed, false)
+      |> assign(:meta_collapsed, false)
       |> allow_upload(:image,
         accept: ~w(.jpg .jpeg .png .gif .webp),
         max_entries: 4,
@@ -553,17 +825,23 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   defp apply_action(socket, :index, %{"topic_id" => topic_id}) do
     topic = Quiz.get_topic!(topic_id)
-    questions = Quiz.list_questions_for_topic(topic.id)
+    questions = rail_questions(socket, topic)
+
+    selected =
+      case socket.assigns[:question] do
+        %Question{id: id} = q ->
+          if Enum.any?(questions, &(&1.id == id)), do: q, else: List.first(questions)
+
+        _ ->
+          List.first(questions)
+      end
 
     socket
-    |> assign(:topic, topic)
     |> assign(:page_title, topic.name)
-    |> assign(:questions_count, length(questions))
     |> assign(:editing_topic, false)
     |> assign(:topic_form, nil)
-    |> assign(:first_question_id, questions |> List.first() |> then(&(&1 && &1.id)))
-    |> assign(:last_question_id, questions |> List.last() |> then(&(&1 && &1.id)))
-    |> stream(:questions, questions)
+    |> assign_rail(topic, questions)
+    |> load_editor(selected)
   end
 
   defp apply_action(socket, :new, %{"topic_id" => topic_id}) do
@@ -584,22 +862,68 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   defp apply_action(socket, :edit, %{"topic_id" => topic_id, "id" => id}) do
     topic = Quiz.get_topic!(topic_id)
     question = Quiz.get_question!(id)
-    changeset = Question.changeset(question, %{})
-    versions = Quiz.list_question_versions(question.id)
+    questions = rail_questions(socket, topic)
 
     socket
+    |> assign(:page_title, "Frage #{question.position + 1} bearbeiten – #{topic.name}")
+    |> assign(:editing_topic, false)
+    |> assign(:topic_form, nil)
+    |> assign_rail(topic, questions)
+    |> load_editor(question)
+  end
+
+  defp rail_questions(socket, topic) do
+    if socket.assigns.search == "" do
+      Quiz.list_questions_for_topic(topic.id)
+    else
+      Quiz.search_questions_for_topic(topic.id, socket.assigns.search)
+    end
+  end
+
+  defp assign_rail(socket, topic, questions) do
+    socket
     |> assign(:topic, topic)
-    |> assign(:question, question)
-    |> assign(:page_title, "Frage bearbeiten – #{topic.name}")
-    |> assign(:form, to_form(changeset))
+    |> assign(:questions_count, length(questions))
+    |> assign(:mini_questions, questions)
+    |> assign(:first_question_id, questions |> List.first() |> then(&(&1 && &1.id)))
+    |> assign(:last_question_id, questions |> List.last() |> then(&(&1 && &1.id)))
+    |> stream(:questions, questions)
+  end
+
+  defp load_editor(socket, nil) do
+    socket
+    |> assign(:question, nil)
+    |> assign(:form, nil)
+    |> assign(:versions, [])
     |> assign(:form_submitted, false)
     |> assign(:option_image_previews, %{})
     |> assign(:preview_uploads, %{})
     |> assign(:show_preview, false)
+  end
+
+  defp load_editor(socket, question) do
+    changeset = Question.changeset(question, %{})
+    versions = Quiz.list_question_versions(question.id)
+
+    socket
+    |> assign(:question, question)
+    |> assign(:form, to_form(changeset))
     |> assign(:versions, compute_version_diffs(versions))
+    |> assign(:form_submitted, false)
+    |> assign(:option_image_previews, %{})
+    |> assign(:preview_uploads, %{})
+    |> assign(:show_preview, false)
   end
 
   @impl true
+  def handle_event("toggle_rail", _params, socket) do
+    {:noreply, update(socket, :rail_collapsed, &(!&1))}
+  end
+
+  def handle_event("toggle_meta", _params, socket) do
+    {:noreply, update(socket, :meta_collapsed, &(!&1))}
+  end
+
   def handle_event("search", %{"search" => search}, socket) do
     questions =
       if search == "" do
@@ -612,6 +936,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
      socket
      |> assign(:search, search)
      |> assign(:questions_count, length(questions))
+     |> assign(:mini_questions, questions)
      |> stream(:questions, questions, reset: true)}
   end
 
@@ -663,12 +988,26 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     question = Quiz.get_question!(socket.assigns.pending_delete_id)
     {:ok, _} = Quiz.delete_question(question)
 
-    {:noreply,
-     socket
-     |> assign(:confirm_action, nil)
-     |> assign(:pending_delete_id, nil)
-     |> restream_questions()
-     |> put_flash(:info, "Frage gelöscht.")}
+    socket =
+      socket
+      |> assign(:confirm_action, nil)
+      |> assign(:pending_delete_id, nil)
+      |> restream_questions()
+      |> put_flash(:info, "Frage gelöscht.")
+
+    selected? = socket.assigns[:question] != nil and socket.assigns[:question].id == question.id
+
+    cond do
+      not selected? ->
+        {:noreply, socket}
+
+      socket.assigns.live_action == :edit ->
+        {:noreply, push_patch(socket, to: ~p"/admin/topics/#{socket.assigns.topic.id}/questions")}
+
+      true ->
+        first = socket.assigns.topic.id |> Quiz.list_questions_for_topic() |> List.first()
+        {:noreply, load_editor(socket, first)}
+    end
   end
 
   def handle_event("cancel_confirm", _params, socket) do
@@ -996,6 +1335,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
     socket
     |> assign(:questions_count, length(questions))
+    |> assign(:mini_questions, questions)
     |> assign(:first_question_id, questions |> List.first() |> then(&(&1 && &1.id)))
     |> assign(:last_question_id, questions |> List.last() |> then(&(&1 && &1.id)))
     |> stream(:questions, questions, reset: true)
@@ -1058,13 +1398,19 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         version_action = if question, do: "updated", else: "created"
         record_version(saved_question, user, version_action)
 
-        flash = if question, do: "Frage aktualisiert.", else: "Frage erstellt."
-
-        {:noreply,
-         socket
-         |> assign(:preview_uploads, %{})
-         |> put_flash(:info, flash)
-         |> push_navigate(to: ~p"/admin/topics/#{topic_id}/questions")}
+        if question do
+          {:noreply,
+           socket
+           |> put_flash(:info, "Frage aktualisiert.")
+           |> load_editor(Quiz.get_question!(saved_question.id))
+           |> restream_questions()}
+        else
+          {:noreply,
+           socket
+           |> assign(:preview_uploads, %{})
+           |> put_flash(:info, "Frage erstellt.")
+           |> push_navigate(to: ~p"/admin/topics/#{topic_id}/questions")}
+        end
 
       {:error, changeset} ->
         {:noreply,

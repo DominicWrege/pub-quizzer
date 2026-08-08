@@ -141,7 +141,7 @@ defmodule PubQuizzerWeb.Layouts do
             <%!-- Top padding lives here (not on <main>) so sticky toolbars pin
               flush with the header instead of being inset by main's padding. --%>
             <div class={[
-              "mx-auto space-y-2 sm:space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-4 pb-[env(safe-area-inset-bottom)]",
+              "mx-auto space-y-2 sm:space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-2 pb-[env(safe-area-inset-bottom)]",
               @max_width
             ]}>
               {render_slot(@inner_block)}

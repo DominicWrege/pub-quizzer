@@ -1,0 +1,287 @@
+<Layouts.app
+  flash={@flash}
+  current_scope={@current_scope}
+  current_path={@current_path}
+  max_width="max-w-[1700px]"
+  main_class="px-2 sm:px-6 lg:px-8 pb-4 sm:pb-10 max-w-full"
+>
+  <div
+    data-sticky-bar
+    class="sticky top-[var(--header-h,0px)] lg:top-0 z-10 -mx-2 px-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-base-100 border-b border-base-300 transition-[box-shadow,border-color] duration-200 pt-2 pb-2 lg:pt-2 lg:pb-2 lg:mb-0"
+  >
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <.back_link navigate={~p"/admin/topics"} />
+          <h1 class="min-w-0 truncate text-xl sm:text-2xl font-bold leading-tight">
+            {@topic.name}
+          </h1>
+          <span class="badge badge-ghost badge-sm font-mono">{@questions_count}</span>
+          <button
+            type="button"
+            phx-click="start_edit_topic"
+            aria-label="Thema bearbeiten"
+            class="btn btn-xs btn-soft btn-square"
+          >
+            <.icon name="hero-pencil" class="size-3.5" />
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3 w-full lg:w-auto">
+        <form
+          id="search-form"
+          phx-change="search"
+          class="group relative flex-1 lg:flex-none lg:hidden"
+        >
+          <.icon
+            name="hero-magnifying-glass"
+            class="pointer-events-none absolute z-10 left-2.5 top-1/2 size-4 -translate-y-1/2 text-base-content/50 transition-colors duration-150 group-focus-within:text-base-content/70"
+          />
+          <input
+            name="search"
+            type="text"
+            value={@search}
+            placeholder="Suchen..."
+            class="input input-sm peer w-full pl-8 pr-8 lg:w-56"
+          />
+          <button
+            type="button"
+            data-clear-input
+            aria-label="Suche leeren"
+            class="absolute z-10 right-1.5 top-1/2 hidden size-6 -translate-y-1/2 items-center justify-center rounded-full text-base-content/50 transition duration-150 hover:bg-base-300 hover:text-base-content active:scale-90 peer-[:not(:placeholder-shown)]:flex"
+          >
+            <.icon name="hero-x-mark" class="size-3.5" />
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Master–detail shell: ordered rail left, editor right (desktop). On mobile
+      the index shows only the rail and the edit action only the editor. --%>
+  <% rail_wrapper_class =
+    if(@rail_collapsed,
+      do: [
+        "lg:sticky lg:top-[3rem] lg:h-[calc(100dvh_-_3rem)] lg:border-r lg:border-base-300 lg:overflow-y-auto",
+        @live_action == :edit && "max-lg:hidden"
+      ],
+      else: [
+        "lg:sticky lg:top-[3rem] lg:h-[calc(100dvh_-_3rem)] lg:border-r lg:border-base-300 lg:flex lg:flex-col lg:pr-5",
+        @live_action == :edit && "max-lg:hidden"
+      ]
+    ) %>
+  <div class={[
+    "mt-3 lg:mt-0 lg:grid lg:items-start lg:gap-6 pb-24 lg:pb-8",
+    if(@rail_collapsed,
+      do: "lg:grid-cols-[3rem_minmax(0,1fr)]",
+      else: "lg:grid-cols-[420px_minmax(0,1fr)]"
+    )
+  ]}>
+    <div class={["min-w-0", rail_wrapper_class]}>
+      <%!-- Collapsed mini rail (desktop): expand chevron + numbered questions --%>
+      <div class={["hidden flex-col items-center gap-1.5 pt-1", @rail_collapsed && "lg:flex"]}>
+        <button
+          type="button"
+          phx-click="toggle_rail"
+          aria-label="Fragenliste einblenden"
+          title="Fragenliste einblenden"
+          class="btn btn-ghost btn-sm btn-square"
+        >
+          <.icon name="hero-chevron-right" class="size-4" />
+        </button>
+        <div class="my-1 h-px w-6 bg-base-300" aria-hidden="true"></div>
+        <%= for q <- @mini_questions do %>
+          <.link
+            patch={~p"/admin/topics/#{@topic.id}/questions/#{q.id}/edit"}
+            aria-label={"Frage #{q.position + 1} öffnen"}
+            title={q.prompt}
+            class={[
+              "grid size-7 shrink-0 place-items-center rounded-full font-mono text-xs font-semibold tabular-nums transition-colors duration-150",
+              if(@question && @question.id == q.id,
+                do: "bg-primary text-primary-content",
+                else: "bg-base-300 text-base-content/60 hover:bg-base-content/20 hover:text-base-content"
+              )
+            ]}
+          >
+            {q.position + 1}
+          </.link>
+        <% end %>
+        <div class="my-1 h-px w-6 bg-base-300" aria-hidden="true"></div>
+        <.link
+          navigate={~p"/admin/topics/#{@topic.id}/questions/new"}
+          aria-label="Neue Frage"
+          title="Neue Frage"
+          class="btn btn-primary btn-xs btn-square size-7 shrink-0 rounded-full transition-colors duration-150"
+        >
+          <.icon name="hero-plus" class="size-4" />
+        </.link>
+      </div>
+      <div class={[
+        "min-w-0",
+        @rail_collapsed && "lg:hidden",
+        !@rail_collapsed && "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:pt-2"
+      ]}>
+        <div class="mb-3 hidden items-center gap-2 lg:flex">
+          <form id="rail-search-form" phx-change="search" class="group relative min-w-0 flex-1">
+            <.icon
+              name="hero-magnifying-glass"
+              class="pointer-events-none absolute z-10 left-2.5 top-1/2 size-4 -translate-y-1/2 text-base-content/50 transition-colors duration-150 group-focus-within:text-base-content/70"
+            />
+            <input
+              name="search"
+              type="text"
+              value={@search}
+              placeholder="Suchen..."
+              class="input input-sm peer w-full pl-8 pr-8"
+            />
+            <button
+              type="button"
+              data-clear-input
+              aria-label="Suche leeren"
+              class="absolute z-10 right-1.5 top-1/2 hidden size-6 -translate-y-1/2 items-center justify-center rounded-full text-base-content/50 transition duration-150 hover:bg-base-300 hover:text-base-content active:scale-90 peer-[:not(:placeholder-shown)]:flex"
+            >
+              <.icon name="hero-x-mark" class="size-3.5" />
+            </button>
+          </form>
+          <button
+            type="button"
+            phx-click="toggle_rail"
+            aria-label="Fragenliste ausblenden"
+            title="Fragenliste ausblenden"
+            class="btn btn-ghost btn-sm btn-square shrink-0"
+          >
+            <.icon name="hero-chevron-left" class="size-4" />
+          </button>
+        </div>
+        <div class="hidden lg:block mb-3 shrink-0">
+          <.link
+            navigate={~p"/admin/topics/#{@topic.id}/questions/new"}
+            class="btn btn-primary btn-sm w-full"
+          >
+            <.icon name="hero-plus" class="size-4" /> Neue Frage
+          </.link>
+        </div>
+        <.question_rail
+          topic={@topic}
+          questions={@streams.questions}
+          search={@search}
+          first_question_id={@first_question_id}
+          last_question_id={@last_question_id}
+          selected_id={if @question, do: @question.id}
+        />
+      </div>
+    </div>
+
+    <div class={["min-w-0 mt-4 lg:mt-0", @live_action == :index && "hidden lg:block"]}>
+      <%= if @form do %>
+        <.editor_pane
+          form={@form}
+          question={@question}
+          versions={@versions}
+          uploads={@uploads}
+          option_image_previews={@option_image_previews}
+          form_submitted={@form_submitted}
+          meta_collapsed={@meta_collapsed}
+        />
+      <% else %>
+        <div class="hidden lg:flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-base-300 py-24 text-base-content/50">
+          <.icon name="hero-question-mark-circle" class="size-10" />
+          <p class="text-sm">Keine Fragen in diesem Thema.</p>
+          <.link
+            navigate={~p"/admin/topics/#{@topic.id}/questions/new"}
+            class="btn btn-primary btn-sm"
+          >
+            <.icon name="hero-plus" class="size-4" /> Neue Frage
+          </.link>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%= if @live_action == :index do %>
+    <%!-- Mobile floating "Neue Frage" button --%>
+    <.link
+      navigate={~p"/admin/topics/#{@topic.id}/questions/new"}
+      aria-label="Neue Frage"
+      class="btn btn-primary border-none fixed bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] right-[calc(env(safe-area-inset-right)+1.25rem)] z-40 rounded-full pl-4 pr-5 gap-2 shadow-md shadow-black/20 active:scale-95 lg:hidden"
+    >
+      <.icon name="hero-plus" class="size-5" />
+      <span class="font-semibold">Neue Frage</span>
+    </.link>
+  <% end %>
+
+  <.confirm_modal
+    id="delete-question-modal"
+    show={@confirm_action == :delete_question}
+    title="Frage löschen?"
+    message="Diese Frage löschen?"
+    confirm_label="Löschen"
+    confirm_event="confirm_delete"
+    cancel_event="cancel_confirm"
+  />
+
+  <%= if @editing_topic do %>
+    <dialog
+      id="topic-form-modal"
+      phx-hook="Dialog"
+      data-cancel-event="cancel_edit_topic"
+      class="m-auto rounded-box bg-base-100 p-4 sm:p-6 shadow-xl max-w-lg w-[calc(100%-2rem)] sm:w-full max-h-[90vh] overflow-y-auto"
+    >
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <h3 class="text-lg font-bold">Thema bearbeiten</h3>
+        <button
+          type="button"
+          phx-click="cancel_edit_topic"
+          aria-label="Schließen"
+          class="btn btn-circle btn-ghost btn-sm shrink-0"
+        >
+          <.icon name="hero-x-mark" class="size-5" />
+        </button>
+      </div>
+      <.form for={@topic_form} id="topic-form" phx-submit="save_topic">
+        <.input field={@topic_form[:name]} type="text" label="Name" />
+        <.input
+          field={@topic_form[:description]}
+          type="text"
+          label="Beschreibung"
+          placeholder="Optional"
+        />
+        <div class="mt-4">
+          <label class="flex items-center cursor-pointer gap-2">
+            <span class="text-sm font-medium">Aktiv</span>
+            <input type="hidden" name="topic[enabled]" value="false" />
+            <input
+              type="checkbox"
+              name="topic[enabled]"
+              value="true"
+              class="toggle toggle-primary"
+              checked={@topic_form[:enabled].value}
+            />
+          </label>
+        </div>
+        <div class="flex justify-between items-center mt-6">
+          <button type="button" phx-click="ask_delete_topic" class="btn btn-sm btn-danger-soft">
+            <.icon name="hero-trash" class="size-4" /> Löschen
+          </button>
+          <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
+        </div>
+      </.form>
+    </dialog>
+  <% end %>
+
+  <.confirm_modal
+    id="delete-topic-modal"
+    show={@confirm_action == :delete_topic}
+    title="Thema löschen?"
+    message="Thema und alle Fragen löschen?"
+    confirm_label="Löschen"
+    confirm_event="confirm_delete_topic"
+    cancel_event="cancel_confirm"
+  />
+
+  <%= if @show_preview and @form do %>
+    {preview(assigns)}
+  <% end %>
+
+  <.image_lightbox url={@viewing_image} />
+</Layouts.app>

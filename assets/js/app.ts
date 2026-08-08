@@ -327,38 +327,90 @@ const OptionSorter = {
 interface QuestionSorterHook extends ViewHook {
   _fromEl: HTMLElement | null
   _clone: HTMLElement | null
+  _rowHeight: number
+  _rects: DOMRect[]
+  _lastTarget: number | null
+  _pending: { cx: number, cy: number, card: HTMLElement } | null
+  _suppressClick: boolean
   _onMove: ((ev: MouseEvent) => void) | null
   _onUp: ((ev: MouseEvent) => void) | null
+  _onClick: ((ev: MouseEvent) => void) | null
 }
 
 const QuestionSorter = {
   mounted(this: QuestionSorterHook) {
     this._fromEl = null
     this._clone = null
+    this._rowHeight = 0
+    this._rects = []
+    this._lastTarget = null
+    this._pending = null
+    this._suppressClick = false
     this._onMove = null
     this._onUp = null
+    this._onClick = null
 
     const coarse = window.matchMedia('(pointer: coarse)').matches
     const narrow = window.matchMedia('(max-width: 1023px)').matches
     if (coarse || narrow) return
 
+    // Drag starts anywhere on the card (buttons excluded); a press without
+    // movement stays a plain click so the stretched select-link still works.
     this.el.addEventListener('mousedown', (e: MouseEvent) => {
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return
       const target = e.target as HTMLElement
-      const handle = target.closest('.drag-handle')
-      if (!handle) return
+      if (target.closest('button')) return
+      const card = target.closest('.q-card') as HTMLElement | null
+      if (!card) return
       e.preventDefault()
-      this._startDrag(e.clientX, e.clientY, handle)
+      this._pending = { cx: e.clientX, cy: e.clientY, card }
+
+      this._onMove = (ev: MouseEvent) => {
+        ev.preventDefault()
+        if (this._pending) {
+          const dist = Math.hypot(ev.clientX - this._pending.cx, ev.clientY - this._pending.cy)
+          if (dist < 5) return
+          const { card } = this._pending
+          this._pending = null
+          this._startDrag(ev.clientX, ev.clientY, card)
+        } else {
+          this._positionClone(ev.clientX, ev.clientY)
+          this._shiftAt(ev.clientY)
+        }
+      }
+      this._onUp = (ev: MouseEvent) => {
+        if (this._pending) {
+          this._pending = null
+          this._cleanupListeners()
+          return
+        }
+        this._suppressClick = true
+        this._endDrag(ev.clientY)
+      }
+      document.addEventListener('mousemove', this._onMove)
+      document.addEventListener('mouseup', this._onUp)
     })
+
+    this._onClick = (e: MouseEvent) => {
+      if (this._suppressClick) {
+        this._suppressClick = false
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+    this.el.addEventListener('click', this._onClick, true)
   },
 
   destroyed(this: QuestionSorterHook) {
     this._cleanup()
+    if (this._onClick) this.el.removeEventListener('click', this._onClick, true)
   },
 
-  _startDrag(this: QuestionSorterHook, cx: number, cy: number, handle: Element) {
-    const card = handle.closest('.q-card') as HTMLElement | null
-    if (!card) return
+  _startDrag(this: QuestionSorterHook, cx: number, cy: number, card: HTMLElement) {
     this._fromEl = card
+    this._rowHeight = card.offsetHeight + 6
+    this._rects = this._cards().map((c) => c.getBoundingClientRect())
+    this._lastTarget = null
 
     this._clone = card.cloneNode(true) as HTMLElement
     this._clone.style.position = 'fixed'
@@ -373,18 +425,6 @@ const QuestionSorter = {
     this._positionClone(cx, cy)
 
     card.classList.add('opacity-15')
-
-    this._onMove = (ev: MouseEvent) => {
-      ev.preventDefault()
-      this._positionClone(ev.clientX, ev.clientY)
-      this._highlightAt(ev.clientX, ev.clientY)
-    }
-    this._onUp = (ev: MouseEvent) => {
-      this._endDrag(ev.clientX, ev.clientY)
-    }
-
-    document.addEventListener('mousemove', this._onMove)
-    document.addEventListener('mouseup', this._onUp)
   },
 
   _positionClone(this: QuestionSorterHook, cx: number, cy: number) {
@@ -397,68 +437,79 @@ const QuestionSorter = {
     return Array.from(this.el.querySelectorAll<HTMLElement>('.q-card'))
   },
 
-  _highlightAt(this: QuestionSorterHook, cx: number, cy: number) {
-    const target = this._resolveTarget(cx, cy)
-    this._cards().forEach((c) => c.classList.remove('border-primary'))
-    if (target) target.card.classList.add('border-primary')
-  },
-
-  _resolveTarget(
-    this: QuestionSorterHook,
-    cx: number,
-    cy: number
-  ): { card: HTMLElement, before: boolean } | null {
-    const cards = this._cards().filter((c) => c !== this._fromEl)
-    if (cards.length === 0) return null
-
-    let closest = cards[0]
-    let minDist = Infinity
-    for (const c of cards) {
-      const rect = c.getBoundingClientRect()
-      const dist = Math.hypot(cx - (rect.left + rect.width / 2), cy - (rect.top + rect.height / 2))
-      if (dist < minDist) { minDist = dist; closest = c }
+  _resolveIndex(this: QuestionSorterHook, cy: number): number {
+    for (let i = 0; i < this._rects.length; i++) {
+      const rect = this._rects[i]
+      if (cy < rect.top + rect.height / 2) return i
     }
-
-    const rect = closest.getBoundingClientRect()
-    const withinRow = cy >= rect.top && cy <= rect.bottom
-    const before = withinRow
-      ? cx < rect.left + rect.width / 2
-      : cy < rect.top + rect.height / 2
-
-    return { card: closest, before }
+    return this._rects.length
   },
 
-  _endDrag(this: QuestionSorterHook, cx: number, cy: number) {
-    this._cleanupClone()
+  _shiftAt(this: QuestionSorterHook, cy: number) {
+    const cards = this._cards()
+    const from = this._fromEl ? cards.indexOf(this._fromEl) : -1
+    if (from < 0) return
+    const target = this._resolveIndex(cy)
+    if (target === this._lastTarget) return
+    this._lastTarget = target
 
-    const moving = this._fromEl
-    const target = this._resolveTarget(cx, cy)
+    cards.forEach((c) => { c.style.transform = '' })
 
-    this._cards().forEach((c) => c.classList.remove('border-primary', 'opacity-15'))
-    this._fromEl = null
+    if (target === from || target === from + 1) return
 
-    if (!moving || !target) return
-
-    if (target.before) {
-      target.card.parentNode?.insertBefore(moving, target.card)
+    if (target > from) {
+      for (let i = from + 1; i < target && i < cards.length; i++) {
+        cards[i].style.transform = `translateY(-${this._rowHeight}px)`
+      }
     } else {
-      target.card.parentNode?.insertBefore(moving, target.card.nextSibling)
+      for (let i = target; i < from; i++) {
+        cards[i].style.transform = `translateY(${this._rowHeight}px)`
+      }
     }
+  },
+
+  _endDrag(this: QuestionSorterHook, cy: number) {
+    this._cleanupClone()
+    this._cleanupListeners()
+
+    const cards = this._cards()
+    const from = this._fromEl ? cards.indexOf(this._fromEl) : -1
+    const target = this._resolveIndex(cy)
+
+    cards.forEach((c) => { c.style.transform = ''; c.classList.remove('opacity-15') })
+    const moving = this._fromEl
+    this._fromEl = null
+    this._lastTarget = null
+    this._rects = []
+
+    if (!moving || from < 0 || target === from || target === from + 1) return
+
+    const to = target > from ? target - 1 : target
+    moving.remove()
+    const ref = to >= this.el.children.length ? null : this.el.children[to] as Node
+    this.el.insertBefore(moving, ref)
 
     const ids = this._cards().map((c) => c.id.replace(/^questions-/, ''))
     this.pushEvent('reorder', { ids })
   },
 
-  _cleanupClone(this: QuestionSorterHook) {
-    if (this._clone) { this._clone.remove(); this._clone = null }
+  _cleanupListeners(this: QuestionSorterHook) {
     if (this._onMove) { document.removeEventListener('mousemove', this._onMove); this._onMove = null }
     if (this._onUp) { document.removeEventListener('mouseup', this._onUp); this._onUp = null }
   },
 
+  _cleanupClone(this: QuestionSorterHook) {
+    if (this._clone) { this._clone.remove(); this._clone = null }
+  },
+
   _cleanup(this: QuestionSorterHook) {
     this._cleanupClone()
-    this._cards().forEach((c) => c.classList.remove('border-primary', 'opacity-15'))
+    this._cleanupListeners()
+    this._pending = null
+    this._cards().forEach((c) => { c.style.transform = ''; c.classList.remove('opacity-15') })
     this._fromEl = null
+    this._lastTarget = null
+    this._rects = []
   }
 } satisfies Partial<ViewHook>
 

@@ -721,10 +721,10 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
         |> auth_conn()
         |> live(~p"/admin/topics/#{topic}/questions")
 
-      html = render_change(view, "search", %{"search" => "Q1"})
+      render_change(view, "search", %{"search" => "Q1"})
 
-      refute html =~ "move_up"
-      refute html =~ "drag-handle"
+      refute has_element?(view, "#questions button[phx-click='move_up']")
+      refute has_element?(view, "#questions .drag-handle")
     end
   end
 
