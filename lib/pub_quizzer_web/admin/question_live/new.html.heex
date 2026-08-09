@@ -5,12 +5,11 @@
   max_width="max-w-4xl"
   main_class="px-2 sm:px-6 lg:px-8 pb-4 sm:pb-10 max-w-full"
 >
-  <.header inline_actions class="max-sm:mb-2 lg:mb-0">
+  <.header inline_actions class="max-sm:mb-2 lg:!mb-0">
     <:back>
       <.back_link navigate={~p"/admin/topics/#{@topic.id}/questions"} />
     </:back>
-    Neue Frage
-    <:subtitle>{@topic.name}</:subtitle>
+    {@topic.name}
     <:actions>
       <button
         type="button"
