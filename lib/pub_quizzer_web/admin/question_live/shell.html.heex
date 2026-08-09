@@ -75,7 +75,7 @@
     "mt-3 lg:mt-0 lg:grid lg:items-stretch lg:gap-0 pb-24 lg:pb-0 lg:flex-1 lg:min-h-0 lg:overflow-hidden",
     if(@rail_collapsed,
       do: "lg:grid-cols-[3rem_minmax(0,1fr)]",
-      else: "lg:grid-cols-[360px_minmax(0,1fr)]"
+      else: "lg:grid-cols-[420px_minmax(0,1fr)]"
     )
   ]}>
     <div class={["min-w-0", rail_wrapper_class]}>
@@ -184,7 +184,13 @@
           id="question-form"
           phx-change="validate"
           phx-submit="save"
-          class="lg:h-full lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:overflow-hidden"
+          class={[
+            "lg:h-full lg:grid lg:overflow-hidden",
+            if(@meta_collapsed,
+              do: "lg:grid-cols-[minmax(0,1fr)_3rem]",
+              else: "lg:grid-cols-[minmax(0,1fr)_360px]"
+            )
+          ]}
         >
           <%!-- Middle column: Q&A editor --%>
           <div class="min-w-0 lg:h-full lg:overflow-y-auto lg:px-6 lg:pt-3 lg:pb-6">
@@ -199,7 +205,32 @@
 
           <%!-- Right column: status + edit history --%>
           <div class="min-w-0 lg:h-full lg:overflow-y-auto lg:border-l lg:border-base-300 lg:px-4 lg:pb-6">
-            <.meta_pane form={@form} versions={@versions} />
+            <%= if @meta_collapsed do %>
+              <div class="flex flex-col items-center gap-2 pt-3">
+                <button
+                  type="button"
+                  phx-click="toggle_meta"
+                  aria-label="Seitenleiste einblenden"
+                  title="Seitenleiste einblenden"
+                  class="btn btn-ghost btn-sm btn-square"
+                >
+                  <.icon name="hero-chevron-left" class="size-4" />
+                </button>
+              </div>
+            <% else %>
+              <div class="flex items-center justify-start pt-3">
+                <button
+                  type="button"
+                  phx-click="toggle_meta"
+                  aria-label="Seitenleiste ausblenden"
+                  title="Seitenleiste ausblenden"
+                  class="btn btn-ghost btn-sm btn-square"
+                >
+                  <.icon name="hero-chevron-right" class="size-4" />
+                </button>
+              </div>
+              <.meta_pane form={@form} versions={@versions} />
+            <% end %>
           </div>
         </.form>
       <% else %>
