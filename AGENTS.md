@@ -1,5 +1,15 @@
 This is a web application written using the Phoenix web framework.
 
+## Session: Question editor layout + admin scroll fixes (Aug 10, 2026)
+
+### Changes
+- **Full-width question editor**: 3-column desktop layout (rail | Q&A | meta) with independent per-column scrolling. `max_width="max-w-none"` + `content_class="!space-y-0"` to neutralize the layout wrapper's `space-y` margins that were causing overflow.
+- **`Layouts.app` enhancements**: Added `content_class` attr (merged onto inner content wrapper), `lg:overflow-y-auto` on `<main>` so desktop admin pages scroll, conditional `mx-auto` (skipped for `""` and `max-w-none`), desktop top padding bumped to `lg:pt-5`.
+- **`AutoResize` hook fix** (`assets/js/app.ts`): Added `overflowY = "hidden"` before measuring `scrollHeight` — textareas no longer show phantom scrollbars when content fits.
+- **Host lobby finished screen**: Shrunk buttons (`btn-lg text-2xl px-12 py-6` → `btn text-lg px-8 py-3`), softer secondary actions (`btn-soft`).
+- **New question header**: `lg:mb-0` to cancel the `space-y-6` desktop bottom margin.
+- **Question rail cards**: Bottom padding `lg:pb-6` on all scrollable columns; `overflow-hidden` removed (was clipping action buttons).
+
 ## Session: E2E test suite — Playwright (Jul 27, 2026)
 
 ### Changes (from previous sessions, retained)

@@ -18,6 +18,7 @@ const AutoResize = {
   },
   resize(this: ViewHook) {
     const el = this.el as HTMLTextAreaElement
+    el.style.overflowY = "hidden"
     el.style.height = "auto"
     el.style.height = el.scrollHeight + "px"
   }

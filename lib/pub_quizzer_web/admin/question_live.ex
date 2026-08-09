@@ -535,7 +535,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         :for={{id, q} <- @questions}
         id={id}
         class={[
-          "q-card relative cursor-pointer overflow-hidden rounded-xl border-2 px-3.5 py-4 transition-all duration-150",
+          "q-card relative cursor-pointer rounded-xl border-2 px-3.5 py-4 transition-all duration-150",
           if(@selected_id == q.id,
             do: "border-primary bg-primary/10",
             else: "border-base-300 bg-base-200 hover:border-base-content/30 hover:bg-base-300/50"
