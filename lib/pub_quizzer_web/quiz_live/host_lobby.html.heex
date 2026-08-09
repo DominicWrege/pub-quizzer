@@ -295,9 +295,9 @@
 
     <%!-- Finished phase --%>
     <%= if @engine_state.status == :finished do %>
-      <div class="text-center mt-28 mb-6 animate-fade-in">
-        <.icon name="hero-trophy" class="size-[6rem] mx-auto text-warning" />
-        <h2 class="text-4xl font-bold mt-2">Quiz beendet!</h2>
+      <div class="text-center mt-20 mb-6 animate-fade-in">
+        <.icon name="hero-trophy" class="size-20 mx-auto text-warning" />
+        <h2 class="text-3xl font-bold mt-2">Quiz beendet!</h2>
       </div>
 
       <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
@@ -306,40 +306,40 @@
           <% [first | _rest] = @standings %>
           <% {_, winner_name, winner_score} = first %>
           <div id="host-winner-line" class="text-center mb-6">
-            <span class="text-2xl font-semibold">
+            <span class="text-xl font-semibold">
               <strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!
             </span>
           </div>
         <% else %>
-          <div class="alert alert-warning text-xl">
+          <div class="alert alert-warning text-lg">
             <.icon name="hero-exclamation-triangle" class="size-6" />
             <span>Keine Teams vorhanden.</span>
           </div>
         <% end %>
       <% else %>
-        <div class="text-center mt-8">
+        <div class="text-center mt-6">
           <button
             phx-click="reveal_final_results"
-            class="btn btn-primary btn-lg text-2xl px-12 py-6"
+            class="btn btn-primary text-lg px-8 py-3"
           >
             Ergebnisse für Teams freigeben
           </button>
         </div>
       <% end %>
 
-      <div class="mt-6 flex justify-center gap-3">
+      <div class="mt-5 flex justify-center gap-3">
         <.link
           navigate={~p"/admin/events"}
-          class="btn btn-lg btn-primary"
+          class="btn btn-soft text-base px-6 py-2.5"
         >
-          <.icon name="hero-chevron-left" class="size-6" /> Zurück zur Übersicht
+          <.icon name="hero-chevron-left" class="size-5" /> Zurück zur Übersicht
         </.link>
         <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
           <.link
             navigate={~p"/admin/events/#{@event.id}/results"}
-            class="btn btn-lg btn-soft"
+            class="btn btn-soft text-base px-6 py-2.5"
           >
-            <.icon name="hero-clipboard" class="size-6" /> Antworten ansehen
+            <.icon name="hero-clipboard" class="size-5" /> Antworten ansehen
           </.link>
         <% end %>
       </div>

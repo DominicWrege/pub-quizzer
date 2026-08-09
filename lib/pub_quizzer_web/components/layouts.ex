@@ -41,6 +41,10 @@ defmodule PubQuizzerWeb.Layouts do
     default: "px-4 pb-4 sm:pb-10 sm:px-6 lg:px-8",
     doc: "classes for the main element"
 
+  attr :content_class, :string,
+    default: "",
+    doc: "extra classes for the inner content wrapper"
+
   attr :hide_nav_actions, :boolean,
     default: false,
     doc: "hides the navbar action buttons (for quiz lobby screens)"
@@ -141,8 +145,10 @@ defmodule PubQuizzerWeb.Layouts do
             <%!-- Top padding lives here (not on <main>) so sticky toolbars pin
               flush with the header instead of being inset by main's padding. --%>
             <div class={[
-              "mx-auto space-y-2 sm:space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-2 pb-[env(safe-area-inset-bottom)]",
-              @max_width
+              "space-y-2 sm:space-y-6 max-w-full sm:max-w-none pt-2 sm:pt-2 lg:pt-5 pb-[env(safe-area-inset-bottom)] lg:flex-1 lg:min-h-0 lg:flex lg:flex-col",
+              @max_width,
+              @max_width not in ["", "max-w-none"] && "mx-auto",
+              @content_class
             ]}>
               {render_slot(@inner_block)}
             </div>
@@ -241,7 +247,11 @@ defmodule PubQuizzerWeb.Layouts do
           <% end %>
         </header>
         <main class={["flex-1", @main_class]}>
-          <div class={["mx-auto space-y-4 pb-[env(safe-area-inset-bottom)]", @max_width]}>
+          <div class={[
+            "space-y-4 pb-[env(safe-area-inset-bottom)]",
+            @max_width,
+            @max_width not in ["", "max-w-none"] && "mx-auto"
+          ]}>
             {render_slot(@inner_block)}
           </div>
         </main>

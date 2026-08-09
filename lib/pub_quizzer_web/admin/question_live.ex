@@ -529,13 +529,13 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       id="questions"
       phx-update="stream"
       phx-hook="QuestionSorter"
-      class="flex flex-col gap-1.5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1"
+      class="flex flex-col gap-1.5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1 lg:pb-6"
     >
       <div
         :for={{id, q} <- @questions}
         id={id}
         class={[
-          "q-card relative cursor-pointer rounded-xl border-2 px-3.5 py-4 transition-all duration-150",
+          "q-card relative cursor-pointer overflow-hidden rounded-xl border-2 px-3.5 py-4 transition-all duration-150",
           if(@selected_id == q.id,
             do: "border-primary bg-primary/10",
             else: "border-base-300 bg-base-200 hover:border-base-content/30 hover:bg-base-300/50"
@@ -627,14 +627,12 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     """
   end
 
-  @doc "Editor pane: toolbar plus the question form with status/history column."
+  @doc "Editor pane: toolbar plus the question form content."
   attr :form, :any, required: true
   attr :question, :any, required: true
-  attr :versions, :list, required: true
   attr :uploads, :map, required: true
   attr :option_image_previews, :map, required: true
   attr :form_submitted, :boolean, required: true
-  attr :meta_collapsed, :boolean, required: true
 
   def editor_pane(assigns) do
     ~H"""
@@ -643,19 +641,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         Frage {@question.position + 1}
       </h2>
       <div class="flex items-center gap-2">
-        <button
-          type="button"
-          phx-click="toggle_meta"
-          aria-label="Status und Verlauf ein-/ausblenden"
-          title="Status und Verlauf ein-/ausblenden"
-          aria-pressed={to_string(@meta_collapsed)}
-          class="btn btn-ghost btn-sm btn-square hidden xl:inline-flex"
-        >
-          <.icon
-            name={if @meta_collapsed, do: "hero-chevron-left", else: "hero-chevron-right"}
-            class="size-4"
-          />
-        </button>
         <button
           type="button"
           phx-click="toggle_preview"
@@ -670,116 +655,110 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
       </div>
     </div>
 
-    <.form
-      for={@form}
-      id="question-form"
-      phx-change="validate"
-      phx-submit="save"
-      class={[
-        "flex flex-col gap-4 xl:grid xl:gap-2 max-w-full",
-        if(@meta_collapsed, do: "xl:grid-cols-[minmax(0,1fr)]", else: "xl:grid-cols-[2fr_1fr]")
-      ]}
-    >
-      <div class="bg-base-200 rounded-2xl p-1.5 sm:p-6 space-y-5 border border-base-300 min-w-0">
-        <%!-- Hidden correct index — driven by click-to-select on option cards --%>
-        <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
+    <div class="bg-base-200 rounded-2xl p-1.5 sm:p-6 space-y-5 border border-base-300 min-w-0">
+      <%!-- Hidden correct index — driven by click-to-select on option cards --%>
+      <input type="hidden" name="question[correct_index]" value={@form[:correct_index].value} />
 
-        <.form_errors form={@form} submitted={@form_submitted} />
-        <.prompt_card form={@form} uploads={@uploads} question={@question} />
-        <.option_rows
-          form={@form}
-          uploads={@uploads}
-          option_image_previews={@option_image_previews}
-        />
-      </div>
+      <.form_errors form={@form} submitted={@form_submitted} />
+      <.prompt_card form={@form} uploads={@uploads} question={@question} />
+      <.option_rows
+        form={@form}
+        uploads={@uploads}
+        option_image_previews={@option_image_previews}
+      />
+    </div>
+    """
+  end
 
-      <%!-- Right column: status + edit history --%>
-      <div class={["min-w-0", @meta_collapsed && "xl:hidden"]}>
-        <div class="space-y-3 xl:sticky xl:top-4">
-          <.status_card form={@form} />
+  @doc "Right-hand meta pane: status toggle and edit history."
+  attr :form, :any, required: true
+  attr :versions, :list, required: true
 
-          <section class="card bg-base-200 border border-base-300">
-            <div class="card-body p-4 gap-3">
-              <div class="flex items-center justify-between">
-                <h3 class="text-sm font-semibold text-base-content/80">Bearbeitungsverlauf</h3>
-                <span class="text-xs text-base-content/50">{length(@versions)} Versionen</span>
-              </div>
-              <%= if @versions == [] do %>
-                <p class="text-sm text-base-content/70 italic">Noch keine Versionen.</p>
-              <% else %>
-                <div class="space-y-2">
-                  <%= for {version, diffs} <- @versions do %>
-                    <div class="rounded-lg border border-base-300 bg-base-100 px-3 py-2">
-                      <div class="flex items-center gap-2">
-                        <div class="avatar avatar-placeholder">
-                          <div class="bg-primary text-primary-content rounded-full w-7">
-                            <span class="text-xs font-semibold">
-                              {String.at((version.user && version.user.name) || "?", 0)}
-                            </span>
-                          </div>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <span class="font-medium text-sm block truncate">
-                            {(version.user && version.user.name) || "Unbekannt"}
-                          </span>
-                          <span class="text-xs text-base-content/70">
-                            {Calendar.strftime(version.inserted_at, "%d.%m.%y %H:%M")}
-                          </span>
-                        </div>
+  def meta_pane(assigns) do
+    ~H"""
+    <div class="space-y-3 lg:pt-5">
+      <.status_card form={@form} />
+
+      <section class="card bg-base-200 border border-base-300">
+        <div class="card-body p-4 gap-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-base-content/80">Bearbeitungsverlauf</h3>
+            <span class="text-xs text-base-content/50">{length(@versions)} Versionen</span>
+          </div>
+          <%= if @versions == [] do %>
+            <p class="text-sm text-base-content/70 italic">Noch keine Versionen.</p>
+          <% else %>
+            <div class="space-y-2">
+              <%= for {version, diffs} <- @versions do %>
+                <div class="rounded-lg border border-base-300 bg-base-100 px-3 py-2">
+                  <div class="flex items-center gap-2">
+                    <div class="avatar avatar-placeholder">
+                      <div class="bg-primary text-primary-content rounded-full w-7">
+                        <span class="text-xs font-semibold">
+                          {String.at((version.user && version.user.name) || "?", 0)}
+                        </span>
                       </div>
-                      <%= if diffs != [] do %>
-                        <ul class="mt-2 space-y-1 text-xs text-base-content/80 border-t border-base-300 pt-2">
-                          <%= for diff <- diffs do %>
-                            <li class="flex items-start gap-1">
-                              <.icon
-                                name="hero-pencil"
-                                class="size-3 mt-0.5 shrink-0 text-base-content/60"
-                              />
-                              <%= case diff.field do %>
-                                <% :prompt -> %>
-                                  <span class="font-semibold">Frage geändert</span>
-                                <% :options -> %>
-                                  <span class="font-semibold">Optionen geändert</span>
-                                <% :correct_index -> %>
-                                  <span class="font-semibold">Antwort:</span>
-                                  {String.capitalize(letter_for_index(diff.old || 0))} → {String.capitalize(
-                                    letter_for_index(diff.new || 0)
-                                  )}
-                                <% :image -> %>
-                                  <%= cond do %>
-                                    <% is_nil(diff.old) and not is_nil(diff.new) -> %>
-                                      <span class="font-semibold">Bild hinzugefügt</span>
-                                    <% not is_nil(diff.old) and is_nil(diff.new) -> %>
-                                      <span class="font-semibold">Bild entfernt</span>
-                                    <% true -> %>
-                                      <span class="font-semibold">Bild geändert</span>
-                                  <% end %>
-                                <% :images -> %>
-                                  <%= cond do %>
-                                    <% (diff.old || []) == [] and (diff.new || []) != [] -> %>
-                                      <span class="font-semibold">Bild hinzugefügt</span>
-                                    <% (diff.old || []) != [] and (diff.new || []) == [] -> %>
-                                      <span class="font-semibold">Bild entfernt</span>
-                                    <% true -> %>
-                                      <span class="font-semibold">Bilder geändert</span>
-                                  <% end %>
-                                <% :layout -> %>
-                                  <span class="font-semibold">Layout:</span>
-                                  {diff.old || "image_side"} → {diff.new}
-                              <% end %>
-                            </li>
-                          <% end %>
-                        </ul>
-                      <% end %>
                     </div>
+                    <div class="min-w-0 flex-1">
+                      <span class="font-medium text-sm block truncate">
+                        {(version.user && version.user.name) || "Unbekannt"}
+                      </span>
+                      <span class="text-xs text-base-content/70">
+                        {Calendar.strftime(version.inserted_at, "%d.%m.%y %H:%M")}
+                      </span>
+                    </div>
+                  </div>
+                  <%= if diffs != [] do %>
+                    <ul class="mt-2 space-y-1 text-xs text-base-content/80 border-t border-base-300 pt-2">
+                      <%= for diff <- diffs do %>
+                        <li class="flex items-start gap-1">
+                          <.icon
+                            name="hero-pencil"
+                            class="size-3 mt-0.5 shrink-0 text-base-content/60"
+                          />
+                          <%= case diff.field do %>
+                            <% :prompt -> %>
+                              <span class="font-semibold">Frage geändert</span>
+                            <% :options -> %>
+                              <span class="font-semibold">Optionen geändert</span>
+                            <% :correct_index -> %>
+                              <span class="font-semibold">Antwort:</span>
+                              {String.capitalize(letter_for_index(diff.old || 0))} → {String.capitalize(
+                                letter_for_index(diff.new || 0)
+                              )}
+                            <% :image -> %>
+                              <%= cond do %>
+                                <% is_nil(diff.old) and not is_nil(diff.new) -> %>
+                                  <span class="font-semibold">Bild hinzugefügt</span>
+                                <% not is_nil(diff.old) and is_nil(diff.new) -> %>
+                                  <span class="font-semibold">Bild entfernt</span>
+                                <% true -> %>
+                                  <span class="font-semibold">Bild geändert</span>
+                              <% end %>
+                            <% :images -> %>
+                              <%= cond do %>
+                                <% (diff.old || []) == [] and (diff.new || []) != [] -> %>
+                                  <span class="font-semibold">Bild hinzugefügt</span>
+                                <% (diff.old || []) != [] and (diff.new || []) == [] -> %>
+                                  <span class="font-semibold">Bild entfernt</span>
+                                <% true -> %>
+                                  <span class="font-semibold">Bilder geändert</span>
+                              <% end %>
+                            <% :layout -> %>
+                              <span class="font-semibold">Layout:</span>
+                              {diff.old || "image_side"} → {diff.new}
+                          <% end %>
+                        </li>
+                      <% end %>
+                    </ul>
                   <% end %>
                 </div>
               <% end %>
             </div>
-          </section>
+          <% end %>
         </div>
-      </div>
-    </.form>
+      </section>
+    </div>
     """
   end
 
