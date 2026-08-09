@@ -59,6 +59,10 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
     end
   end
 
+  defp host_show_round_summary(view) do
+    view |> element("button[phx-click='show_round_summary']") |> render_click()
+  end
+
   defp host_show_standings(view) do
     view |> element("button[phx-click='show_standings']") |> render_click()
   end
@@ -227,7 +231,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       assert state.status == :round_reveal
 
       html = render(view)
-      assert html =~ "Nächste Antwort anzeigen"
+      assert html =~ "Nächste Antwort"
     end
   end
 
@@ -247,6 +251,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       submit_all(event, teams, team)
       host_reveal_round(view)
       host_reveal_all_answers(view)
+      host_show_round_summary(view)
       host_show_standings(view)
 
       assert has_element?(view, ~s|[id^="standing-"]|)
@@ -269,6 +274,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       submit_all(event, teams, team)
       host_reveal_round(view)
       host_reveal_all_answers(view)
+      host_show_round_summary(view)
       host_show_standings(view)
 
       view |> element("button[phx-click='next_round']") |> render_click()
@@ -281,7 +287,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       assert has_element?(view, "button[phx-click='reveal_final_results']")
 
       view |> element("button[phx-click='reveal_final_results']") |> render_click()
-      assert has_element?(view, ~s|[id^="final-"]|)
+      assert has_element?(view, ~s|#host-winner-line|)
     end
 
     test "finish quiz early goes to finished", %{
@@ -323,6 +329,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       submit_all(event, teams, team)
       host_reveal_round(view)
       host_reveal_all_answers(view)
+      host_show_round_summary(view)
       host_show_standings(view)
       view |> element("button[phx-click='next_round']") |> render_click()
 
@@ -334,7 +341,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
 
       html = render(view)
       assert html =~ "Punkten!"
-      assert has_element?(view, ~s|[id^="final-"]|)
+      assert has_element?(view, ~s|#host-winner-line|)
     end
   end
 

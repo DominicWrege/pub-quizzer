@@ -36,6 +36,8 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
               |> assign(:event, event)
               |> assign(:page_title, "Moderator — #{code}")
               |> assign(:confirm_action, nil)
+              |> assign(:reveal_view_index, 0)
+              |> assign(:round_summary_shown, false)
 
             {:ok, socket}
 
@@ -72,13 +74,33 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
   end
 
   def handle_event("reveal_next_answer", _params, socket) do
-    case Engine.reveal_next_answer(socket.assigns.event.id) do
-      {:ok, _state} ->
-        {:noreply, push_event(socket, "scroll_to_bottom", %{})}
+    %{engine_state: state} = socket.assigns
+    view = socket.assigns[:reveal_view_index] || 0
+    frontier = state.reveal_answer_index - 1
 
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, "Fehler: #{reason}")}
+    if view < frontier do
+      {:noreply, assign(socket, :reveal_view_index, view + 1)}
+    else
+      case Engine.reveal_next_answer(socket.assigns.event.id) do
+        {:ok, new_state} ->
+          {:noreply,
+           socket
+           |> assign(:reveal_view_index, new_state.reveal_answer_index - 1)
+           |> push_event("scroll_to_bottom", %{})}
+
+        {:error, reason} ->
+          {:noreply, put_flash(socket, :error, "Fehler: #{reason}")}
+      end
     end
+  end
+
+  def handle_event("reveal_prev_answer", _params, socket) do
+    view = socket.assigns[:reveal_view_index] || 0
+    {:noreply, assign(socket, :reveal_view_index, max(0, view - 1))}
+  end
+
+  def handle_event("show_round_summary", _params, socket) do
+    {:noreply, assign(socket, :round_summary_shown, true)}
   end
 
   def handle_event("ask_finish_quiz", _params, socket) do
@@ -154,7 +176,25 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
     |> assign_available_topics(state)
     |> assign(:standings, EngineState.standings_sorted(state))
     |> assign(:current_topic_name, EngineState.current_topic_name(state))
+    |> sync_reveal_view(state)
+    |> reset_round_summary(state)
   end
+
+  # Host-only cursor for the round-reveal pagination. Tracks the displayed Q&A
+  # independently of reveal_answer_index (which gates teams), clamped to the
+  # already-revealed frontier. Initializes at the frontier when entering
+  # :round_reveal (reveal_answer_index is 1, so view starts at 0).
+  defp sync_reveal_view(socket, %{status: status}) when status != :round_reveal do
+    assign(socket, :reveal_view_index, 0)
+  end
+
+  defp sync_reveal_view(socket, state) do
+    current = socket.assigns[:reveal_view_index] || 0
+    assign(socket, :reveal_view_index, min(current, state.reveal_answer_index - 1))
+  end
+
+  defp reset_round_summary(socket, %{status: :round_reveal}), do: socket
+  defp reset_round_summary(socket, _state), do: assign(socket, :round_summary_shown, false)
 
   # Available topics only change during topic selection, so skip the DB query
   # (filter_topics_with_questions) in every other phase. The engine broadcasts

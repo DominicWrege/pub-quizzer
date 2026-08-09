@@ -66,20 +66,147 @@ select:focus {
   box-shadow: none !important;
 }
 
+/* Hide presentation-exit button by default */
 .presentation-exit {
   display: none;
 }
 
-body.presentation-mode .presentation-exit {
+/* Presentation mode styles - only apply when host view is present */
+body.presentation-mode:has(#host-lobby-main) .presentation-exit {
   display: block;
+  position: fixed !important;
+  top: 0.25rem !important;
+  right: 0.5rem !important;
+  z-index: 9999 !important;
 }
 
-body.presentation-mode .host-header {
+body.presentation-mode:has(#host-lobby-main) .host-header {
   display: none;
 }
 
-body.presentation-mode header.bg-base-200 {
+body.presentation-mode:has(#host-lobby-main) header.bg-base-200 {
   display: none;
+}
+
+/* Beamer-friendly: fill viewport without centering (only on host view) */
+body.presentation-mode:has(#host-lobby-main) main {
+  padding: 0 !important;
+}
+
+body.presentation-mode:has(#host-lobby-main) main > div {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.presentation-mode:has(#host-lobby-main) #host-lobby-main {
+  max-width: 100% !important;
+  height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 2vh 3vw !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+/* Nav row stays at top */
+body.presentation-mode:has(#host-lobby-main) #host-lobby-main > div:first-child {
+  flex-shrink: 0 !important;
+}
+
+/* Q&A card fills remaining space */
+body.presentation-mode:has(#host-lobby-main) [data-test="reveal-question"] {
+  flex: 1 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+body.presentation-mode:has(#host-lobby-main) [data-test="reveal-question"] .card-body {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  padding: 3vh 4vw !important;
+  gap: 2vh !important;
+  overflow: hidden !important;
+}
+
+/* Title - fixed height */
+body.presentation-mode [data-test="reveal-question"] .card-title {
+  font-size: clamp(1.5rem, 3vh, 2.5rem) !important;
+  flex-shrink: 0 !important;
+  line-height: 1.2 !important;
+}
+
+/* Image - takes 35% of available space */
+body.presentation-mode [data-test="reveal-question"] img[alt="Fragebild"] {
+  max-height: 35vh !important;
+  flex-shrink: 1 !important;
+  object-fit: contain !important;
+}
+
+/* Answers - takes remaining space */
+body.presentation-mode [data-test="reveal-question"] .space-y-4 {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  gap: 1vh !important;
+  overflow: hidden !important;
+}
+
+body.presentation-mode [data-test="reveal-question"] .space-y-4 > * + * {
+  margin-top: 0 !important;
+}
+
+/* Answer items - equal height */
+body.presentation-mode [data-test="reveal-question"] .p-5 {
+  padding: 1.5vh 2vw !important;
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  font-size: clamp(1rem, 2vh, 1.5rem) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Responsive scaling for Q&A reveal card in normal mode */
+[data-test="reveal-question"] .card-body {
+  padding: clamp(0.75rem, 2vh, 1.5rem) clamp(1rem, 3vw, 3rem) !important;
+}
+
+[data-test="reveal-question"] .card-title {
+  font-size: clamp(1rem, 2vh, 1.25rem) !important;
+  line-height: 1.3 !important;
+}
+
+[data-test="reveal-question"] img[alt="Fragebild"] {
+  max-height: clamp(8rem, 15vh, 14rem);
+}
+
+[data-test="reveal-question"] .space-y-4 {
+  gap: clamp(0.25rem, 0.5vh, 0.75rem) !important;
+}
+
+[data-test="reveal-question"] .space-y-4 > * + * {
+  margin-top: clamp(0.25rem, 0.5vh, 0.75rem) !important;
+}
+
+[data-test="reveal-question"] .p-5 {
+  padding: clamp(0.5rem, 1vh, 1rem) clamp(0.75rem, 1.5vw, 1.25rem) !important;
+  font-size: clamp(0.875rem, 1.5vh, 1.25rem) !important;
+}
+
+[data-test="reveal-question"] .text-2xl {
+  font-size: clamp(0.875rem, 1.5vh, 1.25rem) !important;
+}
+
+/* Option images scale with viewport */
+[data-test="reveal-question"] .size-32 {
+  width: clamp(3rem, 4vw, 6rem) !important;
+  height: clamp(3rem, 4vw, 6rem) !important;
 }
 
 /* Override daisyUI's btn-soft to use a filled bg (no harsh outline) that
@@ -287,10 +414,12 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
   0% {
     background-color: transparent;
     border-color: transparent;
+    color: var(--color-base-content);
   }
   100% {
-    background-color: color-mix(in oklch, var(--color-success) 30%, transparent);
+    background-color: var(--color-success);
     border-color: var(--color-success);
+    color: var(--color-success-content);
   }
 }
 
@@ -301,7 +430,9 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
 
 /* Applied to the correct option div during round reveal. The static
    bg-success/border-success classes are dropped from the template in favor
-   of this single animation-driven class so the highlight visibly flashes. */
+   of this single animation-driven class so the highlight visibly flashes.
+   Uses the success/success-content pair so text contrast is guaranteed on
+   every theme (per daisyUI color rules). */
 .pq-reveal-correct {
   animation: pq-correct-flash 500ms ease-out forwards;
 }
@@ -317,7 +448,8 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
     animation: none;
   }
   .pq-reveal-correct {
-    background-color: color-mix(in oklch, var(--color-success) 30%, transparent);
+    background-color: var(--color-success);
     border: 2px solid var(--color-success);
+    color: var(--color-success-content);
   }
 }

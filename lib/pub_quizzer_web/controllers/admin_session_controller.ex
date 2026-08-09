@@ -11,8 +11,17 @@ defmodule PubQuizzerWeb.AdminSessionController do
           |> put_resp_header("cache-control", "private, max-age=10800")
           |> render(:new)
 
-        _user_id ->
-          redirect(conn, to: "/admin/topics")
+        user_id ->
+          case Accounts.get_user(user_id) do
+            %PubQuizzer.Accounts.User{active: true} ->
+              redirect(conn, to: "/admin/topics")
+
+            _ ->
+              conn
+              |> clear_session()
+              |> put_resp_header("cache-control", "private, max-age=10800")
+              |> render(:new)
+          end
       end
     else
       redirect(conn, to: "/setup")

@@ -823,11 +823,11 @@ defmodule PubQuizzerWeb.CoreComponents do
   def thumbnail_url(other), do: other
 
   @doc """
-  Builds the responsive `srcset` attribute value for a question image: a 480w
-  thumbnail followed by the full 1280w original. Centralized so the offered
-  widths stay consistent across every `<img>` we render.
+  Builds the responsive `srcset` attribute value for a question image: a 768w
+  thumbnail followed by the full 1920w original. Centralized so the offered
+  resolutions stay consistent across all consumers.
   """
-  def srcset_for(url), do: "#{thumbnail_url(url)} 480w, #{url} 1280w"
+  def srcset_for(url), do: "#{thumbnail_url(url)} 768w, #{url} 1920w"
 
   attr :question, :map, required: true
 
@@ -905,7 +905,7 @@ defmodule PubQuizzerWeb.CoreComponents do
 
   attr :img, :string, required: true
   attr :class, :string, default: nil
-  attr :sizes, :string, default: "(max-width: 640px) 100vw, 288px"
+  attr :sizes, :string, default: "(max-width: 640px) 100vw, 768px"
   attr :rest, :global, include: ~w(loading)
 
   @doc """
@@ -951,16 +951,16 @@ defmodule PubQuizzerWeb.CoreComponents do
             <.answer_cards options={@question.options} />
           <% layout == "image_side" and with_images? -> %>
             <% position = @question[:image_position] || "left" %>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <h4 class="card-title text-3xl break-words leading-relaxed sm:col-span-2">
                 <span class="w-full min-w-0"><.multiline_text text={@question.prompt} /></span>
               </h4>
-              <div class={["space-y-4 sm:col-span-2", position == "left" && "sm:order-2"]}>
+              <div class={["space-y-4 sm:col-span-1", position == "left" && "sm:order-2"]}>
                 <.question_options question={@question} />
               </div>
               <div class={["flex flex-col gap-4 sm:col-span-1", position == "left" && "sm:order-1"]}>
                 <%= for img <- q_images do %>
-                  <.question_image img={img} class="max-h-72 w-auto" />
+                  <.question_image img={img} class="w-full h-auto object-contain" />
                 <% end %>
               </div>
             </div>

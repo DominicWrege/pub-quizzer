@@ -40,8 +40,11 @@ test.describe("four teams", () => {
       }
 
       // Reveal answers
-      await expect(hostPage.locator("text=Nächste Antwort anzeigen")).toBeVisible()
+      await expect(hostPage.locator('[phx-click="reveal_next_answer"]')).toBeVisible()
       await revealRound(hostPage)
+
+      // Proceed from paginated reveal to the win/tie banner
+      await hostPage.locator('[phx-click="show_round_summary"]').click()
 
       // Show standings — all 4 teams ranked
       await hostPage.locator('[phx-click="show_standings"]').click()

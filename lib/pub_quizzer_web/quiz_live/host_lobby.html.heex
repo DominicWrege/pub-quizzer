@@ -34,6 +34,26 @@
               title="Große Schrift"
             >A+</button>
           </div>
+          <%= if @engine_state.status == :question do %>
+            <% all_answered = map_size(@engine_state.answers) == length(@engine_state.teams) %>
+            <%= if (@engine_state.question_index || 0) < length(@engine_state.current_questions) - 1 do %>
+              <button
+                phx-click="next_question"
+                class="btn btn-sm btn-primary"
+                disabled={!all_answered}
+              >
+                <.icon name="hero-chevron-right" class="size-4" /> Nächste Frage
+              </button>
+            <% else %>
+              <button
+                phx-click="reveal_round"
+                class="btn btn-sm btn-primary"
+                disabled={!all_answered}
+              >
+                <.icon name="hero-eye" class="size-4" /> Runde auflösen
+              </button>
+            <% end %>
+          <% end %>
           <button
             onclick="togglePresentation()"
             class="btn btn-sm btn-primary"
@@ -50,7 +70,7 @@
       </:actions>
     </.header>
   </div>
-  <div class="fixed top-4 right-4 z-50 presentation-exit">
+  <div class="fixed top-4 right-4 z-[9999] presentation-exit">
     <button
       onclick="togglePresentation()"
       class="btn btn-sm btn-square"
@@ -132,28 +152,6 @@
       </div>
 
       <.question_slide question={question} id="quiz-qa-area" class="mb-4 animate-fade-in" />
-
-      <% all_answered = MapSet.size(answered) == total_teams %>
-
-      <div class="flex justify-end">
-        <%= if (@engine_state.question_index || 0) < length(@engine_state.current_questions) - 1 do %>
-          <button
-            phx-click="next_question"
-            class="btn btn-primary btn-lg text-xl"
-            disabled={!all_answered}
-          >
-            <.icon name="hero-chevron-right" class="size-6" /> Nächste Frage
-          </button>
-        <% else %>
-          <button
-            phx-click="reveal_round"
-            class="btn btn-primary btn-lg text-xl"
-            disabled={!all_answered}
-          >
-            <.icon name="hero-eye" class="size-6" /> Runde auflösen
-          </button>
-        <% end %>
-      </div>
     <% end %>
 
     <%!-- Round reveal phase --%>
@@ -162,76 +160,96 @@
       <% total = length(@engine_state.current_questions) %>
       <% all_revealed = revealed >= total %>
 
-      <%!-- Show revealed answers — hidden once standings are shown --%>
-      <%= if revealed > 0 and not @engine_state.standings_revealed do %>
-        <h3 class="text-2xl font-semibold mb-4">Antworten ({revealed} / {total})</h3>
-        <div class="space-y-4 mb-6 animate-fade-in-up">
-          <%= for {question, q_idx} <- Enum.with_index(@engine_state.current_questions), q_idx < revealed do %>
-            <div class="card bg-base-200">
-              <div class="card-body">
-                <h4 class="card-title text-2xl">
-                  <span class="w-full min-w-0">Frage {q_idx + 1}:
-                  <.multiline_text text={question.prompt} /></span>
-                </h4>
-                <%= if (question[:images] || []) != [] do %>
-                  <div class="flex flex-wrap justify-center gap-4 mb-2">
-                    <%= for img <- question[:images] do %>
-                      <.question_image
-                        img={img}
-                        class="max-h-64"
-                        sizes="(max-width: 640px) 100vw, 256px"
-                        loading="lazy"
-                      />
-                    <% end %>
-                  </div>
+      <%!-- Paginated answer reveal — one Q&A at a time --%>
+      <%= if !all_revealed or !@round_summary_shown do %>
+        <% view_index = @reveal_view_index || 0 %>
+        <% question = @engine_state.current_questions |> Enum.at(view_index) %>
+
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 class="text-xl font-semibold">
+            <span data-test="reveal-counter">
+              Frage {view_index + 1} / {total}
+            </span>
+          </h3>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              phx-click="reveal_prev_answer"
+              class="btn btn-sm btn-soft"
+              disabled={view_index == 0}
+            >
+              <.icon name="hero-chevron-left" class="size-4" /> Zurück
+            </button>
+
+            <%= if !all_revealed or view_index < revealed - 1 do %>
+              <button
+                phx-click="reveal_next_answer"
+                class="btn btn-sm btn-primary"
+              >
+                Nächste Antwort <.icon name="hero-chevron-right" class="size-4" />
+              </button>
+            <% end %>
+
+            <%= if all_revealed and view_index == total - 1 do %>
+              <button
+                phx-click="show_round_summary"
+                class="btn btn-sm btn-primary"
+              >
+                <.icon name="hero-trophy" class="size-4" /> Ergebnis anzeigen
+              </button>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="card bg-base-200 animate-fade-in" data-test="reveal-question">
+          <div class="card-body px-12 sm:px-16 py-8">
+            <h4 class="card-title text-2xl">
+              <.multiline_text text={question.prompt} />
+            </h4>
+            <%= if (question[:images] || []) != [] do %>
+              <div class="flex flex-wrap justify-center items-center gap-4 mb-2">
+                <%= for img <- question[:images] do %>
+                  <.question_image
+                    img={img}
+                    class="w-[clamp(20rem,45vw,40rem)] h-auto object-contain"
+                    sizes="(max-width: 640px) 100vw, 768px"
+                    loading="lazy"
+                  />
                 <% end %>
-                <div class="space-y-2">
-                  <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                    <div class={[
-                      "p-4 rounded text-2xl flex items-center gap-3",
-                      idx == question.correct_index && "pq-reveal-correct border-2",
-                      idx != question.correct_index && "bg-base-300"
-                    ]}>
-                      <span class="font-mono shrink-0">{letter_for_index(idx)}.</span>
-                      <span class="break-words flex-1"><.multiline_text text={option["text"]} /></span>
-                      <%= if opt_img = option["image"] do %>
-                        <img
-                          src={thumbnail_url(opt_img)}
-                          srcset={srcset_for(opt_img)}
-                          sizes="64px"
-                          alt=""
-                          loading="lazy"
-                          class="h-16 w-16 object-cover rounded shrink-0"
-                        />
-                      <% end %>
-                      <%= if idx == question.correct_index do %>
-                        <.icon
-                          name="hero-check-circle"
-                          class="size-6 inline text-success shrink-0"
-                        />
-                      <% end %>
-                    </div>
+              </div>
+            <% end %>
+            <div class="space-y-4">
+              <%= for {option, idx} <- Enum.with_index(question.options) do %>
+                <div class={[
+                  "p-5 rounded text-2xl flex items-center gap-3",
+                  idx == question.correct_index && "pq-reveal-correct border-2",
+                  idx != question.correct_index && "bg-base-300"
+                ]}>
+                  <span class="font-mono shrink-0">{letter_for_index(idx)}.</span>
+                  <span class="break-words flex-1"><.multiline_text text={option["text"]} /></span>
+                  <%= if opt_img = option["image"] do %>
+                    <img
+                      src={thumbnail_url(opt_img)}
+                      srcset={srcset_for(opt_img)}
+                      sizes="128px"
+                      alt=""
+                      loading="lazy"
+                      class="size-[6vw] max-w-[6rem] object-cover rounded shrink-0"
+                    />
                   <% end %>
                 </div>
-              </div>
+              <% end %>
             </div>
-          <% end %>
+          </div>
         </div>
       <% end %>
 
-      <%= if !all_revealed do %>
-        <div class="mb-6">
-          <button
-            phx-click="reveal_next_answer"
-            class="btn btn-primary btn-lg text-2xl px-12 py-4"
-          >
-            <.icon name="hero-eye" class="size-7" /> Nächste Antwort anzeigen
-          </button>
-        </div>
-      <% else %>
+      <%= if all_revealed and @round_summary_shown do %>
         <%= if @engine_state.standings_revealed do %>
-          <div class="text-center mb-8">
-            <span class="text-5xl font-bold">🏆 Platzierung</span>
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-xl font-semibold">🏆 Platzierung</h3>
+            <button phx-click="next_round" class="btn btn-primary btn-lg text-xl">
+              <.icon name="hero-chevron-right" class="size-6" /> Nächste Runde
+            </button>
           </div>
           <div class="space-y-4 animate-fade-in-up">
             <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
@@ -242,12 +260,6 @@
                 score={score}
               />
             <% end %>
-          </div>
-
-          <div class="mt-6 flex justify-end">
-            <button phx-click="next_round" class="btn btn-primary btn-lg text-xl">
-              <.icon name="hero-chevron-right" class="size-6" /> Nächste Runde
-            </button>
           </div>
         <% else %>
           <% winner =
@@ -289,29 +301,14 @@
       </div>
 
       <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
-        <%!-- Winner --%>
+        <%!-- Winner — compact, minimal --%>
         <%= if @standings != [] do %>
           <% [first | _rest] = @standings %>
           <% {_, winner_name, winner_score} = first %>
-          <div
-            id="host-winner-alert"
-            class="alert alert-success mb-4 text-2xl"
-            phx-hook="Confetti"
-            data-intensity="big"
-          >
-            <.icon name="hero-star" class="size-8" />
-            <span><strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!</span>
-          </div>
-
-          <div class="space-y-4">
-            <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-              <.podium_row
-                id={"final-#{id}"}
-                rank={rank}
-                name={name}
-                score={score}
-              />
-            <% end %>
+          <div id="host-winner-line" class="text-center mb-6">
+            <span class="text-2xl font-semibold">
+              <strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!
+            </span>
           </div>
         <% else %>
           <div class="alert alert-warning text-xl">
@@ -319,31 +316,33 @@
             <span>Keine Teams vorhanden.</span>
           </div>
         <% end %>
-
-        <div class="mt-6 flex justify-between">
-          <.link
-            navigate={~p"/admin/events"}
-            class="btn btn-lg btn-soft"
-          >
-            <.icon name="hero-chevron-left" class="size-6" /> Zurück zum Quiz
-          </.link>
-          <.link
-            navigate={~p"/admin/events/#{@event.id}/results"}
-            class="btn btn-lg btn-primary"
-          >
-            <.icon name="hero-clipboard" class="size-6" /> Antworten ansehen
-          </.link>
-        </div>
       <% else %>
         <div class="text-center mt-8">
           <button
             phx-click="reveal_final_results"
             class="btn btn-primary btn-lg text-2xl px-12 py-6"
           >
-            Ergebnisse anzeigen
+            Ergebnisse für Teams freigeben
           </button>
         </div>
       <% end %>
+
+      <div class="mt-6 flex justify-center gap-3">
+        <.link
+          navigate={~p"/admin/events"}
+          class="btn btn-lg btn-primary"
+        >
+          <.icon name="hero-chevron-left" class="size-6" /> Zurück zur Übersicht
+        </.link>
+        <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
+          <.link
+            navigate={~p"/admin/events/#{@event.id}/results"}
+            class="btn btn-lg btn-soft"
+          >
+            <.icon name="hero-clipboard" class="size-6" /> Antworten ansehen
+          </.link>
+        <% end %>
+      </div>
     <% end %>
   </div>
 

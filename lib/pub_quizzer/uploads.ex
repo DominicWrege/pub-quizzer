@@ -60,9 +60,9 @@ defmodule PubQuizzer.Uploads do
       "-i",
       tmp_path,
       "-vf",
-      "scale=w=1280:h=1280:force_original_aspect_ratio=decrease",
+      "scale=w=1920:h=1920:force_original_aspect_ratio=decrease",
       "-q:v",
-      "10",
+      "5",
       dest
     ]
 
@@ -71,9 +71,9 @@ defmodule PubQuizzer.Uploads do
       "-i",
       tmp_path,
       "-vf",
-      "scale=w=480:h=480:force_original_aspect_ratio=decrease",
+      "scale=w=768:h=768:force_original_aspect_ratio=decrease",
       "-q:v",
-      "15",
+      "10",
       thumb_dest
     ]
 

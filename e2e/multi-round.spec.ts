@@ -56,8 +56,8 @@ test.describe("multi-round", () => {
     await expect(revealFinal).toBeVisible({ timeout: 10_000 })
     await revealFinal.click()
 
-    // Host shows final standings
-    await expect(hostPage.locator('[id^="final-"]')).toHaveCount(2, { timeout: 10_000 })
+    // Host shows compact winner line (final podium was minimized away)
+    await expect(hostPage.locator("#host-winner-line")).toBeVisible({ timeout: 10_000 })
 
     // Teams see the final podium
     await expect(pageA.locator('[id^="team-final-"]')).toHaveCount(2, { timeout: 10_000 })
