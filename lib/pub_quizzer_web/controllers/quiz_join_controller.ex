@@ -16,6 +16,49 @@ defmodule PubQuizzerWeb.QuizJoinController do
     join(conn, %{"code" => code})
   end
 
+  def join_with_code_and_slot(conn, %{"code" => code, "slot" => slot}) do
+    with {slot_num, ""} <- Integer.parse(slot),
+         true <- slot_num >= 1 do
+      handle_join_with_slot(conn, String.trim(code), slot_num - 1)
+    else
+      _ ->
+        conn
+        |> put_flash(:error, "Ungültiger Team-Link.")
+        |> redirect(to: "/")
+    end
+  end
+
+  defp handle_join_with_slot(conn, code, slot_index) do
+    case Quiz.get_event_by_code(code) do
+      nil ->
+        conn
+        |> put_flash(:error, "Kein Quiz mit diesem Code gefunden.")
+        |> redirect(to: "/")
+
+      event ->
+        if event.status != "lobby" do
+          conn
+          |> put_flash(:error, "Dieses Quiz hat bereits begonnen.")
+          |> redirect(to: "/")
+        else
+          case Quiz.claim_team_slot(event, slot_index) do
+            {:ok, team} ->
+              Engine.register_team(event.id, team.id, team.name, team.slot_index)
+
+              conn
+              |> put_session(:team_id, team.id)
+              |> put_session(:event_code, event.code)
+              |> redirect(to: "/quiz/#{event.code}/lobby")
+
+            {:error, :not_found} ->
+              conn
+              |> put_flash(:error, "Dieser Team-Link ist ungültig.")
+              |> redirect(to: "/")
+          end
+        end
+    end
+  end
+
   defp handle_join(conn, code) do
     case Quiz.get_event_by_code(code) do
       nil ->

@@ -16,7 +16,7 @@
     <span class="badge badge-sm">{status_label(@event.status)}</span>
     <:actions>
       <%= if @event.status != "lobby" do %>
-        <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-soft">
+        <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-soft">
           <%= if @event.status == "finished" do %>
             <.icon name="hero-clipboard" class="size-4" /> Ergebnisse
           <% else %>
@@ -25,11 +25,19 @@
         </.link>
       <% end %>
       <%= if @event.status != "lobby" do %>
-        <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator-Konsole</.link>
+        <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary">Moderator-Konsole</.link>
       <% end %>
+      <a
+        href={~p"/admin/events/#{@event}/team-cards"}
+        target="_blank"
+        rel="noopener"
+        class="btn btn-soft"
+      >
+        <.icon name="hero-arrow-down-tray" class="size-4" /> Team-Karten
+      </a>
       <button
         phx-click="ask_delete_event"
-        class="btn btn-sm btn-danger-soft"
+        class="btn btn-danger-soft"
       >
         <.icon name="hero-trash" class="size-4" /> Löschen
       </button>
@@ -47,55 +55,39 @@
   />
 
   <%= if @event.status == "lobby" do %>
-    <div class="flex flex-col items-center gap-6 mb-12">
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-8">
-        <div class="flex flex-col items-center gap-2">
-          <div
-            data-testid="event-code"
-            class="text-6xl font-mono font-bold tracking-widest bg-base-200 rounded-box px-8 py-4"
-          >
-            {@event.code}
-          </div>
-          <div class="text-sm text-base-content/70 text-center">
-            Code an Teams weitergeben
-          </div>
-          <code class="text-sm text-base-content break-all max-w-xs">{String.replace(
-            @join_url,
-            ~r"^https?://",
-            ""
-          )}</code>
+    <div class="flex flex-col items-center gap-4 mb-8">
+      <div class="flex flex-col items-center gap-2">
+        <div
+          data-testid="event-code"
+          class="text-2xl font-mono font-bold tracking-widest bg-base-200 rounded-box px-4 py-2"
+        >
+          {@event.code}
         </div>
-        <div class="flex flex-col items-center gap-2">
-          <button
-            phx-click="show_large_qr"
-            class="bg-white p-3 rounded-box shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-          >
-            {raw(@qr_svg)}
-          </button>
-          <div class="text-sm text-base-content/70 text-center">
-            QR-Code scannen zum Beitreten
-          </div>
-          <button phx-click="show_large_qr" class="btn btn-xs btn-soft">
-            <.icon name="hero-plus" class="size-3" /> Vergrößern
-          </button>
+        <div class="text-sm text-base-content/70 text-center">
+          Code an Teams weitergeben
         </div>
+        <code class="text-sm text-base-content break-all max-w-xs">{String.replace(
+          @join_url,
+          ~r"^https?://",
+          ""
+        )}</code>
       </div>
     </div>
 
     <div class="flex flex-wrap items-center gap-2 mb-6">
-      <button phx-click="add_slot" class="btn btn-sm btn-soft">
+      <button phx-click="add_slot" class="btn btn-soft">
         <.icon name="hero-plus" class="size-4" /> Team hinzufügen
       </button>
-      <button phx-click="remove_slot" class="btn btn-sm btn-soft">
+      <button phx-click="remove_slot" class="btn btn-soft">
         <.icon name="hero-minus" class="size-4" /> Team entfernen
       </button>
       <button
         id="copy-join-link"
         phx-hook="CopyLink"
         data-url={@join_url}
-        class="btn btn-sm btn-soft"
+        class="btn btn-soft"
       >
-        <.icon name="hero-clipboard" class="size-3" /> Link kopieren
+        <.icon name="hero-clipboard" class="size-4" /> Link kopieren
       </button>
       <span class="flex-1"></span>
       <button
@@ -119,7 +111,7 @@
             class="bg-base-100 border-2 border-base-300 rounded-xl px-4 pt-3 pb-3"
           >
             <div class="flex items-center justify-between gap-2 mb-2">
-              <span class="text-sm font-semibold opacity-60">Team {team.slot_index + 1}</span>
+              <span class="text-base font-semibold opacity-60">Team {team.slot_index + 1}</span>
               <%= if team.claimed_at do %>
                 <%= if team.id in @connected_team_ids do %>
                   <span class="badge badge-success transition-colors duration-200">Beigetreten</span>
@@ -143,7 +135,7 @@
                 <button
                   phx-click="kick_team"
                   phx-value-team_id={team.id}
-                  class="btn btn-sm btn-soft"
+                  class="btn btn-soft"
                   title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
                 >
                   <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Rauswerfen
@@ -152,7 +144,7 @@
               <button
                 phx-click="remove_team"
                 phx-value-team_id={team.id}
-                class="btn btn-sm btn-danger-soft"
+                class="btn btn-danger-soft"
                 title="Team entfernen"
               >
                 <.icon name="hero-x-mark" class="size-4" /> Entfernen
@@ -214,38 +206,6 @@
         </div>
       </div>
     </div>
-
-    <%= if @show_large_qr do %>
-      <dialog
-        id="large-qr-modal"
-        phx-hook="Dialog"
-        data-cancel-event="hide_large_qr"
-        class="m-auto rounded-box bg-white p-8 shadow-xl relative"
-        style="max-width: min(90vw, 800px);"
-      >
-        <button
-          type="button"
-          phx-click="hide_large_qr"
-          aria-label="Schließen"
-          class="btn btn-circle btn-ghost btn-sm absolute right-3 top-3"
-        >
-          <.icon name="hero-x-mark" class="size-5" />
-        </button>
-        <div class="flex flex-col items-center gap-4">
-          <div class="bg-white p-4 rounded-box">
-            {raw(@qr_svg_large)}
-          </div>
-          <div class="text-center">
-            <div class="text-4xl font-mono font-bold tracking-widest text-base-content">
-              {@event.code}
-            </div>
-            <code class="text-sm text-base-content/70 break-all max-w-xs inline-block mt-2">
-              {String.replace(@join_url, ~r"^https?://", "")}
-            </code>
-          </div>
-        </div>
-      </dialog>
-    <% end %>
   <% else %>
     <div class="alert alert-info text-base py-4">
       <.icon name="hero-information-circle" class="size-6" />

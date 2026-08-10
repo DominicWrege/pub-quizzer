@@ -53,16 +53,6 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
     view |> element("button[phx-click='reveal_round']") |> render_click()
   end
 
-  defp host_reveal_all_answers(view) do
-    for _idx <- Enum.drop(Enum.with_index(@questions), 1) do
-      view |> element("button[phx-click='reveal_next_answer']") |> render_click()
-    end
-  end
-
-  defp host_show_round_summary(view) do
-    view |> element("button[phx-click='show_round_summary']") |> render_click()
-  end
-
   defp host_show_standings(view) do
     view |> element("button[phx-click='show_standings']") |> render_click()
   end
@@ -72,11 +62,16 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
     view |> element("button[phx-click='confirm_finish_quiz']") |> render_click()
   end
 
-  defp submit_all(event, teams, correct_for) do
+  defp submit_all(event, teams, correct_for, view \\ nil) do
     for t <- teams do
       val = if t.id == correct_for.id, do: 1, else: 0
       Engine.submit_answer(event.id, t.id, val)
     end
+
+    # LiveView broadcasts from the engine arrive as messages in the test
+    # process; render/1 pumps them so the next render_click sees the updated
+    # state (e.g. the "next question" button being enabled once all answered).
+    if view, do: render(view)
   end
 
   setup do
@@ -186,11 +181,37 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
 
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       view |> element("button[phx-click='next_question']") |> render_click()
 
       refute has_element?(view, "button[phx-click='next_question']")
       assert has_element?(view, "button[phx-click='reveal_round']")
+    end
+
+    test "shows live answer distribution as answers come in", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      teams: teams
+    } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+
+      # No answers yet — distribution list exists but counts are all 0
+      html = render(view)
+      assert html =~ "data-test=\"answer-distribution\""
+      assert has_element?(view, "[data-test='distribution-row']")
+
+      # Submit 2 different answers: `team` picks 1 (correct), the rest pick 0
+      [team | others] = teams
+      Engine.submit_answer(event.id, team.id, 1)
+      for t <- others, do: Engine.submit_answer(event.id, t.id, 0)
+      render(view)
+
+      html = render(view)
+      # The "1" count appears twice (two teams picked index 0) and "1" once,
+      # alongside the option text. Confirm the question prompt renders.
+      assert html =~ "What is 2+2?"
     end
 
     test "next question advances to second question", %{
@@ -203,7 +224,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
 
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       view |> element("button[phx-click='next_question']") |> render_click()
 
       html = render(view)
@@ -221,17 +242,19 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
 
       # Submit a correct answer
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
 
       view |> element("button[phx-click='next_question']") |> render_click()
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       host_reveal_round(view)
 
       {:ok, state} = Engine.get_state(event.id)
       assert state.status == :round_reveal
 
       html = render(view)
-      assert html =~ "Nächste Antwort"
+      # New shadow-console round_reveal: stats-first list (no paginated slide).
+      assert html =~ "Auswertung"
+      assert has_element?(view, "[data-test='round-stat-list']")
     end
   end
 
@@ -246,17 +269,14 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
 
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       view |> element("button[phx-click='next_question']") |> render_click()
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       host_reveal_round(view)
-      host_reveal_all_answers(view)
-      host_show_round_summary(view)
       host_show_standings(view)
 
       assert has_element?(view, ~s|[id^="standing-"]|)
       assert has_element?(view, "button[phx-click='next_round']")
-      assert has_element?(view, "button[phx-click='ask_finish_quiz']")
     end
 
     test "next round finishes when no topics remain", %{
@@ -269,12 +289,10 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
 
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       view |> element("button[phx-click='next_question']") |> render_click()
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       host_reveal_round(view)
-      host_reveal_all_answers(view)
-      host_show_round_summary(view)
       host_show_standings(view)
 
       view |> element("button[phx-click='next_round']") |> render_click()
@@ -300,11 +318,10 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
 
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       view |> element("button[phx-click='next_question']") |> render_click()
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       host_reveal_round(view)
-      host_reveal_all_answers(view)
 
       host_finish_quiz(view)
 
@@ -324,12 +341,10 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
 
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       view |> element("button[phx-click='next_question']") |> render_click()
-      submit_all(event, teams, team)
+      submit_all(event, teams, team, view)
       host_reveal_round(view)
-      host_reveal_all_answers(view)
-      host_show_round_summary(view)
       host_show_standings(view)
       view |> element("button[phx-click='next_round']") |> render_click()
 

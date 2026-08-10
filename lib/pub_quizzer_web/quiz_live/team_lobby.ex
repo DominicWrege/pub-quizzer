@@ -29,7 +29,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
 
         case Engine.get_state(event.id) do
           {:ok, state} ->
-            team_state = EngineState.strip_for_team(state)
+            team_state = EngineState.strip_for_team(state, team.id)
             {shuffled_options, shuffle_map} = compute_shuffle(team_state, team)
 
             socket =
@@ -69,7 +69,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
 
   @impl true
   def handle_info({:engine_state, state}, socket) do
-    team_state = EngineState.strip_for_team(state)
+    team_state = EngineState.strip_for_team(state, socket.assigns.team.id)
     current_q = EngineState.current_question(team_state)
     prev_q = EngineState.current_question(socket.assigns.engine_state)
 

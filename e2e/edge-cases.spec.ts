@@ -43,7 +43,7 @@ test.describe("edge cases", () => {
     await pageB.locator('[phx-click="select_answer"]').nth(1).click()
 
     // Host sees both answered
-    await expect(hostPage.locator("text=2 / 2 Teams geantwortet")).toBeVisible({ timeout: 15_000 })
+    await expect(hostPage.locator('[data-test="answered-badge"]')).toHaveText(/2\s*\/\s*2/, { timeout: 15_000 })
 
     for (const ctx of contexts) await ctx.close()
   })

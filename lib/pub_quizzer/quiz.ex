@@ -508,6 +508,34 @@ defmodule PubQuizzer.Quiz do
   end
 
   @doc """
+  Claims a specific team slot by 0-based slot_index. Idempotent: returns
+  {:ok, team} whether the slot was just claimed or already claimed — the
+  printed QR card is the source of truth for "whoever holds it IS this team".
+  Returns {:error, :not_found} if no team has the given slot_index.
+  """
+  def claim_team_slot(event, slot_index) do
+    teams = list_teams_for_event(event.id)
+
+    case Enum.find(teams, fn t -> t.slot_index == slot_index end) do
+      nil ->
+        {:error, :not_found}
+
+      team ->
+        result =
+          if team.claimed_at do
+            {:ok, team}
+          else
+            team
+            |> Team.changeset(%{claimed_at: DateTime.utc_now()})
+            |> Repo.update()
+          end
+
+        broadcast_team_update(event.id)
+        result
+    end
+  end
+
+  @doc """
   Checks if a team belongs to a specific event.
   """
   def team_belongs_to_event?(team_id, event_id) do

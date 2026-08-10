@@ -24,7 +24,7 @@ test.describe("host actions", () => {
     for (const ctx of contexts) await ctx.close()
   })
 
-  test("host can skip standings (Weiter zur Kategorie) and go straight to next topic", async ({
+  test("host can skip standings (Überspringen) and go straight to next topic", async ({
     browser,
     hostPage,
   }) => {
@@ -42,13 +42,13 @@ test.describe("host actions", () => {
     // clear winner is not guaranteed) but standings are NOT shown
     await expect(
       hostPage
-        .locator("text=gewinnt Runde")
-        .or(hostPage.locator("text=Remis! Kein eindeutiger Gewinner.")),
+        .locator("text=gewinnt die Runde")
+        .or(hostPage.locator("text=Remis")),
     ).toBeVisible({ timeout: 10_000 })
     await expect(hostPage.locator('[id^="standing-"]')).toHaveCount(0)
 
-    // Click "Weiter zur Kategorie" to skip standings
-    await hostPage.locator("button", { hasText: "Weiter zur Kategorie" }).click()
+    // Click "Überspringen" to skip standings
+    await hostPage.locator("button", { hasText: "Überspringen" }).click()
 
     // Topic selection reappears for next round
     await hostPage.waitForSelector('[phx-click="choose_topic"]', { timeout: 10_000 })

@@ -1,5 +1,35 @@
 This is a web application written using the Phoenix web framework.
 
+## Session: Shadow moderator + per-team QR cards (Aug 11, 2026)
+
+### Changes
+- **Removed beamer/presentation mode**: deleted `assets/js/presentation.ts`, `assets/js/font-size.ts`, and related CSS/JS wiring. The app no longer drives a projector; PowerPoint handles the actual presentation.
+- **Rebuilt host lobby as shadow console** (`host_lobby.html.heex` / `host_lobby.ex`):
+  - `max-w-2xl` tablet-friendly layout with big touch targets.
+  - Full question prompt text, no images.
+  - Live answer distribution bars updated as teams answer.
+  - Standings now show point deltas (gain/loss vs previous round).
+  - Round reveal is no longer paginated; it shows all question stats + winner immediately.
+  - Event code display shrunk from `text-6xl` to `text-2xl`.
+  - "Weiter zur Kategorie" renamed to "Überspringen — nächste Kategorie".
+- **`EngineState` enhancements**: added `answer_distribution/1,2`, `standings_with_deltas/1`, and changed `strip_for_team/2` to take `team_id` so the viewing team's own answer is preserved while opponents' answers are redacted.
+- **Per-team QR cards**: new `TeamCardLive` (`lib/pub_quizzer_web/admin/team_card_live.ex`) + `team_cards.html.heex`, route `/admin/events/:id/team-cards`. Each event team gets its own printable card with a QR code linking to `/quiz/join/:code/:slot`. Card width reduced via `max-w-sm mx-auto` and 280 px QR codes.
+- **Slot-based team joining**: `Quiz.claim_team_slot/2` + `QuizJoinController.join_with_code_and_slot/2` + route `GET /quiz/join/:code/:slot`. Teams scan pre-printed cards to claim a specific slot (Team 1–N).
+- **Event setup page tablet-friendly** (`event_live.ex` / `event_show.html.heex`): bumped action buttons from `btn-sm` to `btn`, removed the large event-level QR code, cleaned up `qr_svg`/`qr_svg_large`/`show_large_qr` assigns and handlers.
+- **URL generation**: `base_url_from_request` omits default ports (`:443` / `:80`) so QR URLs are clean in production.
+- **Tests**:
+  - Added `test/pub_quizzer_web/controllers/quiz_join_controller_slot_test.exs` (5 tests).
+  - Added `team cards` LiveView tests in `test/pub_quizzer_web/admin_event_live_test.exs`.
+  - Fixed `host_lobby_test.exs` unused-variable warning and live-distribution test.
+  - Replaced deprecated `get_flash/2` with `Phoenix.Flash.get/2` in new controller test.
+- **E2E updates**: `fixtures.ts`, `four-teams.spec.ts`, `host-actions.spec.ts`, `multi-round.spec.ts`, `edge-cases.spec.ts` adjusted for removed `reveal_next_answer` / `show_round_summary` and changed host answered badge text.
+- **AGENTS.md**: added Playwright MCP browser tools guidance under project guidelines.
+
+### Verification
+- `mix test`: 225 tests, 0 failures.
+- `pnpm test:e2e`: 31 passed, 4 unrelated failures in existing specs (`four-teams`, `question-crud` ×2, `quiz-flow`) that pre-date this session and need separate attention.
+- No `pnpm typecheck` script exists and no `tsconfig.json` is present; TypeScript checking is not currently configured.
+
 ## Session: Question editor layout + admin scroll fixes (Aug 10, 2026)
 
 ### Changes
@@ -58,6 +88,7 @@ Key details:
 - Frontend assets in `assets/js/` are **always written in TypeScript** (`.ts`), **never** plain `.js`. New page-specific scripts follow the `guide.ts` pattern: a standalone module imported by `app.ts`, guarded by a DOM-element or pathname check so it only runs on the relevant page.
 - **Interactive browser checks**: to manually verify UI in a real browser (click through a flow, inspect rendered pages, check for console errors, take screenshots, exercise multi-tab scenarios), load the `playwright-cli` skill and drive the `playwright-cli` CLI against the dev server (`http://localhost:4000`). A typical session: `playwright-cli open http://localhost:4000/admin/login` → `playwright-cli snapshot` → interact using the snapshot's `e#` refs (`playwright-cli fill e5 "…"`, `playwright-cli click e15`) → `playwright-cli console` to read browser console messages → `playwright-cli close`. Use `playwright-cli console` to satisfy the no-console-errors rule above instead of writing throwaway spec files. If the global `playwright-cli` binary is unavailable, prefix with `npx playwright cli …`. This is separate from the headless E2E suite (`pnpm test:e2e`, which boots an isolated server on port 4001).
 - **NixOS host**: this machine runs NixOS — there are no globally-installed npm binaries and no branded browsers. Concretely: `playwright-cli` is **not** on PATH (always use `npx playwright cli …`), and `/opt/google/chrome` does not exist, so pass `--browser=chromium` to use the Playwright-bundled Chromium (e.g. `npx playwright cli open --browser=chromium http://localhost:4000/…`). The local CLI also lacks `--mobile`/`--device`; use `playwright-cli resize <w> <h>` for a mobile viewport. Assume other CLI tools come from `nix-shell`/`nix run` or project deps, not global installs.
+- **Playwright MCP browser tools**: for automated browser checks you can also use the Playwright MCP server directly via the `playwright_browser_*` tool family (`navigate`, `snapshot`, `click`, `fill_form`, `evaluate`, `console_messages`, `take_screenshot`, etc.). Target the user's dev server at `http://localhost:4000` and use Chromium. This is useful for quick, scriptable verification of console errors, screenshots, and click-through flows without leaving the agent session.
 
 ### Phoenix v1.8 guidelines
 

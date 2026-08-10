@@ -1,8 +1,6 @@
 import "phoenix_html"
 import { Socket } from "phoenix"
 import { LiveSocket, type ViewHook } from "phoenix_live_view"
-import { restorePresentationMode } from "./presentation"
-import { restoreFontSize } from "./font-size"
 
 // Phoenix LiveView hooks accept plain object literals — `this` is bound to the
 // hook instance at runtime. We type `this: ViewHook` on each method so TS knows
@@ -111,8 +109,6 @@ const ClipboardCopy = {
 
 const ScrollToBottom = {
   mounted(this: ViewHook) {
-    restorePresentationMode()
-    restoreFontSize()
     this.handleEvent("scroll_to_bottom", () => {
       requestAnimationFrame(() => {
         this.el.scrollIntoView({ behavior: "smooth", block: "end" })

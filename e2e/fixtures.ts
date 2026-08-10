@@ -159,9 +159,10 @@ async function completeRound(
     await expect(answerBtns(teamAPage)).toHaveCount(4, { timeout: ENGINE_TIMEOUT })
     await answerBtns(teamAPage).nth(teamAChoice).click()
     await answerBtns(teamBPage).nth(teamBChoice).click()
-    await expect(hostPage.locator("text=2 / 2 Teams geantwortet")).toBeVisible({
-      timeout: ENGINE_TIMEOUT,
-    })
+    await expect(hostPage.locator('[data-test="answered-badge"]')).toHaveText(
+      /2\s*\/\s*2/,
+      { timeout: ENGINE_TIMEOUT },
+    )
 
     const revealBtn = hostPage.locator('[phx-click="reveal_round"]')
     if (await revealBtn.count()) {
@@ -170,55 +171,24 @@ async function completeRound(
     }
     await hostPage.locator('[phx-click="next_question"]').click()
   }
-  await expect(hostPage.locator('[phx-click="reveal_next_answer"]')).toBeVisible()
 
-  await revealRound(hostPage)
-
-  // "Ergebnis anzeigen" proceeds from the paginated reveal to the win/tie banner.
-  // force:true — LiveView morphs the button out as the state advances, and the
-  // default actionability wait races against that re-render.
-  const summary = hostPage.locator('[phx-click="show_round_summary"]')
-  await expect(summary).toBeVisible({ timeout: 10_000 })
-  await summary.click({ force: true })
+  // After reveal_round the host immediately sees the stats list + winner banner
+  // (no paginated reveal — all questions are shown at once in the shadow console).
+  await expect(hostPage.locator('[data-test="round-stat-list"]')).toBeVisible({
+    timeout: 10_000,
+  })
   await expect(
     hostPage
-      .locator("text=gewinnt Runde")
-      .or(hostPage.locator("text=Remis! Kein eindeutiger Gewinner.")),
+      .locator("text=gewinnt die Runde")
+      .or(hostPage.locator("text=Remis")),
   ).toBeVisible({ timeout: 10_000 })
 
   if (showStandings) {
     await hostPage.locator('[phx-click="show_standings"]').click()
-    await expect(hostPage.locator('[id^="standing-"]')).toHaveCount(2, { timeout: 10_000 })
+    await expect(hostPage.locator('[id^="standing-"]')).toHaveCount(2, {
+      timeout: 10_000,
+    })
   }
-}
-
-/**
- * Reveal all answers in the current round on the host page.
- *
- * Drives off the stable "Frage X / N" counter: at the frontier, clicking
- * "Nächste Antwort" reveals the next answer and advances the view, so each
- * click must bump the counter by one. The reveal button transiently unmounts
- * during the LiveView morph, so we never poll it — we wait for the counter to
- * advance with auto-retrying `expect` after each click. Once X reaches N, the
- * "Ergebnis anzeigen" (show_round_summary) button takes over.
- */
-export async function revealRound(hostPage: Page): Promise<void> {
-  const counter = hostPage.locator('[data-test="reveal-counter"]')
-  await expect(counter).toBeVisible()
-  const next = hostPage.locator('[phx-click="reveal_next_answer"]')
-  const summary = hostPage.locator('[phx-click="show_round_summary"]')
-
-  for (;;) {
-    const text = ((await counter.textContent()) ?? "").replace(/\s+/g, " ")
-    const total = Number(text.match(/\/\s*(\d+)/)?.[1])
-    const revealed = Number(text.match(/Frage\s*(\d+)/)?.[1])
-    if (revealed >= total) break
-    await expect(next).toHaveCount(1)
-    await next.click({ force: true })
-    await expect(counter).toHaveText(new RegExp(`Frage ${revealed + 1} /`))
-  }
-
-  await expect(summary).toBeVisible()
 }
 
 export type Fixtures = {

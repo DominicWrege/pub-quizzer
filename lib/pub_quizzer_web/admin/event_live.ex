@@ -39,14 +39,8 @@ defmodule PubQuizzerWeb.Admin.EventLive do
 
   defp apply_action(socket, :show, %{"id" => id}, url) do
     event = Quiz.get_event_with_teams!(id)
-    base = URI.parse(url) |> then(&"#{&1.scheme}://#{&1.host}:#{&1.port}")
+    base = base_url_from_request(url)
     join_url = base <> ~p"/quiz/join/#{event.code}"
-    qr_svg = EQRCode.encode(join_url) |> EQRCode.svg(color: "#1e40af", background: "#ffffff")
-
-    qr_svg_large =
-      join_url
-      |> EQRCode.encode()
-      |> EQRCode.svg(color: "#1e40af", background: "#ffffff", width: 700)
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
@@ -56,11 +50,8 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     |> assign(:page_title, "Event #{event.code}")
     |> assign(:event, event)
     |> assign(:join_url, join_url)
-    |> assign(:qr_svg, qr_svg)
-    |> assign(:qr_svg_large, qr_svg_large)
     |> assign(:connected_team_ids, MapSet.new())
     |> assign(:all_teams_connected, false)
-    |> assign(:show_large_qr, false)
   end
 
   @impl true
@@ -185,14 +176,6 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   end
 
   # Show page confirmations
-  def handle_event("show_large_qr", _params, socket) do
-    {:noreply, assign(socket, :show_large_qr, true)}
-  end
-
-  def handle_event("hide_large_qr", _params, socket) do
-    {:noreply, assign(socket, :show_large_qr, false)}
-  end
-
   def handle_event("ask_delete_event", _params, socket) do
     {:noreply, assign(socket, :confirm_action, :delete)}
   end
@@ -388,4 +371,18 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   def status_label("round_reveal"), do: "Läuft"
   def status_label("finished"), do: "Beendet"
   def status_label(other), do: other
+
+  # Extracts scheme://host[:port] from the request URL, omitting default ports
+  # (443 for https, 80 for http). QR codes embed URLs that need to be reachable
+  # from team devices, so we use the request's actual host (LAN IP in dev)
+  # rather than Endpoint.url/0 which would give "localhost" in dev.
+  defp base_url_from_request(url) do
+    uri = URI.parse(url)
+
+    case {uri.scheme, uri.port} do
+      {"https", 443} -> "https://#{uri.host}"
+      {"http", 80} -> "http://#{uri.host}"
+      {scheme, port} -> "#{scheme}://#{uri.host}:#{port}"
+    end
+  end
 end

@@ -131,5 +131,39 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
       html = render(view)
       refute html =~ "slot_index=\"3\""
     end
+
+    test "links to printable team cards", %{conn: conn} do
+      {:ok, event} = Quiz.create_event(%{team_count: 3})
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/events/#{event.id}")
+
+      assert has_element?(view, "a[href='/admin/events/#{event.id}/team-cards']")
+    end
+  end
+
+  describe "team cards" do
+    test "renders one printable card per team with QR code and slot number", %{conn: conn} do
+      {:ok, event} = Quiz.create_event(%{team_count: 2})
+
+      {:ok, _view, html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/events/#{event.id}/team-cards")
+
+      assert html =~ "Team-Karten"
+      assert html =~ event.code
+
+      [team1, team2] = Enum.sort_by(event.teams, & &1.slot_index)
+
+      assert html =~ "Team 1"
+      assert html =~ "Team 2"
+      assert html =~ "team-card-#{team1.id}"
+      assert html =~ "team-card-#{team2.id}"
+      assert html =~ "<svg"
+      assert html =~ "QR-Code scannen"
+    end
   end
 end

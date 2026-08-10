@@ -45,8 +45,14 @@ defmodule PubQuizzer.Quiz.EngineState do
 
   During `:round_reveal` the host shows the answers, so the full question set
   must be preserved.
+
+  `team_id` is the viewing team's id — that team's own `selected_index` is
+  preserved so its UI can render the "answered" state and highlight its pick
+  after a reconnect. Every other team's selection is replaced with `nil`
+  (keys preserved for `answered_teams/1`) so the live distribution can't be
+  inferred from the LV state.
   """
-  def strip_for_team(%__MODULE__{status: :question} = state) do
+  def strip_for_team(%__MODULE__{status: :question} = state, team_id) do
     slim_questions =
       Enum.map(state.current_questions, fn q ->
         # Preserve option count (shuffle relies on list length); drop text/image/correct_index.
@@ -54,10 +60,18 @@ defmodule PubQuizzer.Quiz.EngineState do
         %{id: q.id, position: q.position, options: blank_options}
       end)
 
-    %{state | current_questions: slim_questions}
+    %{state | current_questions: slim_questions, answers: redact_answers(state.answers, team_id)}
   end
 
-  def strip_for_team(%__MODULE__{} = state), do: state
+  def strip_for_team(%__MODULE__{} = state, team_id) do
+    %{state | answers: redact_answers(state.answers, team_id)}
+  end
+
+  defp redact_answers(answers, team_id) when is_map(answers) do
+    Map.new(answers, fn {qidx, picks} ->
+      {qidx, Map.new(picks, fn {tid, selected} -> {tid, tid == team_id && selected} end)}
+    end)
+  end
 
   # --- Initialization ---
 
@@ -308,6 +322,61 @@ defmodule PubQuizzer.Quiz.EngineState do
     teams
     |> Enum.map(fn t -> {t.id, t.name, Map.get(standings, t.id, 0)} end)
     |> Enum.sort_by(fn {_, _, score} -> score end, :desc)
+  end
+
+  @doc """
+  Live answer distribution for a single question — how many teams picked each
+  option. Returns `%{option_index => count}` including zero-count options so
+  the host UI can render full-width bars. Defaults to the current question.
+  """
+  def answer_distribution(%__MODULE__{} = state) do
+    answer_distribution(state, state.question_index)
+  end
+
+  def answer_distribution(
+        %__MODULE__{answers: answers, current_questions: questions},
+        question_idx
+      ) do
+    case Enum.at(questions, question_idx) do
+      nil ->
+        %{}
+
+      question ->
+        option_count = length(question.options)
+        question_answers = Map.get(answers, question_idx, %{})
+        initial = Map.new(0..(option_count - 1), fn i -> {i, 0} end)
+
+        Enum.reduce(question_answers, initial, fn {_team_id, selected}, acc ->
+          Map.update(acc, selected, 1, &(&1 + 1))
+        end)
+    end
+  end
+
+  @doc """
+  Standings with per-round deltas — `[{team_id, name, total_score, delta}]`
+  sorted by total descending. The delta reflects points scored in the round
+  that was just played (meaningful during `:round_reveal` and `:finished`,
+  zero otherwise). `delta` is safe to render as a `+N` badge.
+  """
+  def standings_with_deltas(%__MODULE__{status: status} = state)
+      when status in [:round_reveal, :finished] do
+    round_scores = compute_round_scores(state)
+
+    state.teams
+    |> Enum.map(fn t ->
+      total = Map.get(state.standings, t.id, 0)
+      delta = Map.get(round_scores, t.id, 0)
+      {t.id, t.name, total, delta}
+    end)
+    |> Enum.sort_by(fn {_, _, total, _} -> total end, :desc)
+  end
+
+  def standings_with_deltas(%__MODULE__{} = state) do
+    state.teams
+    |> Enum.map(fn t ->
+      {t.id, t.name, Map.get(state.standings, t.id, 0), 0}
+    end)
+    |> Enum.sort_by(fn {_, _, total, _} -> total end, :desc)
   end
 
   @doc """

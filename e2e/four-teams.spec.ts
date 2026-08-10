@@ -1,4 +1,4 @@
-import { test, expect, createEvent, joinTeams, startQuiz, pickTopic, revealRound } from "./fixtures"
+import { test, expect, createEvent, joinTeams, startQuiz, pickTopic } from "./fixtures"
 import type { Page, BrowserContext } from "./fixtures"
 
 const ENGINE_TIMEOUT = 20_000
@@ -27,9 +27,10 @@ test.describe("four teams", () => {
           await answerBtns(teams[i]).nth(choices[i]).click()
         }
 
-        await expect(hostPage.locator("text=4 / 4 Teams geantwortet")).toBeVisible({
-          timeout: ENGINE_TIMEOUT,
-        })
+        await expect(hostPage.locator('[data-test="answered-badge"]')).toHaveText(
+          /4\s*\/\s*4/,
+          { timeout: ENGINE_TIMEOUT },
+        )
 
         const revealBtn = hostPage.locator('[phx-click="reveal_round"]')
         if (await revealBtn.count()) {
@@ -39,12 +40,10 @@ test.describe("four teams", () => {
         await hostPage.locator('[phx-click="next_question"]').click()
       }
 
-      // Reveal answers
-      await expect(hostPage.locator('[phx-click="reveal_next_answer"]')).toBeVisible()
-      await revealRound(hostPage)
-
-      // Proceed from paginated reveal to the win/tie banner
-      await hostPage.locator('[phx-click="show_round_summary"]').click()
+      // After reveal_round the host immediately shows stats + winner banner
+      await expect(hostPage.locator('[data-test="round-stat-list"]')).toBeVisible({
+        timeout: 10_000,
+      })
 
       // Show standings — all 4 teams ranked
       await hostPage.locator('[phx-click="show_standings"]').click()

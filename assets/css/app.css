@@ -66,169 +66,6 @@ select:focus {
   box-shadow: none !important;
 }
 
-/* Hide presentation-exit button by default */
-.presentation-exit {
-  display: none;
-}
-
-/* Presentation mode styles - only apply when host view is present */
-body.presentation-mode:has(#host-lobby-main) .presentation-exit {
-  display: block;
-  position: fixed !important;
-  top: 0.25rem !important;
-  right: 0.5rem !important;
-  z-index: 9999 !important;
-}
-
-/* Keep the app nav hidden; turn the host console header into a compact toolbar. */
-body.presentation-mode:has(#host-lobby-main) header.bg-base-200 {
-  display: none;
-}
-
-body.presentation-mode:has(#host-lobby-main) .host-header {
-  flex: none !important;
-  padding: 0.5rem 1rem !important;
-  padding-right: 3.5rem !important;
-  background-color: var(--color-base-100) !important;
-  border-bottom: none !important;
-}
-
-body.presentation-mode:has(#host-lobby-main) .host-header header {
-  padding-bottom: 0 !important;
-  gap: 0.75rem !important;
-}
-
-body.presentation-mode:has(#host-lobby-main) .pres-mode-toggle,
-body.presentation-mode:has(#host-lobby-main) .pres-mode-hide {
-  display: none !important;
-}
-
-/* Beamer-friendly: fill viewport without centering (only on host view) */
-body.presentation-mode:has(#host-lobby-main) main {
-  padding: 0 !important;
-}
-
-body.presentation-mode:has(#host-lobby-main) main > div {
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100vh !important;
-  overflow: hidden !important;
-}
-
-body.presentation-mode:has(#host-lobby-main) #host-lobby-main {
-  max-width: 100% !important;
-  flex: 1 !important;
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 2vh 3vw !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-}
-
-/* Nav row stays at top */
-body.presentation-mode:has(#host-lobby-main) #host-lobby-main > div:first-child {
-  flex-shrink: 0 !important;
-}
-
-/* Q&A card fills remaining space */
-body.presentation-mode:has(#host-lobby-main) [data-test="reveal-question"] {
-  flex: 1 !important;
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-body.presentation-mode:has(#host-lobby-main) [data-test="reveal-question"] .card-body {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 0 !important;
-  padding: 3vh 4vw !important;
-  gap: 2vh !important;
-  overflow: hidden !important;
-}
-
-/* Title - fixed height */
-body.presentation-mode [data-test="reveal-question"] .card-title {
-  font-size: clamp(1.5rem, 3vh, 2.5rem) !important;
-  flex-shrink: 0 !important;
-  line-height: 1.2 !important;
-}
-
-/* Image - takes 35% of available space */
-body.presentation-mode [data-test="reveal-question"] img[alt="Fragebild"] {
-  max-height: 35vh !important;
-  flex-shrink: 1 !important;
-  object-fit: contain !important;
-}
-
-/* Answers - takes remaining space */
-body.presentation-mode [data-test="reveal-question"] .space-y-4 {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 0 !important;
-  gap: 1vh !important;
-  overflow: hidden !important;
-}
-
-body.presentation-mode [data-test="reveal-question"] .space-y-4 > * + * {
-  margin-top: 0 !important;
-}
-
-/* Answer items - equal height */
-body.presentation-mode [data-test="reveal-question"] .p-5 {
-  padding: 1.5vh 2vw !important;
-  flex: 1 !important;
-  display: flex !important;
-  align-items: center !important;
-  font-size: clamp(1rem, 2vh, 1.5rem) !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-/* Responsive scaling for Q&A reveal card in normal mode */
-[data-test="reveal-question"] .card-body {
-  padding: clamp(0.75rem, 2vh, 1.5rem) clamp(1rem, 3vw, 3rem) !important;
-}
-
-[data-test="reveal-question"] .card-title {
-  font-size: clamp(1rem, 2vh, 1.25rem) !important;
-  line-height: 1.3 !important;
-}
-
-[data-test="reveal-question"] img[alt="Fragebild"] {
-  max-height: clamp(8rem, 15vh, 14rem);
-}
-
-[data-test="reveal-question"] .space-y-4 {
-  gap: clamp(0.25rem, 0.5vh, 0.75rem) !important;
-}
-
-[data-test="reveal-question"] .space-y-4 > * + * {
-  margin-top: clamp(0.25rem, 0.5vh, 0.75rem) !important;
-}
-
-[data-test="reveal-question"] .p-5 {
-  padding: clamp(0.5rem, 1vh, 1rem) clamp(0.75rem, 1.5vw, 1.25rem) !important;
-  font-size: clamp(0.875rem, 1.5vh, 1.25rem) !important;
-}
-
-[data-test="reveal-question"] .text-2xl {
-  font-size: clamp(0.875rem, 1.5vh, 1.25rem) !important;
-}
-
-/* Option images scale with viewport */
-[data-test="reveal-question"] .size-32 {
-  width: clamp(3rem, 4vw, 6rem) !important;
-  height: clamp(3rem, 4vw, 6rem) !important;
-}
-
 /* Override daisyUI's btn-soft to use a filled bg (no harsh outline) that
    still contrasts with base-200 cards. Unlayered so it wins over daisyUI's
    @layer daisyui.l1.l2.l3 rules. */
@@ -290,26 +127,6 @@ dialog::backdrop {
 .opt-row {
   transition: transform 200ms ease, color 200ms ease, background-color 200ms ease, border-color 200ms ease;
 }
-
-/* Quiz font size adjustment — only affects Q&A area */
-#quiz-qa-area .card-title,
-#quiz-qa-area .qa-option {
-  font-size: var(--quiz-fs);
-}
-body[data-quiz-font-size="-2"] #quiz-qa-area .card-title,
-body[data-quiz-font-size="-2"] #quiz-qa-area .qa-option { --quiz-fs: 1.25rem; }
-body[data-quiz-font-size="-1"] #quiz-qa-area .card-title,
-body[data-quiz-font-size="-1"] #quiz-qa-area .qa-option { --quiz-fs: 1.5rem; }
-body:not([data-quiz-font-size]) #quiz-qa-area .card-title,
-body[data-quiz-font-size="0"] #quiz-qa-area .card-title,
-body:not([data-quiz-font-size]) #quiz-qa-area .qa-option,
-body[data-quiz-font-size="0"] #quiz-qa-area .qa-option { --quiz-fs: 1.875rem; }
-body[data-quiz-font-size="1"] #quiz-qa-area .card-title,
-body[data-quiz-font-size="1"] #quiz-qa-area .qa-option { --quiz-fs: 2.5rem; }
-body[data-quiz-font-size="2"] #quiz-qa-area .card-title,
-body[data-quiz-font-size="2"] #quiz-qa-area .qa-option { --quiz-fs: 3.25rem; }
-body[data-quiz-font-size="3"] #quiz-qa-area .card-title,
-body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
 
 /* Driver.js guide — match daisyUI theme */
 .driver-popover.pubquiz-guide {
@@ -471,5 +288,26 @@ body[data-quiz-font-size="3"] #quiz-qa-area .qa-option { --quiz-fs: 4rem; }
     background-color: var(--color-success);
     border: 2px solid var(--color-success);
     color: var(--color-success-content);
+  }
+}
+
+/* --- Team QR card print layout -------------------------------------------
+   One card per A4 page. The admin shell's nav, headers, and flashes are
+   hidden via the `print:` Tailwind variant on the chrome wrapper, plus this
+   block which paginates cards and strips the page margins so each card
+   fills its sheet. */
+@media print {
+  .team-card {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .team-card:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  @page {
+    margin: 1.5cm;
   }
 }

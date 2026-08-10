@@ -1,6 +1,6 @@
 <Layouts.app
   flash={@flash}
-  max_width=""
+  max_width="max-w-2xl"
   hide_nav_actions
   main_class="px-4 py-4 sm:pt-2 sm:pb-10 sm:px-6 lg:px-8"
 >
@@ -18,51 +18,9 @@
       </:subtitle>
       <:actions>
         <%= if @engine_state.status != :finished do %>
-          <div class="flex items-center gap-1 mr-2 sm:mr-4">
-            <button
-              onclick="adjustFontSize(-1)"
-              class="btn btn-sm btn-soft btn-square transition-colors duration-150"
-              title="Kleine Schrift"
-            >A−</button>
-            <span
-              id="qfz-label"
-              class="text-xs w-10 text-center tabular-nums text-base-content/70"
-            >100%</span>
-            <button
-              onclick="adjustFontSize(1)"
-              class="btn btn-sm btn-soft btn-square transition-colors duration-150"
-              title="Große Schrift"
-            >A+</button>
-          </div>
-          <%= if @engine_state.status == :question do %>
-            <% all_answered = map_size(@engine_state.answers) == length(@engine_state.teams) %>
-            <%= if (@engine_state.question_index || 0) < length(@engine_state.current_questions) - 1 do %>
-              <button
-                phx-click="next_question"
-                class="btn btn-sm btn-primary"
-                disabled={!all_answered}
-              >
-                <.icon name="hero-chevron-right" class="size-4" /> Nächste Frage
-              </button>
-            <% else %>
-              <button
-                phx-click="reveal_round"
-                class="btn btn-sm btn-primary"
-                disabled={!all_answered}
-              >
-                <.icon name="hero-eye" class="size-4" /> Runde auflösen
-              </button>
-            <% end %>
-          <% end %>
-          <button
-            onclick="togglePresentation()"
-            class="btn btn-sm btn-primary pres-mode-toggle"
-          >
-            Präsentationsmodus <kbd class="kbd kbd-xs">P</kbd>
-          </button>
           <button
             phx-click="ask_finish_quiz"
-            class="btn btn-sm btn-soft pres-mode-hide"
+            class="btn btn-sm btn-soft"
           >
             <.icon name="hero-flag" class="size-4" /> Quiz beenden
           </button>
@@ -70,17 +28,8 @@
       </:actions>
     </.header>
   </div>
-  <div class="fixed top-4 right-4 z-[9999] presentation-exit">
-    <button
-      onclick="togglePresentation()"
-      class="btn btn-sm btn-square"
-      title="Präsentationsmodus beenden (Esc)"
-    >
-      <.icon name="hero-x-mark" class="size-5" />
-    </button>
-  </div>
 
-  <div id="host-lobby-main" phx-hook="ScrollToBottom" class="mx-auto space-y-6 max-w-7xl">
+  <div id="host-lobby-main" phx-hook="ScrollToBottom" class="mx-auto space-y-6">
     <%!-- Topic selection phase --%>
     <%= if @engine_state.status == :topic_selection do %>
       <div class="mb-4 animate-fade-in-up">
@@ -132,165 +81,223 @@
       <% question = @engine_state.current_questions |> Enum.at(@engine_state.question_index) %>
       <% answered = PubQuizzer.Quiz.EngineState.answered_teams(@engine_state) %>
       <% total_teams = length(@engine_state.teams) %>
+      <% total_picks = @answer_distribution |> Map.values() |> Enum.sum() %>
+      <% all_answered = MapSet.size(answered) == total_teams %>
+      <% has_next =
+        (@engine_state.question_index || 0) < length(@engine_state.current_questions) - 1 %>
 
-      <div class="mb-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-baseline gap-2 flex-wrap">
-            <h3 class="text-xl font-semibold">
+      <div class="space-y-4 animate-fade-in">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-baseline gap-2 flex-wrap min-w-0">
+            <h3 class="text-xl font-semibold shrink-0">
               Frage {(@engine_state.question_index || 0) + 1} / {length(
                 @engine_state.current_questions
               )}
             </h3>
             <%= if @current_topic_name do %>
-              <span class="text-sm text-base-content/60">{@current_topic_name}</span>
+              <span class="text-sm text-base-content/60 truncate">{@current_topic_name}</span>
             <% end %>
           </div>
-          <span class="badge badge-ghost text-lg px-4 py-2 transition-all duration-300">
-            {MapSet.size(answered)} / {total_teams} Teams geantwortet
+          <span
+            class="badge badge-lg badge-ghost px-4 py-3 text-base shrink-0 tabular-nums"
+            data-test="answered-badge"
+          >
+            {MapSet.size(answered)} / {total_teams}
           </span>
         </div>
-      </div>
 
-      <.question_slide question={question} id="quiz-qa-area" class="mb-4 animate-fade-in" />
-    <% end %>
-
-    <%!-- Round reveal phase --%>
-    <%= if @engine_state.status == :round_reveal do %>
-      <% revealed = @engine_state.reveal_answer_index %>
-      <% total = length(@engine_state.current_questions) %>
-      <% all_revealed = revealed >= total %>
-
-      <%!-- Paginated answer reveal — one Q&A at a time --%>
-      <%= if !all_revealed or !@round_summary_shown do %>
-        <% view_index = @reveal_view_index || 0 %>
-        <% question = @engine_state.current_questions |> Enum.at(view_index) %>
-
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h3 class="text-xl font-semibold">
-            <span data-test="reveal-counter">
-              Frage {view_index + 1} / {total}
-            </span>
-          </h3>
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              phx-click="reveal_prev_answer"
-              class="btn btn-sm btn-soft"
-              disabled={view_index == 0}
+        <div class="card bg-base-200">
+          <div class="card-body p-5 sm:p-6">
+            <h4
+              class="card-title text-lg sm:text-xl leading-snug break-words"
+              data-test="question-prompt"
             >
-              <.icon name="hero-chevron-left" class="size-4" /> Zurück
-            </button>
-
-            <%= if !all_revealed or view_index < revealed - 1 do %>
-              <button
-                phx-click="reveal_next_answer"
-                class="btn btn-sm btn-primary"
-              >
-                Nächste Antwort <.icon name="hero-chevron-right" class="size-4" />
-              </button>
-            <% end %>
-
-            <%= if all_revealed and view_index == total - 1 do %>
-              <button
-                phx-click="show_round_summary"
-                class="btn btn-sm btn-primary"
-              >
-                <.icon name="hero-trophy" class="size-4" /> Ergebnis anzeigen
-              </button>
-            <% end %>
-          </div>
-        </div>
-
-        <div class="card bg-base-200 animate-fade-in" data-test="reveal-question">
-          <div class="card-body px-12 sm:px-16 py-8">
-            <h4 class="card-title text-2xl">
               <.multiline_text text={question.prompt} />
             </h4>
-            <%= if (question[:images] || []) != [] do %>
-              <div class="flex flex-wrap justify-center items-center gap-4 mb-2">
-                <%= for img <- question[:images] do %>
-                  <.question_image
-                    img={img}
-                    class="w-[clamp(20rem,45vw,40rem)] h-auto object-contain"
-                    sizes="(max-width: 640px) 100vw, 768px"
-                    loading="lazy"
-                  />
-                <% end %>
-              </div>
-            <% end %>
-            <div class="space-y-4">
+
+            <ul class="mt-2 space-y-2" data-test="answer-distribution">
               <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                <div class={[
-                  "p-5 rounded text-2xl flex items-center gap-3",
-                  idx == question.correct_index && "pq-reveal-correct border-2",
-                  idx != question.correct_index && "bg-base-300"
-                ]}>
-                  <span class="font-mono shrink-0">{letter_for_index(idx)}.</span>
-                  <span class="break-words flex-1"><.multiline_text text={option["text"]} /></span>
-                  <%= if opt_img = option["image"] do %>
-                    <img
-                      src={thumbnail_url(opt_img)}
-                      srcset={srcset_for(opt_img)}
-                      sizes="128px"
-                      alt=""
-                      loading="lazy"
-                      class="size-[6vw] max-w-[6rem] object-cover rounded shrink-0"
-                    />
-                  <% end %>
-                </div>
+                <% count = Map.get(@answer_distribution, idx, 0) %>
+                <% pct =
+                  if total_picks > 0, do: Integer.floor_div(count * 100, total_picks), else: 0 %>
+                <li class="flex items-center gap-3" data-test="distribution-row">
+                  <span class="font-mono w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded bg-base-300 text-base-content/70 text-sm sm:text-base shrink-0">
+                    {letter_for_index(idx)}
+                  </span>
+                  <span class="flex-1 min-w-0 text-base sm:text-lg break-words">
+                    <.multiline_text text={option["text"]} />
+                  </span>
+                  <div class="flex items-center gap-2 w-28 sm:w-40 shrink-0">
+                    <div class="flex-1 h-3 bg-base-300 rounded overflow-hidden">
+                      <div
+                        class="h-full bg-primary transition-all duration-300"
+                        style={"width: #{pct}%"}
+                      >
+                      </div>
+                    </div>
+                    <span class="tabular-nums text-sm sm:text-base w-6 text-right">{count}</span>
+                  </div>
+                </li>
               <% end %>
-            </div>
+            </ul>
           </div>
         </div>
-      <% end %>
 
-      <%= if all_revealed and @round_summary_shown do %>
+        <button
+          phx-click={(has_next && "next_question") || "reveal_round"}
+          disabled={!all_answered}
+          class="btn btn-primary btn-lg w-full text-lg"
+          data-test="advance-button"
+        >
+          <%= if has_next do %>
+            <.icon name="hero-chevron-right" class="size-5" /> Nächste Frage
+          <% else %>
+            <.icon name="hero-eye" class="size-5" /> Runde auflösen
+          <% end %>
+        </button>
+      </div>
+    <% end %>
+
+    <%!-- Round reveal phase — stats-first, no paginated slide --%>
+    <%= if @engine_state.status == :round_reveal do %>
+      <div class="space-y-4 animate-fade-in">
+        <h3 class="text-xl font-semibold">
+          Runde {(@engine_state.round_number || 0) + 1} · Auswertung
+        </h3>
+
+        <%!-- Per-question distribution breakdowns — all questions in the round --%>
+        <div class="space-y-3" data-test="round-stat-list">
+          <%= for {question, distribution} <- @round_distributions do %>
+            <% q_total_picks = distribution |> Map.values() |> Enum.sum() %>
+            <div class="card bg-base-200">
+              <div class="card-body p-4 sm:p-5">
+                <div class="flex items-baseline gap-2 mb-1">
+                  <span class="text-xs font-mono text-base-content/60 shrink-0">
+                    Frage {(question.position || 0) + 1}
+                  </span>
+                </div>
+                <h4 class="card-title text-base sm:text-lg leading-snug break-words">
+                  <.multiline_text text={question.prompt} />
+                </h4>
+
+                <ul class="mt-2 space-y-1.5">
+                  <%= for {option, idx} <- Enum.with_index(question.options) do %>
+                    <% count = Map.get(distribution, idx, 0) %>
+                    <% pct =
+                      if q_total_picks > 0,
+                        do: Integer.floor_div(count * 100, q_total_picks),
+                        else: 0 %>
+                    <% is_correct = idx == question.correct_index %>
+                    <li class={[
+                      "flex items-center gap-3 rounded px-2 py-1.5",
+                      is_correct && "bg-success/15"
+                    ]}>
+                      <span class={[
+                        "font-mono w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded text-sm shrink-0",
+                        is_correct && "bg-success text-success-content",
+                        !is_correct && "bg-base-300 text-base-content/70"
+                      ]}>
+                        {letter_for_index(idx)}
+                      </span>
+                      <span class="flex-1 min-w-0 text-sm sm:text-base break-words">
+                        <.multiline_text text={option["text"]} />
+                      </span>
+                      <%= if is_correct do %>
+                        <.icon name="hero-check-circle" class="size-4 text-success shrink-0" />
+                      <% end %>
+                      <div class="flex items-center gap-2 w-24 sm:w-32 shrink-0">
+                        <div class={[
+                          "flex-1 h-2.5 rounded overflow-hidden",
+                          is_correct && "bg-success/30",
+                          !is_correct && "bg-base-300"
+                        ]}>
+                          <div
+                            class={[
+                              "h-full transition-all duration-300",
+                              is_correct && "bg-success",
+                              !is_correct && "bg-base-content/40"
+                            ]}
+                            style={"width: #{pct}%"}
+                          >
+                          </div>
+                        </div>
+                        <span class="tabular-nums text-xs sm:text-sm w-5 text-right">{count}</span>
+                      </div>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <%!-- Winner banner + standings-or-skip section --%>
         <%= if @engine_state.standings_revealed do %>
-          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div class="space-y-3 animate-fade-in-up">
             <h3 class="text-xl font-semibold">🏆 Platzierung</h3>
-            <button phx-click="next_round" class="btn btn-primary btn-lg text-xl">
-              <.icon name="hero-chevron-right" class="size-6" /> Nächste Runde
+            <ol class="space-y-2" data-test="standings-list">
+              <%= for {{id, name, total, delta}, rank} <- Enum.with_index(@standings_with_deltas) do %>
+                <li
+                  id={"standing-#{id}"}
+                  class={[
+                    "flex items-center gap-3 p-3 rounded-lg border",
+                    rank == 0 && "border-warning bg-warning/10",
+                    rank == 1 && "border-base-content/30 bg-base-200",
+                    rank >= 2 && "border-base-300 bg-base-200"
+                  ]}
+                >
+                  <span class="font-bold text-lg w-8 text-center shrink-0">
+                    <%= cond do %>
+                      <% rank == 0 -> %>
+                        🥇
+                      <% rank == 1 -> %>
+                        🥈
+                      <% rank == 2 -> %>
+                        🥉
+                      <% true -> %>
+                        {rank + 1}
+                    <% end %>
+                  </span>
+                  <span class="flex-1 font-semibold text-base sm:text-lg truncate">{name}</span>
+                  <%= if delta > 0 do %>
+                    <span class="badge badge-success badge-sm shrink-0">+{delta}</span>
+                  <% end %>
+                  <span class="tabular-nums text-xl font-bold shrink-0">{total}</span>
+                </li>
+              <% end %>
+            </ol>
+            <button phx-click="next_round" class="btn btn-primary btn-lg w-full text-lg">
+              <.icon name="hero-chevron-right" class="size-5" /> Nächste Runde
             </button>
-          </div>
-          <div class="space-y-4 animate-fade-in-up">
-            <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-              <.podium_row
-                id={"standing-#{id}"}
-                rank={rank}
-                name={name}
-                score={score}
-              />
-            <% end %>
           </div>
         <% else %>
           <% winner =
             Enum.find(@engine_state.teams, fn t ->
               t.id == @engine_state.current_winner_team_id
             end) %>
-          <div class="mb-6">
-            <%= if winner do %>
-              <div class="alert alert-success text-2xl font-semibold justify-center">
-                <.icon name="hero-trophy" class="size-8 text-warning" />
-                <span><strong>{winner.name}</strong>
-                gewinnt Runde {(@engine_state.round_number || 0) + 1}</span>
-              </div>
-            <% else %>
-              <div class="alert alert-info text-xl justify-center">
-                <.icon name="hero-hand-raised" class="size-6" />
-                <span>Remis! Kein eindeutiger Gewinner.</span>
-              </div>
-            <% end %>
-          </div>
 
-          <div class="mb-6 flex flex-wrap items-center justify-center gap-3">
-            <button phx-click="show_standings" class="btn btn-lg text-xl px-12 py-4 btn-soft">
-              <.icon name="hero-clipboard" class="size-7" /> Team-Ergebnisse anzeigen
+          <%= if winner do %>
+            <div class="alert alert-success text-lg font-semibold">
+              <.icon name="hero-trophy" class="size-6 text-warning" />
+              <span><strong>{winner.name}</strong> gewinnt die Runde!</span>
+            </div>
+          <% else %>
+            <div class="alert alert-info text-base">
+              <.icon name="hero-hand-raised" class="size-5" />
+              <span>Remis! Kein eindeutiger Gewinner.</span>
+            </div>
+          <% end %>
+
+          <div class="flex flex-col gap-2">
+            <button phx-click="show_standings" class="btn btn-primary btn-lg text-base">
+              <.icon name="hero-clipboard" class="size-5" /> Team-Ergebnisse anzeigen
             </button>
-            <button phx-click="next_round" class="btn btn-primary btn-lg text-2xl px-12 py-4">
-              <.icon name="hero-bookmark" class="size-5" /> Weiter zur Kategorie
+            <button phx-click="next_round" class="btn btn-soft btn-lg text-base">
+              <.icon name="hero-bookmark" class="size-5" /> Überspringen — nächste Kategorie
             </button>
           </div>
         <% end %>
-      <% end %>
+      </div>
     <% end %>
 
     <%!-- Finished phase --%>

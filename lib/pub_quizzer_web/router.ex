@@ -43,6 +43,7 @@ defmodule PubQuizzerWeb.Router do
     # Team join (controller sets session cookie)
     post "/quiz/join", QuizJoinController, :join
     get "/quiz/join/:code", QuizJoinController, :join_with_code
+    get "/quiz/join/:code/:slot", QuizJoinController, :join_with_code_and_slot
 
     # Public quiz live session (team lobby only)
     live_session :team_quiz do
@@ -87,6 +88,7 @@ defmodule PubQuizzerWeb.Router do
       live "/events", EventLive, :index
       live "/events/:id", EventLive, :show
       live "/events/:id/results", ResultLive, :index
+      live "/events/:id/team-cards", TeamCardLive, :index
 
       live "/profile", ProfileLive, :index
 
