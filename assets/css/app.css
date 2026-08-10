@@ -80,12 +80,27 @@ body.presentation-mode:has(#host-lobby-main) .presentation-exit {
   z-index: 9999 !important;
 }
 
-body.presentation-mode:has(#host-lobby-main) .host-header {
+/* Keep the app nav hidden; turn the host console header into a compact toolbar. */
+body.presentation-mode:has(#host-lobby-main) header.bg-base-200 {
   display: none;
 }
 
-body.presentation-mode:has(#host-lobby-main) header.bg-base-200 {
-  display: none;
+body.presentation-mode:has(#host-lobby-main) .host-header {
+  flex: none !important;
+  padding: 0.5rem 1rem !important;
+  padding-right: 3.5rem !important;
+  background-color: var(--color-base-100) !important;
+  border-bottom: none !important;
+}
+
+body.presentation-mode:has(#host-lobby-main) .host-header header {
+  padding-bottom: 0 !important;
+  gap: 0.75rem !important;
+}
+
+body.presentation-mode:has(#host-lobby-main) .pres-mode-toggle,
+body.presentation-mode:has(#host-lobby-main) .pres-mode-hide {
+  display: none !important;
 }
 
 /* Beamer-friendly: fill viewport without centering (only on host view) */
@@ -97,11 +112,16 @@ body.presentation-mode:has(#host-lobby-main) main > div {
   max-width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  overflow: hidden !important;
 }
 
 body.presentation-mode:has(#host-lobby-main) #host-lobby-main {
   max-width: 100% !important;
-  height: 100vh !important;
+  flex: 1 !important;
+  min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   padding: 2vh 3vw !important;

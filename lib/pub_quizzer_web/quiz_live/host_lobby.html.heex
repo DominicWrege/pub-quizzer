@@ -18,7 +18,7 @@
       </:subtitle>
       <:actions>
         <%= if @engine_state.status != :finished do %>
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1 mr-2 sm:mr-4">
             <button
               onclick="adjustFontSize(-1)"
               class="btn btn-sm btn-soft btn-square transition-colors duration-150"
@@ -56,13 +56,13 @@
           <% end %>
           <button
             onclick="togglePresentation()"
-            class="btn btn-sm btn-primary"
+            class="btn btn-sm btn-primary pres-mode-toggle"
           >
             Präsentationsmodus <kbd class="kbd kbd-xs">P</kbd>
           </button>
           <button
             phx-click="ask_finish_quiz"
-            class="btn btn-sm btn-soft"
+            class="btn btn-sm btn-soft pres-mode-hide"
           >
             <.icon name="hero-flag" class="size-4" /> Quiz beenden
           </button>
@@ -135,7 +135,7 @@
 
       <div class="mb-4">
         <div class="flex items-center justify-between">
-          <div>
+          <div class="flex items-baseline gap-2 flex-wrap">
             <h3 class="text-xl font-semibold">
               Frage {(@engine_state.question_index || 0) + 1} / {length(
                 @engine_state.current_questions
