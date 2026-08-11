@@ -292,11 +292,24 @@ dialog::backdrop {
 }
 
 /* --- Team QR card print layout -------------------------------------------
-   One card per A4 page. The admin shell's nav, headers, and flashes are
-   hidden via the `print:` Tailwind variant on the chrome wrapper, plus this
-   block which paginates cards and strips the page margins so each card
-   fills its sheet. */
+   One card per DIN A5 sheet (148 x 210 mm portrait). The admin shell's nav,
+   header, and flashes are hidden via the `print:` Tailwind variant driven by
+   `<Layouts.app print_chrome={false}>`. `@page { margin: 0 }` zero-edges the
+   sheet so browsers omit their default header (page title) and footer (URL);
+   inner card padding replaces the former page margin. The SVG sizing rules
+   keep the QR inside its white wrapper on screen (.team-card svg max-width:
+   100%) and fill ~60% of the A5 width in print, for reliable scanning. */
+.team-card svg {
+  max-width: 100%;
+  height: auto;
+}
+
 @media print {
+  @page {
+    size: 148mm 210mm;
+    margin: 0;
+  }
+
   .team-card {
     break-after: page;
     page-break-after: always;
@@ -307,7 +320,8 @@ dialog::backdrop {
     page-break-after: auto;
   }
 
-  @page {
-    margin: 1.5cm;
+  .team-card svg {
+    width: 100%;
+    max-width: 60mm;
   }
 }

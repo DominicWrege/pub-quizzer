@@ -49,9 +49,20 @@ defmodule PubQuizzerWeb.Layouts do
     default: false,
     doc: "hides the navbar action buttons (for quiz lobby screens)"
 
+  attr :print_chrome, :boolean,
+    default: true,
+    doc: "when false, the admin header/drawer/flashes get print:hidden (for printable pages)"
+
   slot :inner_block, required: true
 
   def app(assigns) do
+    assigns =
+      assign(
+        assigns,
+        :print_chrome_class,
+        if(assigns[:print_chrome], do: "", else: "print:hidden")
+      )
+
     ~H"""
     <%= if @current_scope && @current_scope[:user] do %>
       <%!-- Below lg the document scrolls naturally so iOS Safari's floating URL
@@ -63,7 +74,10 @@ defmodule PubQuizzerWeb.Layouts do
       >
         <input type="checkbox" id="nav-drawer-toggle" class="peer hidden" />
         <header
-          class="sticky top-0 z-20 shrink-0 bg-base-200 border-b border-base-300 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-0"
+          class={[
+            "sticky top-0 z-20 shrink-0 bg-base-200 border-b border-base-300 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-0",
+            @print_chrome_class
+          ]}
           data-guide-seen={"#{@current_scope.user.guide_seen}"}
           data-guide-role={@current_scope.user.role}
         >
@@ -138,7 +152,10 @@ defmodule PubQuizzerWeb.Layouts do
         <label
           for="nav-drawer-toggle"
           aria-hidden="true"
-          class="fixed inset-x-0 top-0 z-40 h-[var(--app-height)] bg-black/50 opacity-0 invisible pointer-events-none peer-checked:opacity-100 peer-checked:visible peer-checked:pointer-events-auto transition-[opacity,visibility] duration-200 sm:hidden"
+          class={[
+            "fixed inset-x-0 top-0 z-40 h-[var(--app-height)] bg-black/50 opacity-0 invisible pointer-events-none peer-checked:opacity-100 peer-checked:visible peer-checked:pointer-events-auto transition-[opacity,visibility] duration-200 sm:hidden",
+            @print_chrome_class
+          ]}
         ></label>
         <div class="flex min-h-0 flex-1">
           <main class={["flex-1 lg:overflow-y-auto lg:overscroll-contain", @main_class]}>
@@ -156,7 +173,10 @@ defmodule PubQuizzerWeb.Layouts do
         </div>
         <%!-- shadow only while open: a shadow on the translated-off-screen drawer
             bleeds into the top of the viewport when closed --%>
-        <aside class="fixed inset-x-0 top-0 z-50 max-h-[var(--app-height)] overflow-y-auto bg-base-100 border-b border-base-300 -translate-y-full peer-checked:translate-y-0 peer-checked:shadow-xl transition-[transform,box-shadow] duration-200 sm:hidden flex flex-col">
+        <aside class={[
+          "fixed inset-x-0 top-0 z-50 max-h-[var(--app-height)] overflow-y-auto bg-base-100 border-b border-base-300 -translate-y-full peer-checked:translate-y-0 peer-checked:shadow-xl transition-[transform,box-shadow] duration-200 sm:hidden flex flex-col",
+          @print_chrome_class
+        ]}>
           <div class="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4 border-b border-base-300">
             <span class="font-semibold">Navigation</span>
             <label
@@ -258,7 +278,9 @@ defmodule PubQuizzerWeb.Layouts do
       </div>
     <% end %>
 
-    <.flash_group flash={@flash} />
+    <div class={@print_chrome_class}>
+      <.flash_group flash={@flash} />
+    </div>
     """
   end
 

@@ -12,7 +12,10 @@ defmodule PubQuizzerWeb.Admin.TeamCardLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, page_title: "Team-Karten")}
+    # page_title intentionally nil: @page margin:0 suppresses the browser's
+    # print header/footer anyway, and we don't want "Team-Karten" showing up
+    # on the printed A5 sheet or in the tab title.
+    {:ok, assign(socket, page_title: nil)}
   end
 
   @impl true
@@ -30,7 +33,7 @@ defmodule PubQuizzerWeb.Admin.TeamCardLive do
         svg =
           card_url
           |> EQRCode.encode()
-          |> EQRCode.svg(color: "#1e40af", background: "#ffffff", width: 280)
+          |> EQRCode.svg(color: "#1e40af", background: "#ffffff", width: 400)
 
         %{team: team, slot: slot, url: card_url, svg: svg}
       end)

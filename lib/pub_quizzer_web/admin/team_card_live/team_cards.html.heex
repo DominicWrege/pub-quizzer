@@ -3,6 +3,7 @@
   current_scope={@current_scope}
   current_path={@current_path}
   max_width="max-w-lg"
+  print_chrome={false}
 >
   <div class="print:hidden">
     <.header>
@@ -37,22 +38,34 @@
       id={"team-card-#{team.id}"}
       data-test="team-card"
       data-slot={slot}
-      class="team-card card bg-base-200 max-w-sm mx-auto print:shadow-none print:border-0 print:bg-white"
+      class={
+        [
+          # screen: daisyUI card chrome (kept per design decision)
+          "team-card card bg-base-200 max-w-sm mx-auto",
+          # print: blank A5 sheet, no chrome, content centered
+          "print:bg-white print:border-0 print:shadow-none print:rounded-none",
+          "print:max-w-none print:mx-0 print:w-[148mm] print:min-h-[210mm]",
+          "print:flex print:flex-col print:justify-center"
+        ]
+      }
     >
-      <div class="card-body items-center text-center p-8 print:p-12">
-        <div class="text-5xl sm:text-6xl font-bold tracking-tight">
+      <div class={[
+        "card-body items-center text-center p-8",
+        "print:p-16 print:gap-8"
+      ]}>
+        <div class="text-5xl sm:text-6xl font-bold tracking-tight print:text-3xl">
           Team {slot}
         </div>
-        <div class="mt-6 bg-white p-4 rounded-box shadow-sm print:shadow-none">
+        <div class="mt-6 bg-white px-8 py-4 rounded-box shadow-sm print:mt-0 print:p-0 print:shadow-none print:rounded-none">
           {raw(svg)}
         </div>
-        <div class="mt-6 text-base text-base-content/70">
+        <div class="mt-6 text-base text-base-content/70 print:mt-0">
           <span class="font-mono">Code:</span>
-          <span class="font-mono font-bold tracking-widest text-2xl text-base-content">
+          <span class="font-mono font-bold tracking-widest text-2xl text-base-content print:text-3xl">
             {@event.code}
           </span>
         </div>
-        <p class="mt-4 text-xs text-base-content/50 max-w-md">
+        <p class="mt-4 text-xs text-base-content/50 max-w-md print:mt-2 print:text-sm print:text-base-content/60">
           QR-Code scannen mit der Kamera-App, um als Team {slot} beizutreten.
         </p>
       </div>
