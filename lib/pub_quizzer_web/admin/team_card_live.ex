@@ -33,12 +33,19 @@ defmodule PubQuizzerWeb.Admin.TeamCardLive do
         svg =
           card_url
           |> EQRCode.encode()
-          |> EQRCode.svg(color: "#1e40af", background: "#ffffff", width: 400)
+          |> EQRCode.svg(color: "#000000", background: "#ffffff", width: 400)
 
-        %{team: team, slot: slot, url: card_url, svg: svg}
+        %{team: team, slot: slot, url: card_url, display_url: display_url(card_url), svg: svg}
       end)
 
     {:noreply, assign(socket, event: event, cards: cards)}
+  end
+
+  # Human-readable join link for the printed card fallback: no scheme, no port
+  # (e.g. "quizforabetterlife.eu/quiz/join/ABC/3").
+  defp display_url(card_url) do
+    uri = URI.parse(card_url)
+    "#{uri.host}#{uri.path}"
   end
 
   # Mirror of EventLive's helper — same default-port omission so QR URLs are

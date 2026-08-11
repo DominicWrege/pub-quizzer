@@ -34,7 +34,7 @@
 
   <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto print:block print:gap-0 print:mt-0 print:max-w-none print:mx-0">
     <div
-      :for={%{team: team, slot: slot, svg: svg} <- @cards}
+      :for={%{team: team, slot: slot, display_url: display_url, svg: svg} <- @cards}
       id={"team-card-#{team.id}"}
       data-test="team-card"
       data-slot={slot}
@@ -51,23 +51,27 @@
     >
       <div class={[
         "card-body items-center text-center p-8",
-        "print:p-16 print:gap-8"
+        "print:p-16 print:gap-4"
       ]}>
         <div class="text-3xl sm:text-4xl font-bold tracking-tight print:text-3xl">
           Team {slot}
         </div>
-        <div class="mt-4 bg-white px-6 py-3 rounded-box shadow-sm print:mt-0 print:p-0 print:shadow-none print:rounded-none">
+        <div class="team-card-qr mt-2 bg-white px-4 py-2 rounded-box shadow-sm print:mt-0 print:p-0 print:shadow-none print:rounded-none">
           {raw(svg)}
         </div>
-        <div class="mt-6 text-base text-base-content/70 print:mt-0">
-          <span class="font-mono">Code:</span>
-          <span class="font-mono font-bold tracking-widest text-2xl text-base-content print:text-3xl">
-            {@event.code}
+        <div class="mt-3 hidden text-base text-base-content/70 print:block print:mt-0">
+          <span class="font-mono font-semibold tracking-tight text-sm text-base-content break-all print:text-base">
+            {display_url}
           </span>
         </div>
-        <p class="mt-4 text-xs text-base-content/50 max-w-md print:mt-2 print:text-sm print:text-base-content/60">
-          QR-Code scannen mit der Kamera-App, um als Team {slot} beizutreten.
-        </p>
+        <div class="mt-3 hidden flex-col items-center gap-1.5 text-xs text-base-content/60 print:flex print:mt-0 print:text-sm print:text-base-content/70">
+          <span class="inline-flex items-center gap-1.5">
+            <.icon name="hero-camera" class="size-4" /> Kamera auf QR-Code richten
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <.icon name="hero-link" class="size-4" /> Oder Link im Browser eingeben
+          </span>
+        </div>
       </div>
     </div>
   </div>

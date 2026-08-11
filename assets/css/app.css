@@ -299,7 +299,7 @@ dialog::backdrop {
    inner card padding replaces the former page margin. The SVG sizing rules
    keep the QR inside its white wrapper on screen (.team-card svg max-width:
    100%) and fill ~60% of the A5 width in print, for reliable scanning. */
-.team-card svg {
+.team-card .team-card-qr svg {
   max-width: 180px;
   height: auto;
 }
@@ -320,7 +320,7 @@ dialog::backdrop {
     page-break-after: auto;
   }
 
-  .team-card svg {
+  .team-card .team-card-qr svg {
     width: 100%;
     max-width: 60mm;
   }

@@ -28,14 +28,9 @@
       <%= if @event.status != "lobby" do %>
         <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary">Moderator-Konsole</.link>
       <% end %>
-      <a
-        href={~p"/admin/events/#{@event}/team-cards"}
-        target="_blank"
-        rel="noopener"
-        class="btn btn-soft"
-      >
+      <.link navigate={~p"/admin/events/#{@event}/team-cards"} class="btn btn-soft">
         <.icon name="hero-arrow-down-tray" class="size-4" /> Team-Karten
-      </a>
+      </.link>
       <button
         phx-click="ask_delete_event"
         class="btn btn-danger-soft"
