@@ -383,6 +383,11 @@ const QuestionSorter = {
         }
         this._suppressClick = true
         this._endDrag(ev.clientY)
+        // A real drag (mouse moved) fires no `click` after mouseup, so the
+        // suppression flag would linger and swallow the next real click.
+        // Clear it after the current task: the synthetic click right after
+        // mouseup is still caught, but later clicks pass through.
+        window.setTimeout(() => { this._suppressClick = false }, 0)
       }
       document.addEventListener('mousemove', this._onMove)
       document.addEventListener('mouseup', this._onUp)

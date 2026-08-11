@@ -536,6 +536,26 @@ defmodule PubQuizzer.Quiz do
   end
 
   @doc """
+  Assigns a random UUID token to every team of an event that doesn't already
+  have one. Tokens are stable per team row, so a team can be tracked across
+  quiz runs — but only finished quizzes with >1 round get them (the host
+  decides via this call). Returns the list of updated teams.
+  """
+  def assign_team_tokens(event_id) do
+    event = get_event_with_teams!(event_id)
+
+    event.teams
+    |> Enum.reject(& &1.token)
+    |> Enum.each(fn team ->
+      team
+      |> Team.changeset(%{token: Ecto.UUID.generate()})
+      |> Repo.update()
+    end)
+
+    list_teams_for_event(event_id)
+  end
+
+  @doc """
   Checks if a team belongs to a specific event.
   """
   def team_belongs_to_event?(team_id, event_id) do

@@ -474,6 +474,12 @@ defmodule PubQuizzer.Quiz.Engine do
   defp persist_event_status(state) do
     event = PubQuizzer.Repo.get(PubQuizzer.Quiz.QuizEvent, state.event_id)
 
+    if state.status == :finished and length(state.completed_rounds) > 1 do
+      # Team 1 in quiz A isn't team 1 in quiz B — stamp a stable UUID on every
+      # team so future statistics can tie results back to the same team.
+      PubQuizzer.Quiz.assign_team_tokens(state.event_id)
+    end
+
     attrs = %{
       status: Atom.to_string(state.status),
       current_round: state.round_number,

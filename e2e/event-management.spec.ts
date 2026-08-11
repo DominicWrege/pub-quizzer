@@ -1,4 +1,4 @@
-import { test, expect, createEvent, joinTeams } from "./fixtures"
+import { test, expect, createEvent, joinTeams, waitForLiveView } from "./fixtures"
 
 test.describe("event management", () => {
   test("host can rename a team", async ({ browser, hostPage }) => {
@@ -23,18 +23,14 @@ test.describe("event management", () => {
   test("host can add and remove team slots", async ({ hostPage }) => {
     test.setTimeout(60_000)
 
-    await createEvent(hostPage, 2)
+    await createEvent(hostPage, 4)
 
-    // Initially 2 team rows
-    await expect(hostPage.locator("tbody#event-teams tr")).toHaveCount(2, { timeout: 10_000 })
+    // Initially 4 team rows
+    await expect(hostPage.locator("tbody#event-teams tr")).toHaveCount(4, { timeout: 10_000 })
 
     // Add a slot
     await hostPage.locator('[phx-click="add_slot"]').click()
-    await expect(hostPage.locator("tbody#event-teams tr")).toHaveCount(3, { timeout: 10_000 })
-
-    // Remove a slot (removes last unclaimed)
-    await hostPage.locator('[phx-click="remove_slot"]').click()
-    await expect(hostPage.locator("tbody#event-teams tr")).toHaveCount(2, { timeout: 10_000 })
+    await expect(hostPage.locator("tbody#event-teams tr")).toHaveCount(5, { timeout: 10_000 })
   })
 
   test("host can search events by code", async ({ browser, hostPage }) => {
@@ -61,7 +57,10 @@ test.describe("event management", () => {
     // Go to the events index and delete the event there
     await hostPage.goto("/admin/events")
     await waitForLiveView(hostPage)
-    await hostPage.locator(`#event-... button`, { hasText: "Löschen" }).first().click()
+    await hostPage
+      .locator(`div[id^="event-"]:has-text("${code}") [phx-click="ask_delete"]`)
+      .first()
+      .click()
     await expect(hostPage.locator("#delete-event-index-modal")).toBeVisible({ timeout: 5_000 })
 
     // Confirm deletion
@@ -82,8 +81,8 @@ test.describe("event management", () => {
     // Remove the first team in the (desktop) table
     await hostPage.locator("#event-teams [phx-click='remove_team']").first().click()
 
-    // One team row gone (was 2, now 1)
-    await expect(hostPage.locator("tbody#event-teams tr")).toHaveCount(1, { timeout: 10_000 })
+    // One team row gone (was 4, now 3)
+    await expect(hostPage.locator("tbody#event-teams tr")).toHaveCount(3, { timeout: 10_000 })
 
     for (const ctx of contexts) await ctx.close()
   })

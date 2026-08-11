@@ -27,17 +27,20 @@ test.describe("team join", () => {
   test("joining a full quiz shows an error", async ({ browser, hostPage }) => {
     test.setTimeout(60_000)
 
-    const code = await createEvent(hostPage, 2)
+    const code = await createEvent(hostPage, 4)
 
-    // Fill both slots
-    const ctxA = await browser.newContext()
-    const ctxB = await browser.newContext()
-    const pageA = await ctxA.newPage()
-    const pageB = await ctxB.newPage()
-    await joinTeam(pageA, code)
-    await joinTeam(pageB, code)
+    // Fill all four slots
+    const contexts = []
+    const pages = []
+    for (let i = 0; i < 4; i++) {
+      const ctx = await browser.newContext()
+      const page = await ctx.newPage()
+      await joinTeam(page, code)
+      contexts.push(ctx)
+      pages.push(page)
+    }
 
-    // Try a third team
+    // Try a fifth team
     const ctxC = await browser.newContext()
     const pageC = await ctxC.newPage()
     await pageC.goto("/")
@@ -47,8 +50,7 @@ test.describe("team join", () => {
     await expect(pageC.locator(".alert-error")).toBeVisible({ timeout: 10_000 })
     await expect(pageC).toHaveURL("/")
 
-    await ctxA.close()
-    await ctxB.close()
+    for (const ctx of contexts) await ctx.close()
     await ctxC.close()
   })
 

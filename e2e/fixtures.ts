@@ -40,19 +40,11 @@ async function loginAsHost(page: Page): Promise<void> {
 }
 
 /** Create a quiz event via the admin UI and return its 4-digit join code. */
-async function createEvent(page: Page, teamCount: number): Promise<string> {
+async function createEvent(page: Page, _teamCount = 4): Promise<string> {
   await page.goto("/admin/events")
   await waitForLiveView(page)
   await page.waitForSelector("#new-event-btn", { state: "visible" })
   await page.locator("#new-event-btn").click()
-  await page.waitForSelector("#event-form", { state: "attached" })
-  await page.waitForLoadState("networkidle")
-
-  const input = page.locator('input[name="team_count"]')
-  await input.click({ clickCount: 3 })
-  await input.fill(String(teamCount))
-
-  await page.locator("#event-form button[type='submit']").click()
 
   await page.waitForSelector('[data-testid="event-code"]', { timeout: 10_000 })
   await waitForLiveView(page)

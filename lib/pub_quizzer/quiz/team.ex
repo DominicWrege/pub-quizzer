@@ -6,6 +6,7 @@ defmodule PubQuizzer.Quiz.Team do
     field :name, :string
     field :slot_index, :integer
     field :claimed_at, :utc_datetime
+    field :token, :string
 
     belongs_to :quiz_event, PubQuizzer.Quiz.QuizEvent
 
@@ -14,7 +15,7 @@ defmodule PubQuizzer.Quiz.Team do
 
   def changeset(team, attrs) do
     team
-    |> cast(attrs, [:name, :slot_index, :claimed_at, :quiz_event_id])
+    |> cast(attrs, [:name, :slot_index, :claimed_at, :token, :quiz_event_id])
     |> validate_required([:name, :slot_index])
     |> validate_length(:name, min: 1, max: 50)
   end

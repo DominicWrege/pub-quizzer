@@ -98,6 +98,31 @@ defmodule PubQuizzer.EventsTest do
     end
   end
 
+  describe "assign_team_tokens/1" do
+    test "assigns a unique UUID token to every team" do
+      {:ok, event} = Quiz.create_event(%{team_count: 3})
+      teams = Quiz.assign_team_tokens(event.id)
+
+      assert length(teams) == 3
+
+      for team <- teams do
+        assert team.token != nil
+        assert String.length(team.token) == 36
+      end
+
+      tokens = Enum.map(teams, & &1.token)
+      assert length(tokens) == length(Enum.uniq(tokens))
+    end
+
+    test "does not overwrite existing tokens" do
+      {:ok, event} = Quiz.create_event(%{team_count: 2})
+      first = Quiz.assign_team_tokens(event.id)
+      second = Quiz.assign_team_tokens(event.id)
+
+      assert Enum.map(first, & &1.token) == Enum.map(second, & &1.token)
+    end
+  end
+
   describe "start_event/1" do
     test "transitions from lobby to topic_selection" do
       {:ok, event} = Quiz.create_event(%{team_count: 2})

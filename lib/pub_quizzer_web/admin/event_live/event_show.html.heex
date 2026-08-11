@@ -16,7 +16,10 @@
         <%= if @event.name && @event.name != "" do %>
           <span class="truncate">{@event.name}</span>
         <% else %>
-          <span class="text-base-content/60">Event vom {Calendar.strftime(@event.inserted_at, "%d.%m.%Y")}</span>
+          <span class="text-base-content/60">Event vom {Calendar.strftime(
+            @event.inserted_at,
+            "%d.%m.%Y"
+          )}</span>
         <% end %>
         <button
           phx-click="open_edit_name"
@@ -89,7 +92,7 @@
   <% end %>
 
   <div class="flex items-center gap-2 mb-4">
-    <span class="badge badge-lg font-mono tracking-widest">{@event.code}</span>
+    <span data-testid="event-code" class="badge badge-lg font-mono tracking-widest">{@event.code}</span>
     <span class="badge badge-lg">{status_label(@event.status)}</span>
   </div>
 
