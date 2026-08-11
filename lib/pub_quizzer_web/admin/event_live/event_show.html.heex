@@ -4,60 +4,112 @@
   current_path={@current_path}
   max_width="max-w-3xl"
 >
-  <.header>
-    <:back>
-      <.back_link navigate={~p"/admin/events"} />
-    </:back>
-    <%= if @event.name && @event.name != "" do %>
-      {@event.name}
-    <% else %>
-      Event
-    <% end %>
-    <span class="badge badge-sm font-mono tracking-widest">{@event.code}</span>
-    <span class="badge badge-sm">{status_label(@event.status)}</span>
-    <:actions>
-      <%= if @event.status != "lobby" do %>
-        <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-soft">
-          <%= if @event.status == "finished" do %>
-            <.icon name="hero-clipboard" class="size-4" /> Ergebnisse
-          <% else %>
-            <.icon name="hero-play" class="size-4" /> Live
-          <% end %>
+  <div
+    data-sticky-bar
+    class="sticky top-[var(--header-h,0px)] lg:top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-base-100 border-b border-transparent transition-[box-shadow,border-color] duration-200 pt-3 pb-3 lg:pt-2 mb-4"
+  >
+    <.header class="lg:items-center">
+      <:back>
+        <.back_link navigate={~p"/admin/events"} />
+      </:back>
+      <span class="inline-flex items-center gap-2 min-w-0">
+        <%= if @event.name && @event.name != "" do %>
+          <span class="truncate">{@event.name}</span>
+        <% else %>
+          <span class="text-base-content/60">Event vom {Calendar.strftime(@event.inserted_at, "%d.%m.%Y")}</span>
+        <% end %>
+        <button
+          phx-click="open_edit_name"
+          class="btn btn-soft btn-sm btn-square shrink-0"
+          aria-label="Event-Name bearbeiten"
+        >
+          <.icon name="hero-pencil" class="size-4" />
+        </button>
+      </span>
+      <:actions>
+        <%= if @event.status != "lobby" do %>
+          <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-soft">
+            <%= if @event.status == "finished" do %>
+              <.icon name="hero-clipboard" class="size-4" /> Ergebnisse
+            <% else %>
+              <.icon name="hero-play" class="size-4" /> Live
+            <% end %>
+          </.link>
+        <% end %>
+        <%= if @event.status != "lobby" do %>
+          <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary">Moderator-Konsole</.link>
+        <% end %>
+        <.link navigate={~p"/admin/events/#{@event}/team-cards"} class="btn btn-sm btn-soft">
+          <.icon name="hero-arrow-down-tray" class="size-4" /> Team-Karten
         </.link>
-      <% end %>
-      <%= if @event.status != "lobby" do %>
-        <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary">Moderator-Konsole</.link>
-      <% end %>
-      <.link navigate={~p"/admin/events/#{@event}/team-cards"} class="btn btn-soft">
-        <.icon name="hero-arrow-down-tray" class="size-4" /> Team-Karten
-      </.link>
-      <button
-        phx-click="ask_delete_event"
-        class="btn btn-danger-soft"
-      >
-        <.icon name="hero-trash" class="size-4" /> Löschen
-      </button>
-    </:actions>
-  </.header>
+        <button
+          id="copy-join-link"
+          phx-hook="CopyLink"
+          data-url={@join_url}
+          class="btn btn-sm btn-soft"
+        >
+          <.icon name="hero-clipboard" class="size-4" /> Link kopieren
+        </button>
+      </:actions>
+    </.header>
+  </div>
 
-  <.confirm_modal
-    id="delete-event-modal"
-    show={@confirm_action == :delete}
-    title="Event löschen?"
-    message="Event und alle Daten unwiderruflich löschen?"
-    confirm_label="Löschen"
-    confirm_event="do_delete_event"
-    cancel_event="cancel_action"
-  />
+  <%= if @edit_name_dialog do %>
+    <dialog
+      id="event-name-dialog"
+      phx-hook="Dialog"
+      data-cancel-event="cancel_edit_name"
+      class="m-auto rounded-box bg-base-100 p-6 shadow-xl w-[calc(100%-2rem)] sm:w-auto sm:min-w-sm max-w-md"
+    >
+      <div class="flex items-start justify-between gap-4">
+        <h3 class="text-lg font-bold">Event-Name</h3>
+        <button
+          type="button"
+          phx-click="cancel_edit_name"
+          aria-label="Schließen"
+          class="btn btn-circle btn-ghost btn-sm shrink-0"
+        >
+          <.icon name="hero-x-mark" class="size-5" />
+        </button>
+      </div>
+      <.form for={@name_form} id="event-name-form" phx-submit="save_name">
+        <div class="pt-4">
+          <.input
+            field={@name_form[:name]}
+            type="text"
+            label="Name"
+            placeholder={"Event vom " <> Calendar.strftime(@event.inserted_at, "%d.%m.%Y")}
+          />
+        </div>
+        <div class="flex justify-end mt-6">
+          <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
+        </div>
+      </.form>
+    </dialog>
+  <% end %>
+
+  <div class="flex items-center gap-2 mb-4">
+    <span class="badge badge-lg font-mono tracking-widest">{@event.code}</span>
+    <span class="badge badge-lg">{status_label(@event.status)}</span>
+  </div>
 
   <%= if @event.status == "lobby" do %>
     <div class="card bg-base-200 shadow-sm">
       <div class="card-body">
-        <div class="flex items-center justify-between gap-2 mb-3">
-          <h3 class="card-title text-lg">{@event.team_count} Teams</h3>
-          <button phx-click="add_slot" class="btn btn-soft btn-sm">
-            <.icon name="hero-plus" class="size-4" /> Team hinzufügen
-          </button>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 class="card-title text-base sm:text-lg">{@event.team_count} Teams</h3>
+          <div class="flex items-center gap-2">
+            <button phx-click="add_slot" class="btn btn-soft btn-sm">
+              <.icon name="hero-plus" class="size-4" /> Team hinzufügen
+            </button>
+            <button
+              phx-click="do_start"
+              class="btn btn-primary btn-sm"
+              disabled={!@all_teams_connected}
+            >
+              ▶ Quiz starten
+            </button>
+          </div>
         </div>
 
         <%!-- Mobile: cards --%>
@@ -154,25 +206,6 @@
           </.table>
         </div>
       </div>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2 mb-6">
-      <button
-        id="copy-join-link"
-        phx-hook="CopyLink"
-        data-url={@join_url}
-        class="btn btn-soft"
-      >
-        <.icon name="hero-clipboard" class="size-4" /> Link kopieren
-      </button>
-      <span class="flex-1"></span>
-      <button
-        phx-click="do_start"
-        class="btn btn-primary"
-        disabled={!@all_teams_connected}
-      >
-        ▶ Quiz starten
-      </button>
     </div>
   <% else %>
     <div class="alert alert-info text-base py-4">

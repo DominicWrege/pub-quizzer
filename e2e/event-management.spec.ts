@@ -53,17 +53,19 @@ test.describe("event management", () => {
     await expect(hostPage.locator(`text=${code}`)).toBeVisible({ timeout: 10_000 })
   })
 
-  test("host can delete an event from the show page", async ({ browser, hostPage }) => {
+  test("host can delete an event from the events index", async ({ browser, hostPage }) => {
     test.setTimeout(60_000)
 
     const code = await createEvent(hostPage, 2)
 
-    // Click delete on the show page
-    await hostPage.locator('[phx-click="ask_delete_event"]').click()
-    await expect(hostPage.locator("#delete-event-modal")).toBeVisible({ timeout: 5_000 })
+    // Go to the events index and delete the event there
+    await hostPage.goto("/admin/events")
+    await waitForLiveView(hostPage)
+    await hostPage.locator(`#event-... button`, { hasText: "Löschen" }).first().click()
+    await expect(hostPage.locator("#delete-event-index-modal")).toBeVisible({ timeout: 5_000 })
 
     // Confirm deletion
-    await hostPage.locator("#delete-event-modal button", { hasText: "Löschen" }).click()
+    await hostPage.locator("#delete-event-index-modal button", { hasText: "Löschen" }).click()
 
     // Redirected to events index, code no longer visible
     await expect(hostPage).toHaveURL(/\/admin\/events$/, { timeout: 10_000 })

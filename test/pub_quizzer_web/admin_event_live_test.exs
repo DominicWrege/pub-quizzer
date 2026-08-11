@@ -46,7 +46,7 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
   end
 
   describe "new" do
-    test "opens dialog with form when clicking Neues Quiz", %{conn: conn} do
+    test "clicking Neues Quiz creates an event with 4 teams and redirects to show", %{conn: conn} do
       {:ok, view, _html} =
         conn
         |> auth_conn()
@@ -56,38 +56,12 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
 
       view |> element("#new-event-btn") |> render_click()
 
-      assert has_element?(view, "#event-form-modal")
-      assert has_element?(view, "#event-form")
-    end
-
-    test "cancel closes the dialog", %{conn: conn} do
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/events")
-
-      view |> element("#new-event-btn") |> render_click()
-      assert has_element?(view, "#event-form-modal")
-
-      view |> element(~s(#event-form-modal button[aria-label="Schließen"])) |> render_click()
-
-      refute has_element?(view, "#event-form-modal")
-    end
-
-    test "submit creates event and redirects to show", %{conn: conn} do
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/events")
-
-      view |> element("#new-event-btn") |> render_click()
-
-      view
-      |> element("#event-form")
-      |> render_submit(%{"team_count" => "4"})
-
       {path, _flash} = assert_redirect(view)
       assert String.starts_with?(path, "/admin/events/")
+
+      id = String.trim_leading(path, "/admin/events/")
+      event = Quiz.get_event!(id)
+      assert event.team_count == 4
     end
   end
 
@@ -128,6 +102,27 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
         |> live(~p"/admin/events/#{event.id}")
 
       assert has_element?(view, "a[href='/admin/events/#{event.id}/team-cards']")
+    end
+
+    test "renames event via dialog", %{conn: conn} do
+      {:ok, event} = Quiz.create_event(%{team_count: 3})
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/events/#{event.id}")
+
+      refute has_element?(view, "#event-name-dialog")
+
+      view |> element("button[phx-click=open_edit_name]") |> render_click()
+      assert has_element?(view, "#event-name-dialog")
+
+      view
+      |> element("#event-name-form")
+      |> render_submit(%{"name" => "Staffelabend"})
+
+      refute has_element?(view, "#event-name-dialog")
+      assert has_element?(view, "h1", "Staffelabend")
     end
   end
 

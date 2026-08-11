@@ -17,7 +17,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, socket |> assign(:delete_event_id, nil) |> assign(:confirm_action, nil)}
+    {:ok, assign(socket, :delete_event_id, nil)}
   end
 
   @impl true
@@ -33,7 +33,6 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     |> assign(:events, events)
     |> assign(:search_query, "")
     |> assign(:filtered_events, events)
-    |> assign(:show_new_dialog, false)
     |> assign_active_finished(events)
   end
 
@@ -47,11 +46,13 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     end
 
     socket
-    |> assign(:page_title, "Event #{event.code}")
+    |> assign(:page_title, page_title_for(event))
     |> assign(:event, event)
     |> assign(:join_url, join_url)
     |> assign(:connected_team_ids, MapSet.new())
     |> assign(:all_teams_connected, false)
+    |> assign(:edit_name_dialog, false)
+    |> assign(:name_form, to_form(%{"name" => event.name || ""}))
   end
 
   @impl true
@@ -73,34 +74,42 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   end
 
   def handle_event("start_new", _params, socket) do
+    case Quiz.create_event(%{team_count: 4, name: ""}) do
+      {:ok, event} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Event erstellt mit Code #{event.code}.")
+         |> push_navigate(to: ~p"/admin/events/#{event.id}")}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Event konnte nicht erstellt werden.")}
+    end
+  end
+
+  def handle_event("open_edit_name", _params, socket) do
     {:noreply,
      socket
-     |> assign(:show_new_dialog, true)
-     |> assign(:form, to_form(%{"team_count" => "5"}))}
+     |> assign(:edit_name_dialog, true)
+     |> assign(:name_form, to_form(%{"name" => socket.assigns.event.name || ""}))}
   end
 
-  def handle_event("cancel_new", _params, socket) do
-    {:noreply, assign(socket, :show_new_dialog, false)}
+  def handle_event("cancel_edit_name", _params, socket) do
+    {:noreply, assign(socket, :edit_name_dialog, false)}
   end
 
-  def handle_event("save", %{"team_count" => team_count} = params, socket) do
-    name = Map.get(params, "name", "")
+  def handle_event("save_name", %{"name" => name}, socket) do
+    case Quiz.update_event(socket.assigns.event, %{name: name}) do
+      {:ok, _event} ->
+        event = Quiz.get_event_with_teams!(socket.assigns.event.id)
 
-    with {count, ""} <- Integer.parse(team_count),
-         true <- count > 0 do
-      case Quiz.create_event(%{team_count: count, name: name}) do
-        {:ok, event} ->
-          {:noreply,
-           socket
-           |> put_flash(:info, "Event erstellt mit Code #{event.code}.")
-           |> push_navigate(to: ~p"/admin/events/#{event.id}")}
+        {:noreply,
+         socket
+         |> assign(:event, event)
+         |> assign(:edit_name_dialog, false)
+         |> assign(:name_form, to_form(%{"name" => event.name || ""}))}
 
-        {:error, _changeset} ->
-          {:noreply, put_flash(socket, :error, "Event konnte nicht erstellt werden.")}
-      end
-    else
-      _ ->
-        {:noreply, put_flash(socket, :error, "Ungültige Team-Anzahl.")}
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Name konnte nicht geändert werden.")}
     end
   end
 
@@ -175,27 +184,6 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     end
   end
 
-  # Show page confirmations
-  def handle_event("ask_delete_event", _params, socket) do
-    {:noreply, assign(socket, :confirm_action, :delete)}
-  end
-
-  def handle_event("do_delete_event", _params, socket) do
-    event = socket.assigns.event
-
-    case Quiz.delete_event(event) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> assign(:confirm_action, nil)
-         |> put_flash(:info, "Event gelöscht.")
-         |> push_navigate(to: ~p"/admin/events")}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Event konnte nicht gelöscht werden.")}
-    end
-  end
-
   def handle_event("do_start", _params, socket) do
     event = socket.assigns.event
 
@@ -208,10 +196,6 @@ defmodule PubQuizzerWeb.Admin.EventLive do
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Event konnte nicht gestartet werden.")}
     end
-  end
-
-  def handle_event("cancel_action", _params, socket) do
-    {:noreply, assign(socket, :confirm_action, nil)}
   end
 
   # Index page delete confirmation
@@ -371,6 +355,14 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   def status_label("round_reveal"), do: "Läuft"
   def status_label("finished"), do: "Beendet"
   def status_label(other), do: other
+
+  defp page_title_for(event) do
+    if event.name && event.name != "" do
+      "#{event.name} · #{event.code}"
+    else
+      "Event vom #{Calendar.strftime(event.inserted_at, "%d.%m.%Y")} · #{event.code}"
+    end
+  end
 
   # Extracts scheme://host[:port] from the request URL, omitting default ports
   # (443 for https, 80 for http). QR codes embed URLs that need to be reachable
