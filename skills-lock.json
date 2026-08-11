@@ -19,12 +19,6 @@
       "skillPath": "elixir/SKILL.md",
       "computedHash": "b8f9a58fc110ab05a805a1c4a82d3aeddaa8a739acee267bf0b7ec6f75002e8b"
     },
-    "playwright-cli": {
-      "source": "microsoft/playwright-cli",
-      "sourceType": "github",
-      "skillPath": "skills/playwright-cli/SKILL.md",
-      "computedHash": "f602822b51bcb6d033749c60731b8f1e80f308222fcb2e4af551905a817c6e08"
-    },
     "tailwind-4-docs": {
       "source": "lombiq/tailwind-agent-skills",
       "sourceType": "github",

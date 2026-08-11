@@ -21,7 +21,6 @@ defmodule PubQuizzer.Quiz.EngineState do
     # DB id of the Round row for the in-progress/current round. Set by the
     # engine after persisting the round; nil in lobby/topic_selection/finished.
     current_round_id: nil,
-    reveal_answer_index: 0,
     standings_revealed: false,
     final_results_revealed: false,
     # answers: %{question_index => %{team_id => selected_index}}
@@ -189,7 +188,6 @@ defmodule PubQuizzer.Quiz.EngineState do
         current_winner_team_id: winner_team_id,
         standings: new_standings,
         completed_rounds: state.completed_rounds ++ [round_summary],
-        reveal_answer_index: 1,
         standings_revealed: false
     }
 
@@ -197,22 +195,6 @@ defmodule PubQuizzer.Quiz.EngineState do
   end
 
   def reveal_round(%__MODULE__{}), do: {:error, :not_in_question_phase}
-
-  @doc """
-  Reveal the next answer in round_reveal phase.
-  Increments reveal_answer_index. Returns :all_revealed when done.
-  """
-  def reveal_next_answer(%__MODULE__{status: :round_reveal} = state) do
-    total = length(state.current_questions)
-
-    if state.reveal_answer_index < total do
-      {:ok, %{state | reveal_answer_index: state.reveal_answer_index + 1}}
-    else
-      {:ok, state, :all_revealed}
-    end
-  end
-
-  def reveal_next_answer(%__MODULE__{}), do: {:error, :not_in_round_reveal}
 
   @doc """
   Reveal team standings to all devices.

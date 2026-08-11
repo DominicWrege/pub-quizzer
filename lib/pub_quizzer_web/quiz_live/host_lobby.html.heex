@@ -144,7 +144,7 @@
         </div>
 
         <button
-          phx-click={(has_next && "next_question") || "reveal_round"}
+          phx-click="next_question"
           disabled={!all_answered}
           class="btn btn-primary btn-lg w-full text-lg"
           data-test="advance-button"

@@ -67,10 +67,6 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
   end
 
   @impl true
-  def handle_event("reveal_round", _params, socket) do
-    {:noreply, engine_call(socket, &Engine.reveal_round/1)}
-  end
-
   def handle_event("ask_finish_quiz", _params, socket) do
     {:noreply, assign(socket, :confirm_action, :finish_quiz)}
   end
@@ -100,14 +96,14 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
   end
 
   def handle_event("next_question", _params, socket) do
-    case Engine.next_question(socket.assigns.event.id) do
+    event_id = socket.assigns.event.id
+
+    case Engine.next_question(event_id) do
       {:ok, _state} ->
         {:noreply, socket}
 
       {:error, :end_of_round} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Runde beendet — klicke auf Auflösen, um die Punkte anzuzeigen.")}
+        {:noreply, engine_call(socket, &Engine.reveal_round/1)}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Fehler: #{reason}")}

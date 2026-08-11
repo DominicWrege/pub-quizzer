@@ -106,64 +106,51 @@
     <% end %>
   <% end %>
 
-  <%!-- Round reveal: winner auto-shown after all answers revealed,
-       standings still gated behind moderator trigger --%>
+  <%!-- Round reveal: winner shown immediately; standings gated behind moderator trigger --%>
   <%= if @engine_state.status == :round_reveal do %>
-    <% all_revealed =
-      @engine_state.reveal_answer_index >= length(@engine_state.current_questions) %>
-
-    <%= if all_revealed do %>
-      <div class="mb-3 animate-fade-in">
-        <%= if @engine_state.current_winner_team_id == @team.id do %>
-          <div class="alert alert-success text-sm px-3 py-2">
+    <div class="mb-3 animate-fade-in">
+      <%= if @engine_state.current_winner_team_id == @team.id do %>
+        <div class="alert alert-success text-sm px-3 py-2">
+          <.icon name="hero-trophy" class="size-4" />
+          <span><strong>Dein Team hat Runde {(@engine_state.round_number || 0) + 1} gewonnen!</strong></span>
+        </div>
+      <% else %>
+        <% winner =
+          Enum.find(@engine_state.teams, fn t ->
+            t.id == @engine_state.current_winner_team_id
+          end) %>
+        <%= if winner do %>
+          <div class="alert alert-info text-sm px-3 py-2">
             <.icon name="hero-trophy" class="size-4" />
-            <span><strong>Dein Team hat Runde {(@engine_state.round_number || 0) + 1} gewonnen!</strong></span>
+            <span>{winner.name} hat Runde {(@engine_state.round_number || 0) + 1} gewonnen</span>
           </div>
         <% else %>
-          <% winner =
-            Enum.find(@engine_state.teams, fn t ->
-              t.id == @engine_state.current_winner_team_id
-            end) %>
-          <%= if winner do %>
-            <div class="alert alert-info text-sm px-3 py-2">
-              <.icon name="hero-trophy" class="size-4" />
-              <span>{winner.name} hat Runde {(@engine_state.round_number || 0) + 1} gewonnen</span>
-            </div>
-          <% else %>
-            <div class="alert alert-info text-sm px-3 py-2">
-              <.icon name="hero-hand-raised" class="size-4" />
-              <span>Remis! Kein eindeutiger Gewinner.</span>
-            </div>
-          <% end %>
+          <div class="alert alert-info text-sm px-3 py-2">
+            <.icon name="hero-hand-raised" class="size-4" />
+            <span>Remis! Kein eindeutiger Gewinner.</span>
+          </div>
         <% end %>
-      </div>
-
-      <%= if @engine_state.standings_revealed do %>
-        <div class="text-center mb-4">
-          <span class="text-lg font-bold">Platzierung</span>
-        </div>
-        <div class="space-y-2">
-          <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-            <.podium_row
-              id={"team-standing-#{id}"}
-              rank={rank}
-              name={name}
-              score={score}
-              size="sm"
-            >
-              <%= if @team.id == id do %>
-                <span class="text-xs font-normal">(du)</span>
-              <% end %>
-            </.podium_row>
-          <% end %>
-        </div>
       <% end %>
-    <% else %>
-      <div class="text-center max-w-xs mx-auto mt-8">
-        <div class="alert shadow-md text-base border border-base-300 px-4 py-3">
-          <.icon name="hero-eye" class="size-4" />
-          <span class="font-semibold">Antworten werden aufgelöst</span>
-        </div>
+    </div>
+
+    <%= if @engine_state.standings_revealed do %>
+      <div class="text-center mb-4">
+        <span class="text-lg font-bold">Platzierung</span>
+      </div>
+      <div class="space-y-2">
+        <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
+          <.podium_row
+            id={"team-standing-#{id}"}
+            rank={rank}
+            name={name}
+            score={score}
+            size="sm"
+          >
+            <%= if @team.id == id do %>
+              <span class="text-xs font-normal">(du)</span>
+            <% end %>
+          </.podium_row>
+        <% end %>
       </div>
     <% end %>
   <% end %>

@@ -123,15 +123,6 @@ defmodule PubQuizzer.Quiz.Engine do
   end
 
   @doc """
-  Reveal the next answer during round reveal.
-  """
-  def reveal_next_answer(event_id) do
-    GenServer.call(via_tuple(event_id), :reveal_next_answer)
-  catch
-    :exit, _ -> {:error, :not_found}
-  end
-
-  @doc """
   Reveal team standings to all devices.
   """
   def reveal_standings(event_id) do
@@ -270,23 +261,6 @@ defmodule PubQuizzer.Quiz.Engine do
       {:ok, new_es} ->
         persist_round_winner(new_es)
         persist_event_status(new_es)
-        broadcast(new_es)
-        {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
-
-      {:error, reason} ->
-        {:reply, {:error, reason}, state}
-    end
-  end
-
-  def handle_call(:reveal_next_answer, _from, state) do
-    {:ok, state} = ensure_loaded(state)
-
-    case EngineState.reveal_next_answer(state.engine_state) do
-      {:ok, new_es} ->
-        broadcast(new_es)
-        {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
-
-      {:ok, new_es, :all_revealed} ->
         broadcast(new_es)
         {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
 

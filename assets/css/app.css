@@ -300,7 +300,7 @@ dialog::backdrop {
    keep the QR inside its white wrapper on screen (.team-card svg max-width:
    100%) and fill ~60% of the A5 width in print, for reliable scanning. */
 .team-card svg {
-  max-width: 100%;
+  max-width: 180px;
   height: auto;
 }
 

@@ -2,7 +2,7 @@
   flash={@flash}
   current_scope={@current_scope}
   current_path={@current_path}
-  max_width="max-w-lg"
+  max_width="max-w-4xl"
   print_chrome={false}
 >
   <div class="print:hidden">
@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  <div class="mt-6 space-y-6 print:mt-0 print:space-y-0">
+  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto print:block print:gap-0 print:mt-0 print:max-w-none print:mx-0">
     <div
       :for={%{team: team, slot: slot, svg: svg} <- @cards}
       id={"team-card-#{team.id}"}
@@ -41,7 +41,7 @@
       class={
         [
           # screen: daisyUI card chrome (kept per design decision)
-          "team-card card bg-base-200 max-w-sm mx-auto",
+          "team-card card bg-base-200",
           # print: blank A5 sheet, no chrome, content centered
           "print:bg-white print:border-0 print:shadow-none print:rounded-none",
           "print:max-w-none print:mx-0 print:w-[148mm] print:min-h-[210mm]",
@@ -53,10 +53,10 @@
         "card-body items-center text-center p-8",
         "print:p-16 print:gap-8"
       ]}>
-        <div class="text-5xl sm:text-6xl font-bold tracking-tight print:text-3xl">
+        <div class="text-3xl sm:text-4xl font-bold tracking-tight print:text-3xl">
           Team {slot}
         </div>
-        <div class="mt-6 bg-white px-8 py-4 rounded-box shadow-sm print:mt-0 print:p-0 print:shadow-none print:rounded-none">
+        <div class="mt-4 bg-white px-6 py-3 rounded-box shadow-sm print:mt-0 print:p-0 print:shadow-none print:rounded-none">
           {raw(svg)}
         </div>
         <div class="mt-6 text-base text-base-content/70 print:mt-0">

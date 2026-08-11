@@ -13,6 +13,7 @@
     <% else %>
       Event
     <% end %>
+    <span class="badge badge-sm font-mono tracking-widest">{@event.code}</span>
     <span class="badge badge-sm">{status_label(@event.status)}</span>
     <:actions>
       <%= if @event.status != "lobby" do %>
@@ -55,53 +56,14 @@
   />
 
   <%= if @event.status == "lobby" do %>
-    <div class="flex flex-col items-center gap-4 mb-8">
-      <div class="flex flex-col items-center gap-2">
-        <div
-          data-testid="event-code"
-          class="text-2xl font-mono font-bold tracking-widest bg-base-200 rounded-box px-4 py-2"
-        >
-          {@event.code}
-        </div>
-        <div class="text-sm text-base-content/70 text-center">
-          Code an Teams weitergeben
-        </div>
-        <code class="text-sm text-base-content break-all max-w-xs">{String.replace(
-          @join_url,
-          ~r"^https?://",
-          ""
-        )}</code>
-      </div>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2 mb-6">
-      <button phx-click="add_slot" class="btn btn-soft">
-        <.icon name="hero-plus" class="size-4" /> Team hinzufügen
-      </button>
-      <button phx-click="remove_slot" class="btn btn-soft">
-        <.icon name="hero-minus" class="size-4" /> Team entfernen
-      </button>
-      <button
-        id="copy-join-link"
-        phx-hook="CopyLink"
-        data-url={@join_url}
-        class="btn btn-soft"
-      >
-        <.icon name="hero-clipboard" class="size-4" /> Link kopieren
-      </button>
-      <span class="flex-1"></span>
-      <button
-        phx-click="do_start"
-        class="btn btn-primary btn-lg text-xl px-10 w-full sm:w-auto"
-        disabled={!@all_teams_connected}
-      >
-        ▶ Quiz starten
-      </button>
-    </div>
-
     <div class="card bg-base-200 shadow-sm">
       <div class="card-body">
-        <h3 class="card-title text-lg mb-3">{@event.team_count} Teams</h3>
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h3 class="card-title text-lg">{@event.team_count} Teams</h3>
+          <button phx-click="add_slot" class="btn btn-soft btn-sm">
+            <.icon name="hero-plus" class="size-4" /> Team hinzufügen
+          </button>
+        </div>
 
         <%!-- Mobile: cards --%>
         <div id="event-team-cards" class="space-y-3 lg:hidden">
@@ -141,14 +103,6 @@
                   <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Rauswerfen
                 </button>
               <% end %>
-              <button
-                phx-click="remove_team"
-                phx-value-team_id={team.id}
-                class="btn btn-danger-soft"
-                title="Team entfernen"
-              >
-                <.icon name="hero-x-mark" class="size-4" /> Entfernen
-              </button>
             </div>
           </div>
         </div>
@@ -205,6 +159,25 @@
           </.table>
         </div>
       </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2 mb-6">
+      <button
+        id="copy-join-link"
+        phx-hook="CopyLink"
+        data-url={@join_url}
+        class="btn btn-soft"
+      >
+        <.icon name="hero-clipboard" class="size-4" /> Link kopieren
+      </button>
+      <span class="flex-1"></span>
+      <button
+        phx-click="do_start"
+        class="btn btn-primary"
+        disabled={!@all_teams_connected}
+      >
+        ▶ Quiz starten
+      </button>
     </div>
   <% else %>
     <div class="alert alert-info text-base py-4">

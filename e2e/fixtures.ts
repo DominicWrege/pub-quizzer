@@ -164,12 +164,15 @@ async function completeRound(
       { timeout: ENGINE_TIMEOUT },
     )
 
-    const revealBtn = hostPage.locator('[phx-click="reveal_round"]')
-    if (await revealBtn.count()) {
-      await revealBtn.click()
-      break
-    }
     await hostPage.locator('[phx-click="next_question"]').click()
+
+    const statList = hostPage.locator('[data-test="round-stat-list"]')
+    try {
+      await expect(statList).toBeVisible({ timeout: 5_000 })
+      break
+    } catch {
+      // Round not revealed yet — continue to the next question.
+    }
   }
 
   // After reveal_round the host immediately sees the stats list + winner banner
