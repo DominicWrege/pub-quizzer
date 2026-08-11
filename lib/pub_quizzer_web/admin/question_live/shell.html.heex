@@ -233,7 +233,7 @@
                   <.icon name="hero-chevron-right" class="size-4" />
                 </button>
               </div>
-              <.meta_pane form={@form} versions={@versions} />
+              <.meta_pane versions={@versions} />
             <% end %>
           </div>
         </.form>
@@ -332,10 +332,6 @@
     confirm_event="confirm_delete_topic"
     cancel_event="cancel_confirm"
   />
-
-  <%= if @show_preview and @form do %>
-    {preview(assigns)}
-  <% end %>
 
   <.image_lightbox url={@viewing_image} />
 </Layouts.app>

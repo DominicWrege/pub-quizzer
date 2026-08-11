@@ -12,13 +12,6 @@
     {@topic.name}
     <:actions>
       <button
-        type="button"
-        phx-click="toggle_preview"
-        class="btn btn-soft btn-sm gap-1 hidden sm:inline-flex"
-      >
-        <.icon name="hero-eye" class="size-4" /> Vorschau
-      </button>
-      <button
         type="submit"
         form="question-form"
         class="btn btn-primary btn-sm gap-1"
@@ -47,10 +40,6 @@
       option_image_previews={@option_image_previews}
     />
   </.form>
-
-  <%= if @show_preview do %>
-    {preview(assigns)}
-  <% end %>
 
   <.image_lightbox url={@viewing_image} />
 </Layouts.app>

@@ -265,27 +265,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       assert updated.correct_index == 3
     end
 
-    test "preview does not crash on edit page", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, question} =
-        Quiz.create_question(%{
-          prompt: "Preview test",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id
-        })
-
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
-
-      html = render_click(view, "toggle_preview", %{})
-      assert html =~ "Vorschau"
-      refute html =~ "UndefinedFunctionError"
-    end
-
     test "validate does not crash when OptionSorter leaves _unused_N keys in options", %{
       conn: conn
     } do
@@ -329,165 +308,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
     end
   end
 
-  describe "slide layout" do
-    test "new question defaults to image_side layout", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics/#{topic}/questions/new")
-
-      assert has_element?(view, "input[name='question[layout]'][value='image_side'][checked]")
-      refute has_element?(view, "input[name='question[layout]'][value='answer_cards'][checked]")
-    end
-
-    test "layout picker renders all three options", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, _view, html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/topics/#{topic}/questions/new")
-
-      assert html =~ "Bild + Text"
-      assert html =~ "Antwort-Bilder"
-      assert html =~ "Bild oben"
-    end
-
-    test "image position sub-toggle only appears for image_side layout", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, q_top} =
-        Quiz.create_question(%{
-          prompt: "Top",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id,
-          layout: "image_top"
-        })
-
-      {:ok, q_side} =
-        Quiz.create_question(%{
-          prompt: "Side",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id,
-          layout: "image_side"
-        })
-
-      {:ok, q_cards} =
-        Quiz.create_question(%{
-          prompt: "Cards",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id,
-          layout: "answer_cards"
-        })
-
-      {:ok, view_top, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{q_top}/edit")
-
-      refute has_element?(view_top, "input[name='question[image_position]']")
-
-      {:ok, view_side, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{q_side}/edit")
-
-      assert has_element?(view_side, "input[name='question[image_position]']")
-
-      {:ok, view_cards, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{q_cards}/edit")
-
-      refute has_element?(view_cards, "input[name='question[image_position]']")
-    end
-
-    test "creates a question with answer_cards layout", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, view, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/new")
-
-      view
-      |> form("#question-form", %{
-        "question" => %{
-          "prompt" => "Which flag?",
-          "options" => %{"0" => "A", "1" => "B", "2" => "C", "3" => "D"},
-          "correct_index" => "0",
-          "layout" => "answer_cards"
-        }
-      })
-      |> render_submit()
-
-      assert [q] = Quiz.list_questions_for_topic(topic.id)
-      assert q.layout == "answer_cards"
-    end
-
-    test "switching to image_side via validate reveals the position sub-toggle", %{
-      conn: conn
-    } do
-      topic = create_topic()
-
-      {:ok, view, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/new")
-
-      html =
-        render_change(view, "validate", %{
-          "_target" => "question[layout]",
-          "question" => %{
-            "prompt" => "X",
-            "options" => %{"0" => "A", "1" => "B", "2" => "C", "3" => "D"},
-            "correct_index" => "0",
-            "layout" => "image_side"
-          }
-        })
-
-      assert html =~ "Bildposition"
-      assert has_element?(view, "input[name='question[image_position]']")
-    end
-
-    test "preview renders answer_cards layout without crashing", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, question} =
-        Quiz.create_question(%{
-          prompt: "Which one?",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id,
-          layout: "answer_cards"
-        })
-
-      {:ok, view, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
-
-      html = render_click(view, "toggle_preview", %{})
-      assert html =~ "Vorschau"
-      assert html =~ "grid-cols-2"
-      refute html =~ "UndefinedFunctionError"
-    end
-
-    test "image_side layout without an image falls back to text-only in preview", %{
-      conn: conn
-    } do
-      topic = create_topic()
-
-      {:ok, question} =
-        Quiz.create_question(%{
-          prompt: "No image side",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id,
-          layout: "image_side"
-        })
-
-      {:ok, view, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
-
-      html = render_click(view, "toggle_preview", %{})
-      # text-only fallback: single-column, no image_side grid
-      refute html =~ ~s(grid-cols-1 sm:grid-cols-3)
-    end
-
+  describe "question images" do
     test "creates a question with multiple images", %{conn: conn} do
       topic = create_topic()
 
@@ -499,8 +320,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
         "question" => %{
           "prompt" => "Two logos",
           "options" => %{"0" => "A", "1" => "B", "2" => "C", "3" => "D"},
-          "correct_index" => "0",
-          "layout" => "image_side"
+          "correct_index" => "0"
         }
       })
       |> render_submit()
@@ -541,50 +361,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       |> render_submit()
 
       assert Quiz.get_question!(question.id).images == ["/uploads/b.jpg"]
-    end
-
-    test "image_side preview stacks multiple images", %{conn: conn} do
-      topic = create_topic()
-
-      {:ok, question} =
-        Quiz.create_question(%{
-          prompt: "Stacked",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id,
-          layout: "image_side",
-          images: ["/uploads/a.jpg", "/uploads/b.jpg"]
-        })
-
-      {:ok, view, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
-
-      html = render_click(view, "toggle_preview", %{})
-      assert html =~ "/uploads/a.jpg"
-      assert html =~ "/uploads/b.jpg"
-    end
-
-    test "image_top preview renders image next to prompt with options below", %{
-      conn: conn
-    } do
-      topic = create_topic()
-
-      {:ok, question} =
-        Quiz.create_question(%{
-          prompt: "Flood app",
-          options: ["A", "B", "C", "D"],
-          correct_index: 0,
-          topic_id: topic.id,
-          layout: "image_top",
-          images: ["/uploads/flood.jpg"]
-        })
-
-      {:ok, view, _html} =
-        conn |> auth_conn() |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
-
-      html = render_click(view, "toggle_preview", %{})
-      assert html =~ "/uploads/flood.jpg"
-      assert html =~ "Flood app"
     end
   end
 

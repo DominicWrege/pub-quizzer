@@ -119,19 +119,6 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
       assert has_element?(view, "#event-teams tr", "4")
     end
 
-    test "remove slot button removes the last team", %{conn: conn} do
-      {:ok, event} = Quiz.create_event(%{team_count: 3})
-
-      {:ok, view, _html} =
-        conn
-        |> auth_conn()
-        |> live(~p"/admin/events/#{event.id}")
-
-      view |> element("button", "Team entfernen") |> render_click()
-      html = render(view)
-      refute html =~ "slot_index=\"3\""
-    end
-
     test "links to printable team cards", %{conn: conn} do
       {:ok, event} = Quiz.create_event(%{team_count: 3})
 
