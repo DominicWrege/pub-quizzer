@@ -10,6 +10,11 @@
       "command": [".venv/bin/cicada-mcp", "server", "--watch"],
       "cwd": ".",
       "enabled": true
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--headless", "--executable-path", "/home/dominic/.nix-profile/bin/chromium"],
+      "enabled": true
     }
   }
 }

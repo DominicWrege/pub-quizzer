@@ -71,6 +71,7 @@ Shared vocabulary so we name the same things (German UI ↔ English/code):
 
 - Use the **Playwright MCP** `playwright_browser_*` tools against the user's dev server (`http://localhost:4000`) for interactive checks: navigate → snapshot → click/fill/type → `playwright_browser_console_messages` → screenshot. Use console messages to satisfy the no-console-errors rule instead of writing throwaway spec files.
 - The MCP server runs **headless** Chromium via `--executable-path /home/dominic/.nix-profile/bin/chromium`. Do NOT run `npx @playwright/mcp install-browser`; on NixOS use the system chromium and the headless flag (this host has no globally-installed npm binaries or branded browsers — assume CLI tools come from `nix-shell`/`nix run` or project deps).
+- The **Chrome DevTools MCP** (`chrome-devtools`) is also configured in `opencode.jsonc` with the same headless system chromium. Use its tools for DevTools-level inspection (network, performance, DOM); prefer Playwright MCP for normal click-through verification.
 
 <!-- usage-rules-start -->
 
