@@ -1,107 +1,76 @@
 This is a web application written using the Phoenix web framework.
 
-## Session: Shadow moderator + per-team QR cards (Aug 11, 2026)
+## Architecture overview
 
-### Changes
-- **Removed beamer/presentation mode**: deleted `assets/js/presentation.ts`, `assets/js/font-size.ts`, and related CSS/JS wiring. The app no longer drives a projector; PowerPoint handles the actual presentation.
-- **Rebuilt host lobby as shadow console** (`host_lobby.html.heex` / `host_lobby.ex`):
-  - `max-w-2xl` tablet-friendly layout with big touch targets.
-  - Full question prompt text, no images.
-  - Live answer distribution bars updated as teams answer.
-  - Standings now show point deltas (gain/loss vs previous round).
-  - Round reveal is no longer paginated; it shows all question stats + winner immediately.
-  - Event code display shrunk from `text-6xl` to `text-2xl`.
-  - "Weiter zur Kategorie" renamed to "Überspringen — nächste Kategorie".
-- **`EngineState` enhancements**: added `answer_distribution/1,2`, `standings_with_deltas/1`, and changed `strip_for_team/2` to take `team_id` so the viewing team's own answer is preserved while opponents' answers are redacted.
-- **Per-team QR cards**: new `TeamCardLive` (`lib/pub_quizzer_web/admin/team_card_live.ex`) + `team_cards.html.heex`, route `/admin/events/:id/team-cards`. Each event team gets its own printable card with a QR code linking to `/quiz/join/:code/:slot`. Card width reduced via `max-w-sm mx-auto` and 280 px QR codes.
-- **Slot-based team joining**: `Quiz.claim_team_slot/2` + `QuizJoinController.join_with_code_and_slot/2` + route `GET /quiz/join/:code/:slot`. Teams scan pre-printed cards to claim a specific slot (Team 1–N).
-- **Event setup page tablet-friendly** (`event_live.ex` / `event_show.html.heex`): bumped action buttons from `btn-sm` to `btn`, removed the large event-level QR code, cleaned up `qr_svg`/`qr_svg_large`/`show_large_qr` assigns and handlers.
-- **URL generation**: `base_url_from_request` omits default ports (`:443` / `:80`) so QR URLs are clean in production.
-- **Tests**:
-  - Added `test/pub_quizzer_web/controllers/quiz_join_controller_slot_test.exs` (5 tests).
-  - Added `team cards` LiveView tests in `test/pub_quizzer_web/admin_event_live_test.exs`.
-  - Fixed `host_lobby_test.exs` unused-variable warning and live-distribution test.
-  - Replaced deprecated `get_flash/2` with `Phoenix.Flash.get/2` in new controller test.
-- **E2E updates**: `fixtures.ts`, `four-teams.spec.ts`, `host-actions.spec.ts`, `multi-round.spec.ts`, `edge-cases.spec.ts` adjusted for removed paginated round reveal / `show_round_summary` and changed host answered badge text.
-- **AGENTS.md**: added Playwright MCP browser tools guidance under project guidelines.
+Realtime pub-quiz ("Kneipenquiz") for teams. Phoenix LiveView + SQLite. German-language UI.
 
-### Verification
-- `mix test`: 225 tests, 0 failures.
-- `pnpm test:e2e`: 31 passed, 4 unrelated failures in existing specs (`four-teams`, `question-crud` ×2, `quiz-flow`) that pre-date this session and need separate attention.
-- No `pnpm typecheck` script exists and no `tsconfig.json` is present; TypeScript checking is not currently configured.
+**Domain** (`lib/pub_quizzer/`):
+- `Quiz` context + schemas: `Topic`, `Question`/`QuestionVersion`, `QuizEvent`, `Round`, `Team`, `Answer`.
+- `Quiz.Engine` — one GenServer per running quiz event (via `DynamicSupervisor` + `Registry`), persists rounds/answers and broadcasts state over PubSub (`quiz:event:<id>`). Client API: `start_quiz`, `choose_topic`, `submit_answer`, `next_question`, `reveal_round`, `reveal_standings`, `next_round`, `finish_quiz`, `reveal_final_results`.
+- `Quiz.EngineState` — pure state struct + transition functions (no side effects). Key helpers: `strip_for_team/2` (redacts opponents' answers for team clients), `answer_distribution/1`, `standings_with_deltas/1`, `answered_teams/1`.
+- `Accounts` (users, magic-link auth email), `OptionShuffle`, `Uploads`, `Names`, `Quiz.TopicPdf`.
 
-## Session: Question editor layout + admin scroll fixes (Aug 10, 2026)
+**Web** (`lib/pub_quizzer_web/`):
+- Quiz LiveViews: `QuizLive.HostLobby` (moderator "shadow console" — sees the question prompt, live answer-distribution bars, standings, drives reveal), `QuizLive.TeamLobby` (public, per-team answer UI).
+- Admin LiveViews (`Admin` namespace): `TopicLive`, `QuestionLive` (3-column editor: rail | Q&A | meta), `EventLive`, `TeamCardLive` (printable per-team QR cards), `ResultLive`, `UserLive` (superadmin), `ProfileLive`.
+- Auth: `AdminAuth` plug (roles `moderator` / `superadmin`), magic-link login via `MagicLinkController`. Dev-only backdoor `DevAuthController` (`/dev/login-as/:email`) for E2E.
+- Join flow: `QuizJoinController` — `POST /quiz/join` (code), `GET /quiz/join/:code` (code link), `GET /quiz/join/:code/:slot` (QR slot join, claims Team 1–N via `Quiz.claim_team_slot/2`).
 
-### Changes
-- **Full-width question editor**: 3-column desktop layout (rail | Q&A | meta) with independent per-column scrolling. `max_width="max-w-none"` + `content_class="!space-y-0"` to neutralize the layout wrapper's `space-y` margins that were causing overflow.
-- **`Layouts.app` enhancements**: Added `content_class` attr (merged onto inner content wrapper), `lg:overflow-y-auto` on `<main>` so desktop admin pages scroll, conditional `mx-auto` (skipped for `""` and `max-w-none`), desktop top padding bumped to `lg:pt-5`.
-- **`AutoResize` hook fix** (`assets/js/app.ts`): Added `overflowY = "hidden"` before measuring `scrollHeight` — textareas no longer show phantom scrollbars when content fits.
-- **Host lobby finished screen**: Shrunk buttons (`btn-lg text-2xl px-12 py-6` → `btn text-lg px-8 py-3`), softer secondary actions (`btn-soft`).
-- **New question header**: `lg:mb-0` to cancel the `space-y-6` desktop bottom margin.
-- **Question rail cards**: Bottom padding `lg:pb-6` on all scrollable columns; `overflow-hidden` removed (was clipping action buttons).
+**Quiz flow:** teams join via code or QR card → host starts quiz → round's chooser picks a topic → teams answer on their devices → host advances questions and reveals the round (all question stats + winner at once) → standings → next round.
 
-## Session: E2E test suite — Playwright (Jul 27, 2026)
+## Project rules
 
-### Changes (from previous sessions, retained)
-(all UI polish from Jul 12 session — see git log for details)
+- **NEVER commit or push without asking the user first** — always wait for explicit confirmation. This is a hard rule.
+- **Keep commits/pushes lightweight** — when told to "commit and push", just `git add`, commit, push, and glance at `git status`. No multi-step verification gauntlets for routine commits; default to a single bundle commit unless the user asks for separate ones. Don't re-ask or over-narrate the step.
+- **NEVER kill the dev server on port 4000** — if `http://localhost:4000` responds, that's the user's `mix phx.server`; use it as-is for browser verification and don't free the port or start a second server on 4000. If a stale compiled beam needs a restart, **ask the user to restart their server** instead of killing it. Only start your own server if port 4000 is genuinely free and you need one, and stop it when done.
+- **Always announce subagent use** — tell the user before launching any subagent via the `task` tool; never run one silently.
+- **Nix hash refreshes** — whenever `mix.lock` changes, update the `mix-deps` hash in `nix/release.nix` (`beamPackages.fetchMixDeps`). Whenever a `package.json` or `pnpm-lock.yaml` changes, refresh the `pnpmDeps` hash. Get the correct hash by setting `hash = lib.fakeHash;`, running `nix build .#pub-quizzer`, and copying the `got:` value from the error. Nix's git-aware source copy only includes tracked files, so stage new lockfiles before building.
+- **Every JS change** (including HEEx `phx-*` bindings that trigger JS) **must** be verified free of browser console errors — run a Playwright check capturing `page.on("console")` and `page.on("pageerror")` on the affected pages. A bare `<input>` with `phx-change` outside a `<form>` is a common source of "form events require the input to be inside a form" errors.
+- Use `Req` for HTTP requests — avoid `:httpoison`, `:tesla`, `:httpc`.
+- When you need to search docs for Elixir, Phoenix, Ecto, LiveView, or Tailwind, use the `context7` MCP server.
 
-### E2E test suite changes
-- **Auth backdoor**: Created `/dev/login-as/:email` route + `DevAuthController` for E2E — sets `user_id` session directly, no real emails sent.
-- **`handle_info({:engine_state, _})` crash**: Added catch-all clause in `event_live.ex` to prevent GenServer crash when teams join (was resetting `connected_team_ids`).
-- **Toast close button**: `btn btn-sm` → `btn-ghost px-1 text-white` for proper contrast on any background.
-- **`srcset` string interpolation bug**: Fixed 6 occurrences in `host_lobby.html.heex` where `{...}` in HEEx string attributes was literal text — now uses `<>` concatenation.
-- **`completeRound` helper** (`fixtures.ts`): Robust loop that answers all questions, advances, reveals, and shows standings. Handles the quiz transition delay.
-- **Flaky-test fixes**: All answer/reveal loops use `for(;;)` + `revealBtn.count()` + `revealNext.count()` with proper waiting instead of non-blocking `locator.count()` in while conditions.
-- **Existing tests fixed**: `e2e/smoke.spec.ts` (3 tests), `e2e/quiz-flow.spec.ts` — selector and timing issues resolved.
-- **New test files**: `e2e/multi-round.spec.ts` (2 tests), `e2e/edge-cases.spec.ts` (2 tests) — multi-round flow, final results from early finish, round reveal→standings→next topic, answer-change.
-- **Full suite**: 8 E2E tests all passing consistently in sequential (`workers: 1`) mode. Run with `pnpm test:e2e`.
+## Terminology glossary
 
-When you need to search docs for Elixir, Phoenix, Ecto, LiveView, or Tailwind, use the `context7` MCP server.
+Shared vocabulary so we name the same things (German UI ↔ English/code):
 
-## Work State
-All 8 E2E tests pass consistently. `pnpm test:e2e`.
+| German (UI) | English / code |
+|---|---|
+| Moderator-Konsole | host lobby (`QuizLive.HostLobby`) — the "shadow console" for the moderator |
+| Team-Lobby | team lobby (`QuizLive.TeamLobby`) |
+| Runde auflösen | round reveal (shows all question stats + round winner at once) |
+| Auswertung | standings (per-round evaluation) |
+| Nächste Frage / Nächste Runde | next question / next round |
+| Überspringen — nächste Kategorie | skip to next topic |
+| Thema / Themen | topic / topics (`Topic`) |
+| Frage / Fragen | question / questions (`Question`) |
+| Event | event (`QuizEvent`) |
+| Quiz starten | start quiz |
+| Team-Karten / QR-Code-PDF | per-team QR cards — each team (Team 1–N) gets its own printable card with a unique QR linking to `/quiz/join/:code/:slot`, which claims that slot on scan (`TeamCardLive`, `/admin/events/:id/team-cards`) |
+| QR-Code | the per-team QR on each card (one per team, not one per event) |
+| Slot | a team's assigned slot (Team 1–N), claimed by scanning its card (`Quiz.claim_team_slot/2`) |
+| Beitreten / Code | join / event code (`/quiz/join/:code`, `/quiz/join/:code/:slot`) |
+| Team hat Runde N gewonnen · Vortritt | round winner / precedence for topic choice |
+| Ergebnisse für Teams freigeben | release final results to teams |
 
-- `e2e/fixtures.ts`: `loginAsHost`, `createEvent`, `joinTeam`, `completeRound` (optional `showStandings` param, default true).
-- `e2e/smoke.spec.ts`: 3 tests — home page, invalid code flash, dev backdoor login.
-- `e2e/quiz-flow.spec.ts`: full round: teams answer → host advances → reveal → standings.
-- `e2e/multi-round.spec.ts`: 2 tests — two rounds with accumulated standings, early-finish final reveal.
-- `e2e/edge-cases.spec.ts`: 2 tests — round→standings→next topic flow, answer-change within same question.
+## Testing
 
-Key details:
-- `completeRound` uses `for(;;)` with `revealBtn.count()` / `revealNext.count()` (never non-blocking `locator.count()` in while-conditions).
+- **`mix test`** — unit + LiveView tests (`test/pub_quizzer_web/...`).
+- **`pnpm test:e2e`** — Playwright suite in `e2e/`, boots an isolated server on port 4001, sequential (`workers: 1`).
+
+**Fixtures** (`e2e/fixtures.ts`): `loginAsHost`, `createEvent`, `joinTeam`, `completeRound` (optional `showStandings` param, default true).
+
+**Spec files**: `smoke.spec.ts` (3), `quiz-flow.spec.ts` (full round), `multi-round.spec.ts` (2), `edge-cases.spec.ts` (2), plus `four-teams`, `host-actions`, `question-crud`.
+
+**Key details**:
+- `completeRound` uses `for(;;)` with `revealBtn.count()` / `revealNext.count()` — never non-blocking `locator.count()` in while-conditions.
 - Round reveal is no longer paginated; the host clicks "Runde auflösen" once and the shadow console shows all question stats + winner immediately.
-- Team pages use isolated browser contexts (separate session cookies each).
-- Host page uses the typed `test` fixture with `reuseExistingServer: true`.
+- Team pages use isolated browser contexts (separate session cookies each); host page uses the typed `test` fixture with `reuseExistingServer: true`.
+- Auth backdoor: `GET /dev/login-as/:email` sets `user_id` directly (dev only).
 
-## Project guidelines
+## Browser verification
 
-- **NEVER commit or push without asking the user first** — always wait for explicit confirmation. This is a hard rule. Breaking it causes major frustration.
-- **Keep commits/pushes lightweight and stop over-thinking them** — when the user says "commit and push", just `git add`, commit, push, and a quick `git status` glance; that's it. Do **not** run multi-step verification gauntlets (repeated class greps, asset-rebuild dances, rendered-height measurements, etc.) for routine commits — reserve heavy validation for when something is genuinely in doubt. **Do not deliberate about how to split changes into multiple commits**: default to a single bundle commit unless the user explicitly asks for separate commits, and never propose a multi-commit plan or re-explain commit strategy when one commit will do. Don't re-ask or over-narrate the commit step.
-- **NEVER kill the dev server on port 4000** — the user runs their own `mix phx.server` on port 4000. If `http://localhost:4000` already responds, that is the **user's** server: use it as-is for browser verification and do **not** `pkill -f '[b]eam.smp'`, do not free the port, and do not start a second server on 4000 (it would collide with theirs). If you need a recompile or restart — e.g. a stale compiled beam after editing a `.heex` template, where the dev code reloader can serve a half-updated module — **ask the user to restart their server** instead of killing it. Only start your own server if port 4000 is genuinely free *and* you need one, and stop it when you're done so it can't block the user's next start.
-- **Always announce subagent use** — before launching any subagent via the `task` tool, tell the user you are doing so. They want visibility into every subagent invocation; never run one silently.
-- Use `mix precommit` alias when you are done with all changes and fix any pending issues
-- **Whenever `mix.lock` changes** (adding or updating a dependency), you **must** update the `mix-deps` hash in `nix/release.nix` (the `beamPackages.fetchMixDeps` `hash` attr) **before pushing**, otherwise CI (`nix build .#pub-quizzer`) fails with a fixed-output hash mismatch. Get the correct hash by running `nix build .#pub-quizzer` and reading the `got:` value from the error (or set `hash = lib.fakeHash;` first to force the error).
-- **Nix release builds frontend assets from source** — `nix/release.nix` no longer trusts committed minified `priv/static` CSS/JS; its build runs an offline `pnpm install` (via `fetchPnpmDeps` + `pnpmConfigHook`), the Tailwind v4 CLI, and nixpkgs `esbuild`, then `phx.digest`. So prod styles/scripts are always regenerated from `assets/` — you do **not** need to commit minified `app.css`/`app.js` for a deploy (the committed copies are just dev/watcher artifacts). Deps are managed with **pnpm** (not npm): there are two lockfiles, `assets/pnpm-lock.yaml` (frontend deps) and root `pnpm-lock.yaml` (E2E `@playwright/test`). **Caveat:** if you change a `package.json` or `pnpm-lock.yaml`, you **must** refresh the `pnpmDeps` hash in `nix/release.nix` (set `hash = lib.fakeHash;`, run `nix build .#pub-quizzer`, copy the `got:` value) — same fixed-output-hash rule as `mix.lock` above. Note the new lockfiles are untracked until `git add`-ed; Nix's git-aware source copy only includes tracked files, so stage them before building.
-- Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
-- **Never** commit or push without asking the user first — always wait for explicit confirmation
-- **Every time you add or update JavaScript** (including HEEx `phx-*` bindings that trigger JS), you **must** verify there are no browser console errors by running a Playwright check that captures `page.on("console")` and `page.on("pageerror")` events on the affected pages. A bare `<input>` with `phx-change` outside a `<form>` is a common source of "form events require the input to be inside a form" errors.
-- Frontend assets in `assets/js/` are **always written in TypeScript** (`.ts`), **never** plain `.js`. New page-specific scripts follow the `guide.ts` pattern: a standalone module imported by `app.ts`, guarded by a DOM-element or pathname check so it only runs on the relevant page.
-- **Interactive browser checks**: to manually verify UI in a real browser (click through a flow, inspect rendered pages, check for console errors, take screenshots, exercise multi-tab scenarios), use the **Playwright MCP** `playwright_browser_*` tool family directly against the user's dev server (`http://localhost:4000`) with Chromium. A typical session: `playwright_browser_navigate` to the page → `playwright_browser_snapshot` to get the accessibility tree + `e#` element refs → interact (`playwright_browser_click`, `playwright_browser_fill_form`, `playwright_browser_type`) → `playwright_browser_console_messages` to read browser console messages → `playwright_browser_take_screenshot` for visual verification. Use `playwright_browser_console_messages` to satisfy the no-console-errors rule above instead of writing throwaway spec files. This is separate from the headless E2E suite (`pnpm test:e2e`, which boots an isolated server on port 4001). **If the MCP server reports its bundled Chromium is missing, do NOT run `npx @playwright/mcp install-browser` — point the MCP server at the system Chromium instead** (set the executable path in the MCP server config / launch args, e.g. `--executable-path /run/current-system/sw/bin/chromium` on NixOS). The bundled downloader is for non-NixOS setups and just wastes time + disk here.
-- **NixOS host**: this machine runs NixOS — there are no globally-installed npm binaries and no branded browsers. `/opt/google/chrome` does not exist; the Playwright MCP server launches its own bundled Chromium, so no `--browser` flag is needed. Assume CLI tools come from `nix-shell`/`nix run` or project deps, not global installs.
-
-### Phoenix v1.8 guidelines
-
-- **Always** begin your LiveView templates with `<Layouts.app flash={@flash} ...>` which wraps all inner content
-- The `MyAppWeb.Layouts` module is aliased in the `my_app_web.ex` file, so you can use it without needing to alias it again
-- Anytime you run into errors with no `current_scope` assign:
-  - You failed to follow the Authenticated Routes guidelines, or you failed to pass `current_scope` to `<Layouts.app>`
-  - **Always** fix the `current_scope` error by moving your routes to the proper `live_session` and ensure you pass `current_scope` as needed
-- Phoenix v1.8 moved the `<.flash_group>` component to the `Layouts` module. You are **forbidden** from calling `<.flash_group>` outside of the `layouts.ex` module
-- Out of the box, `core_components.ex` imports an `<.icon name="hero-x-mark" class="w-5 h-5"/>` component for hero icons. **Always** use the `<.icon>` component for icons, **never** use `Heroicons` modules or similar
-- **Always** use the imported `<.input>` component for form inputs from `core_components.ex` when available. `<.input>` is imported and using it will save steps and prevent errors
-- If you override the default input classes (`<.input class="myclass px-2 py-1 rounded-lg">)`) class with your own values, no default classes are inherited, so your
-custom classes must fully style the input
-
+- Use the **Playwright MCP** `playwright_browser_*` tools against the user's dev server (`http://localhost:4000`) for interactive checks: navigate → snapshot → click/fill/type → `playwright_browser_console_messages` → screenshot. Use console messages to satisfy the no-console-errors rule instead of writing throwaway spec files.
+- The MCP server runs **headless** Chromium via `--executable-path /home/dominic/.nix-profile/bin/chromium`. Do NOT run `npx @playwright/mcp install-browser`; on NixOS use the system chromium and the headless flag (this host has no globally-installed npm binaries or branded browsers — assume CLI tools come from `nix-shell`/`nix run` or project deps).
 
 <!-- usage-rules-start -->
 

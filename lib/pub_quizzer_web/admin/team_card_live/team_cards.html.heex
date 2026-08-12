@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto print:block print:gap-0 print:mt-0 print:max-w-none print:mx-0">
+  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 print:block print:gap-0 print:mt-0 print:max-w-none print:mx-0">
     <div
       :for={%{team: team, slot: slot, display_url: display_url, svg: svg} <- @cards}
       id={"team-card-#{team.id}"}
@@ -40,8 +40,8 @@
       data-slot={slot}
       class={
         [
-          # screen: daisyUI card chrome (kept per design decision)
-          "team-card card bg-base-200",
+          # screen: daisyUI card chrome
+          "team-card card bg-base-100 border border-base-300",
           # print: blank A5 sheet, no chrome, content centered
           "print:bg-white print:border-0 print:shadow-none print:rounded-none",
           "print:max-w-none print:mx-0 print:w-[148mm] print:min-h-[210mm]",
@@ -51,25 +51,22 @@
     >
       <div class={[
         "card-body items-center text-center p-8",
-        "print:p-16 print:gap-4"
+        "print:p-12 print:gap-4"
       ]}>
         <div class="text-3xl sm:text-4xl font-bold tracking-tight print:text-3xl">
           Team {slot}
         </div>
-        <div class="team-card-qr mt-2 bg-white px-4 py-2 rounded-box shadow-sm print:mt-0 print:p-0 print:shadow-none print:rounded-none">
+        <div class="team-card-qr mt-2 bg-white px-4 py-2 rounded-box print:mt-0 print:p-0 print:rounded-none">
           {raw(svg)}
         </div>
         <div class="mt-3 hidden text-base text-base-content/70 print:block print:mt-0">
-          <span class="font-mono font-semibold tracking-tight text-sm text-base-content break-all print:text-base">
+          <span class="font-mono font-semibold tracking-tight text-sm text-base-content break-words print:text-base">
             {display_url}
           </span>
         </div>
         <div class="mt-3 hidden flex-col items-center gap-1.5 text-xs text-base-content/60 print:flex print:mt-0 print:text-sm print:text-base-content/70">
           <span class="inline-flex items-center gap-1.5">
-            <.icon name="hero-camera" class="size-4" /> Kamera auf QR-Code richten
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <.icon name="hero-link" class="size-4" /> Oder Link im Browser eingeben
+            <.icon name="hero-camera" class="size-4" /> QR-Code scannen oder Link im Browser eingeben
           </span>
         </div>
       </div>

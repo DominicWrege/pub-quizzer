@@ -145,8 +145,9 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
       assert html =~ "team-card-#{team1.id}"
       assert html =~ "team-card-#{team2.id}"
       assert html =~ "<svg"
-      assert html =~ "Kamera auf QR-Code richten"
-      assert html =~ "Oder Link im Browser eingeben"
+      assert html =~ "QR-Code scannen oder Link im Browser eingeben"
+      refute html =~ "Kamera auf QR-Code richten"
+      refute html =~ "Oder Link im Browser eingeben"
     end
   end
 end
