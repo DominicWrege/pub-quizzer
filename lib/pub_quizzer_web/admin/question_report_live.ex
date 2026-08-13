@@ -19,37 +19,70 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
      |> assign(:entries, entries)
      |> assign(:topics, topics)
      |> assign(:topic_filter, "")
-     |> assign(:sort, "hardest")
-     |> assign_rows(entries, "", "hardest")}
+     |> assign(:sort_key, "right")
+     |> assign(:sort_dir, :asc)
+     |> assign_rows(entries, "", "right", :asc)}
   end
 
   @impl true
   def handle_event("filter", params, socket) do
     topic_filter = Map.get(params, "topic_id", "")
-    sort = Map.get(params, "sort", "hardest")
 
     {:noreply,
      socket
      |> assign(:topic_filter, topic_filter)
-     |> assign(:sort, sort)
-     |> assign_rows(socket.assigns.entries, topic_filter, sort)}
+     |> assign_rows(
+       socket.assigns.entries,
+       topic_filter,
+       socket.assigns.sort_key,
+       socket.assigns.sort_dir
+     )}
   end
 
-  defp assign_rows(socket, entries, topic_filter, sort) do
+  @impl true
+  def handle_event("sort", %{"key" => key}, socket) do
+    {key, dir} =
+      if socket.assigns.sort_key == key do
+        {key, if(socket.assigns.sort_dir == :asc, do: :desc, else: :asc)}
+      else
+        {key, default_dir(key)}
+      end
+
+    {:noreply,
+     socket
+     |> assign(:sort_key, key)
+     |> assign(:sort_dir, dir)
+     |> assign_rows(socket.assigns.entries, socket.assigns.topic_filter, key, dir)}
+  end
+
+  defp default_dir("right"), do: :asc
+  defp default_dir("name"), do: :asc
+  defp default_dir(_key), do: :desc
+
+  defp assign_rows(socket, entries, topic_filter, sort_key, sort_dir) do
     rows =
       entries
       |> Enum.filter(fn entry ->
         topic_filter == "" or to_string(entry.topic_id) == topic_filter
       end)
-      |> sort_entries(sort)
+      |> sort_entries(sort_key, sort_dir)
 
     assign(socket, :rows, rows)
   end
 
-  defp sort_entries(entries, "asked"),
-    do: Enum.sort_by(entries, fn e -> {-e.asked_in, e.pct} end)
+  defp sort_entries(entries, key, dir) do
+    key_fun =
+      case key do
+        "name" -> fn e -> String.downcase(e.question.prompt) end
+        "asked" -> fn e -> e.asked_in end
+        "answers" -> fn e -> e.answers end
+        "wrong" -> fn e -> e.answers - e.correct end
+        "right" -> fn e -> e.pct end
+      end
 
-  defp sort_entries(entries, _hardest), do: Enum.sort_by(entries, & &1.pct)
+    sorted = Enum.sort_by(entries, key_fun)
+    if dir == :desc, do: Enum.reverse(sorted), else: sorted
+  end
 
   @impl true
   def render(assigns) do
@@ -86,10 +119,6 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
               {name}
             </option>
           </select>
-          <select name="sort" class="select select-sm select-bordered">
-            <option value="hardest" selected={@sort == "hardest"}>Schwerste zuerst</option>
-            <option value="asked" selected={@sort == "asked"}>Häufigste zuerst</option>
-          </select>
         </form>
       </div>
 
@@ -97,17 +126,33 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
         <table class="table table-sm">
           <thead>
             <tr class="border-b-2 border-base-300 bg-base-300">
-              <th class="px-4 py-3">Frage</th>
-              <th class="px-4 py-3 text-center">Gefragt</th>
-              <th class="px-4 py-3 text-center">Antworten</th>
-              <th class="px-4 py-3 text-center">Richtig</th>
+              <th class="px-4 py-3">
+                <.sort_button label="Frage" key="name" sort_key={@sort_key} sort_dir={@sort_dir} />
+              </th>
+              <th class="px-4 py-3 text-center">
+                <.sort_button label="Gefragt" key="asked" sort_key={@sort_key} sort_dir={@sort_dir} />
+              </th>
+              <th class="px-4 py-3 text-center">
+                <.sort_button
+                  label="Antworten"
+                  key="answers"
+                  sort_key={@sort_key}
+                  sort_dir={@sort_dir}
+                />
+              </th>
+              <th class="px-4 py-3 text-center">
+                <.sort_button label="Falsch" key="wrong" sort_key={@sort_key} sort_dir={@sort_dir} />
+              </th>
+              <th class="px-4 py-3 text-center">
+                <.sort_button label="Richtig" key="right" sort_key={@sort_key} sort_dir={@sort_dir} />
+              </th>
               <th class="px-4 py-3 min-w-[200px]">Verteilung</th>
               <th class="px-4 py-3">Falle</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-base-300">
             <tr :if={@rows == []} id="question-report-empty" class="bg-base-200">
-              <td colspan="6" class="px-4 py-6 text-center text-base-content/70">
+              <td colspan="7" class="px-4 py-6 text-center text-base-content/70">
                 Keine Fragen aus abgeschlossenen Quiz gefunden.
               </td>
             </tr>
@@ -122,6 +167,9 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
               </td>
               <td class="px-4 py-3 text-center font-mono">{entry.asked_in}×</td>
               <td class="px-4 py-3 text-center font-mono">{entry.answers}</td>
+              <td class="px-4 py-3 text-center font-mono text-base-content/70">
+                {entry.answers - entry.correct}
+              </td>
               <td class="px-4 py-3 text-center">
                 <span class={[
                   "font-mono font-bold",
@@ -164,6 +212,39 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
         </table>
       </div>
     </Layouts.app>
+    """
+  end
+
+  attr :label, :string, required: true
+  attr :key, :string, required: true
+  attr :sort_key, :string, required: true
+  attr :sort_dir, :atom, required: true
+
+  defp sort_button(assigns) do
+    ~H"""
+    <button
+      type="button"
+      id={"sort-#{@key}"}
+      phx-click="sort"
+      phx-value-key={@key}
+      class={[
+        "inline-flex items-center gap-1 transition-colors",
+        @sort_key == @key && "text-base-content underline underline-offset-4",
+        @sort_key != @key && "hover:text-base-content/90"
+      ]}
+      aria-sort={if @sort_key == @key, do: to_string(@sort_dir), else: "none"}
+    >
+      {@label}
+      <span class="text-xs w-3">
+        <%= cond do %>
+          <% @sort_key == @key and @sort_dir == :asc -> %>
+            ↑
+          <% @sort_key == @key and @sort_dir == :desc -> %>
+            ↓
+          <% true -> %>
+        <% end %>
+      </span>
+    </button>
     """
   end
 

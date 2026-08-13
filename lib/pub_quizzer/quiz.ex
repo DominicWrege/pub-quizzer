@@ -784,6 +784,7 @@ defmodule PubQuizzer.Quiz do
         topic_name: question.topic.name,
         asked_in: asked_in,
         answers: stats.answers,
+        correct: correct,
         pct: pct,
         picks: stats.picks,
         trap: trap

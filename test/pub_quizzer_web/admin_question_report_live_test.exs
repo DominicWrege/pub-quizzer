@@ -112,7 +112,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
     end
 
     test "sorts hardest question first by default", %{conn: conn} do
-      %{q1: q1, q2: q2} = seed()
+      seed()
 
       {:ok, _view, html} =
         conn
@@ -120,6 +120,30 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
         |> live(~p"/admin/question-report")
 
       assert html =~ ~r/Hard question.*Easy question/s
+    end
+
+    test "clicking column headers re-sorts the table", %{conn: conn} do
+      seed()
+
+      {:ok, view, html} =
+        conn
+        |> log_in_user()
+        |> live(~p"/admin/question-report")
+
+      # default: hardest first (q1 60 % before q2 100 %)
+      assert html =~ ~r/Hard question.*Easy question/s
+
+      # toggle Richtig to desc -> q2 first
+      view |> element("#sort-right") |> render_click()
+      assert render(view) =~ ~r/Easy question.*Hard question/s
+
+      # Antworten desc -> q1 (5 answers) before q2 (2)
+      view |> element("#sort-answers") |> render_click()
+      assert render(view) =~ ~r/Hard question.*Easy question/s
+
+      # name asc -> Easy before Hard
+      view |> element("#sort-name") |> render_click()
+      assert render(view) =~ ~r/Easy question.*Hard question/s
     end
 
     test "filters by topic", %{conn: conn} do
