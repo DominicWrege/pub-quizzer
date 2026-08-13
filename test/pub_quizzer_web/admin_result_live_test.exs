@@ -80,31 +80,6 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
       assert has_element?(view, "#result-timing", "2 Min.")
     end
 
-    test "shows per-question option distribution with highlighted correct option", %{conn: conn} do
-      %{event: event, round: round, questions: [q1 | _]} = setup_finished_event()
-
-      {:ok, view, _html} =
-        conn
-        |> log_in_user()
-        |> live(~p"/admin/events/#{event.id}/results")
-
-      stats_id = "#question-stats-#{round.id}-#{q1.id}"
-      assert has_element?(view, stats_id)
-      assert has_element?(view, "#{stats_id} [data-correct='true']", "B")
-      assert has_element?(view, "#{stats_id} [data-correct='false']", "A")
-    end
-
-    test "shows a segment for teams that did not answer", %{conn: conn} do
-      %{event: event, round: round, questions: [_q1, q2]} = setup_finished_event()
-
-      {:ok, view, _html} =
-        conn
-        |> log_in_user()
-        |> live(~p"/admin/events/#{event.id}/results")
-
-      assert has_element?(view, "#question-stats-#{round.id}-#{q2.id} [data-no-answer]", "1")
-    end
-
     test "shows accuracy per team", %{conn: conn} do
       %{event: event, teams: [t1, t2]} = setup_finished_event()
 

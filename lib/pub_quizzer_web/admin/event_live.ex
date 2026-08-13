@@ -297,36 +297,31 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   def event_card(assigns) do
     ~H"""
     <div id={"event-#{@event.id}"} class="card bg-base-200 shadow-sm">
-      <div class="card-body gap-3">
-        <div class="flex items-center justify-between">
-          <%= if @event.name && @event.name != "" do %>
-            <h3 class="card-title text-base">{@event.name}</h3>
-          <% else %>
-            <span class="text-sm text-base-content/60 font-mono">{@event.code}</span>
-          <% end %>
-          <span class="badge">{@event.team_count} Teams</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <%= if @event.name && @event.name != "" do %>
-            <span class="text-sm text-base-content/60 font-mono">{@event.code}</span>
-          <% end %>
-          <span class={[
-            "text-xs font-semibold",
-            Quiz.status_active?(@event.status) && "text-primary",
-            @event.status == "finished" && "text-success",
-            @event.status == "lobby" && "text-base-content/40"
-          ]}>
+      <div class="card-body gap-2">
+        <div class="flex items-start justify-between gap-2">
+          <h3 class="card-title text-base">
+            <%= if named?(@event) do %>
+              {@event.name}
+            <% else %>
+              Quiz vom {Calendar.strftime(@event.inserted_at, "%d.%m.%y")}
+            <% end %>
+          </h3>
+          <span class={["badge badge-sm shrink-0", status_badge_class(@event.status)]}>
             {status_label(@event.status)}
           </span>
         </div>
 
-        <span class="text-3xl font-bold font-mono">{Calendar.strftime(
-          @event.inserted_at,
-          "%d.%m.%y"
-        )}</span>
+        <div class="flex items-center gap-1.5 text-sm text-base-content/60">
+          <%= if named?(@event) do %>
+            <span>{Calendar.strftime(@event.inserted_at, "%d.%m.%y")}</span>
+            <span>·</span>
+          <% end %>
+          <span class="font-mono">{@event.code}</span>
+          <span>·</span>
+          <span>{@event.team_count} Teams</span>
+        </div>
 
-        <div class="card-actions justify-end mt-2">
+        <div class="card-actions justify-end mt-1">
           <%= cond do %>
             <% Quiz.status_active?(@event.status) -> %>
               <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary btn-sm">Moderator</.link>
@@ -335,6 +330,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
               <.link navigate={~p"/admin/events/#{@event}"} class="btn btn-sm btn-soft">Verwalten</.link>
             <% true -> %>
               <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-primary">Ergebnisse</.link>
+              <.link navigate={~p"/admin/events/#{@event}/report"} class="btn btn-sm btn-soft">Bericht</.link>
           <% end %>
           <button
             phx-click="ask_delete"
@@ -347,6 +343,16 @@ defmodule PubQuizzerWeb.Admin.EventLive do
       </div>
     </div>
     """
+  end
+
+  defp named?(event), do: event.name != nil and event.name != ""
+
+  defp status_badge_class(status) do
+    cond do
+      Quiz.status_active?(status) -> "badge-primary"
+      status == "finished" -> "badge-success"
+      true -> "badge-ghost"
+    end
   end
 
   def status_label("lobby"), do: "Bereit"

@@ -1,0 +1,126 @@
+- generic [ref=f26e3]:
+  - banner [ref=f26e4]:
+    - generic [ref=f26e5]:
+      - link "Quiz for a better life" [ref=f26e7] [cursor=pointer]:
+        - /url: /
+      - group [ref=f26e10]:
+        - generic "d" [ref=f26e11] [cursor=pointer]
+    - generic [ref=f26e14]:
+      - link "Quiz" [ref=f26e15] [cursor=pointer]:
+        - /url: /admin/events
+      - link "Themen verwalten" [ref=f26e18] [cursor=pointer]:
+        - /url: /admin/topics
+      - link "Benutzer" [ref=f26e21] [cursor=pointer]:
+        - /url: /admin/users
+  - main [ref=f26e25]:
+    - generic [ref=f26e26]:
+      - generic [ref=f26e27]:
+        - textbox "Nach Code oder Name suchen..." [ref=f26e29]
+        - generic [ref=f26e30]:
+          - link "Fragen-Bericht" [ref=f26e31] [cursor=pointer]:
+            - /url: /admin/question-report
+          - button "Neues Quiz" [ref=f26e34] [cursor=pointer]
+      - generic [ref=f26e37]:
+        - generic [ref=f26e39]:
+          - generic [ref=f26e40]:
+            - generic [ref=f26e41]: "6596"
+            - generic [ref=f26e42]: 5 Teams
+          - generic [ref=f26e43]: Läuft
+          - generic [ref=f26e45]: 09.08.26
+          - generic [ref=f26e46]:
+            - link "Moderator" [ref=f26e47] [cursor=pointer]:
+              - /url: /quiz/6596/host
+            - link "Live-Ergebnisse" [ref=f26e48] [cursor=pointer]:
+              - /url: /admin/events/1/results
+            - button "Löschen" [ref=f26e49] [cursor=pointer]
+        - generic [ref=f26e51]:
+          - generic [ref=f26e52]:
+            - generic [ref=f26e53]: "6770"
+            - generic [ref=f26e54]: 4 Teams
+          - generic [ref=f26e55]: Bereit
+          - generic [ref=f26e57]: 12.08.26
+          - generic [ref=f26e58]:
+            - link "Verwalten" [ref=f26e59] [cursor=pointer]:
+              - /url: /admin/events/9
+            - button "Löschen" [ref=f26e60] [cursor=pointer]
+        - generic [ref=f26e62]:
+          - generic [ref=f26e63]:
+            - generic [ref=f26e64]: "9268"
+            - generic [ref=f26e65]: 4 Teams
+          - generic [ref=f26e66]: Bereit
+          - generic [ref=f26e68]: 11.08.26
+          - generic [ref=f26e69]:
+            - link "Verwalten" [ref=f26e70] [cursor=pointer]:
+              - /url: /admin/events/8
+            - button "Löschen" [ref=f26e71] [cursor=pointer]
+        - generic [ref=f26e73]:
+          - generic [ref=f26e74]:
+            - generic [ref=f26e75]: "6228"
+            - generic [ref=f26e76]: 4 Teams
+          - generic [ref=f26e77]: Bereit
+          - generic [ref=f26e79]: 11.08.26
+          - generic [ref=f26e80]:
+            - link "Verwalten" [ref=f26e81] [cursor=pointer]:
+              - /url: /admin/events/7
+            - button "Löschen" [ref=f26e82] [cursor=pointer]
+        - generic [ref=f26e84]:
+          - generic [ref=f26e85]:
+            - generic [ref=f26e86]: "2096"
+            - generic [ref=f26e87]: 4 Teams
+          - generic [ref=f26e88]: Bereit
+          - generic [ref=f26e90]: 11.08.26
+          - generic [ref=f26e91]:
+            - link "Verwalten" [ref=f26e92] [cursor=pointer]:
+              - /url: /admin/events/6
+            - button "Löschen" [ref=f26e93] [cursor=pointer]
+        - generic [ref=f26e95]:
+          - generic [ref=f26e96]:
+            - generic [ref=f26e97]: "5487"
+            - generic [ref=f26e98]: 3 Teams
+          - generic [ref=f26e99]: Bereit
+          - generic [ref=f26e101]: 11.08.26
+          - generic [ref=f26e102]:
+            - link "Verwalten" [ref=f26e103] [cursor=pointer]:
+              - /url: /admin/events/5
+            - button "Löschen" [ref=f26e104] [cursor=pointer]
+        - generic [ref=f26e106]:
+          - generic [ref=f26e107]:
+            - generic [ref=f26e108]: "2017"
+            - generic [ref=f26e109]: 2 Teams
+          - generic [ref=f26e110]: Bereit
+          - generic [ref=f26e112]: 11.08.26
+          - generic [ref=f26e113]:
+            - link "Verwalten" [ref=f26e114] [cursor=pointer]:
+              - /url: /admin/events/4
+            - button "Löschen" [ref=f26e115] [cursor=pointer]
+      - group [ref=f26e116]:
+        - generic "Beendete Quiz (2)" [ref=f26e117] [cursor=pointer]
+        - generic [ref=f26e118]:
+          - generic [ref=f26e120]:
+            - generic [ref=f26e121]:
+              - heading "Demo-Bericht" [level=3] [ref=f26e122]
+              - generic [ref=f26e123]: 4 Teams
+            - generic [ref=f26e124]:
+              - generic [ref=f26e125]: "8631"
+              - generic [ref=f26e126]: Beendet
+            - generic [ref=f26e127]: 13.08.26
+            - generic [ref=f26e128]:
+              - link "Ergebnisse" [ref=f26e129] [cursor=pointer]:
+                - /url: /admin/events/11/results
+              - link "Bericht" [ref=f26e130] [cursor=pointer]:
+                - /url: /admin/events/11/report
+              - button "Löschen" [ref=f26e131] [cursor=pointer]
+          - generic [ref=f26e133]:
+            - generic [ref=f26e134]:
+              - heading "Demo-Quiz Statistiken" [level=3] [ref=f26e135]
+              - generic [ref=f26e136]: 3 Teams
+            - generic [ref=f26e137]:
+              - generic [ref=f26e138]: "2275"
+              - generic [ref=f26e139]: Beendet
+            - generic [ref=f26e140]: 13.08.26
+            - generic [ref=f26e141]:
+              - link "Ergebnisse" [ref=f26e142] [cursor=pointer]:
+                - /url: /admin/events/10/results
+              - link "Bericht" [ref=f26e143] [cursor=pointer]:
+                - /url: /admin/events/10/report
+              - button "Löschen" [ref=f26e144] [cursor=pointer]

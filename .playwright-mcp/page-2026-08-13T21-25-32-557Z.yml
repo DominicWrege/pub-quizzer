@@ -1,0 +1,97 @@
+- generic [ref=f10e3]:
+  - banner [ref=f10e4]:
+    - generic [ref=f10e5]:
+      - link "Quiz for a better life" [ref=f10e7] [cursor=pointer]:
+        - /url: /
+      - group [ref=f10e10]:
+        - generic "d" [ref=f10e11] [cursor=pointer]
+    - generic [ref=f10e14]:
+      - link "Quiz" [ref=f10e15] [cursor=pointer]:
+        - /url: /admin/events
+      - link "Themen verwalten" [ref=f10e18] [cursor=pointer]:
+        - /url: /admin/topics
+      - link "Benutzer" [ref=f10e21] [cursor=pointer]:
+        - /url: /admin/users
+  - main [ref=f10e25]:
+    - generic [ref=f10e26]:
+      - generic [ref=f10e27]:
+        - heading "Bericht Demo-Quiz Statistiken · 13.08.2026" [level=1] [ref=f10e30]:
+          - generic [ref=f10e31]:
+            - generic [ref=f10e32]: Bericht
+            - generic [ref=f10e33]: Demo-Quiz Statistiken · 13.08.2026
+        - link "Ergebnisse" [ref=f10e35] [cursor=pointer]:
+          - /url: /admin/events/10/results
+      - generic [ref=f10e38]:
+        - generic [ref=f10e39]:
+          - generic [ref=f10e40]: Dauer gesamt
+          - generic [ref=f10e41]: 8 Sek.
+        - generic [ref=f10e42]:
+          - generic [ref=f10e43]: Reine Antwortzeit
+          - generic [ref=f10e44]: 7 Sek.
+      - generic [ref=f10e45]:
+        - generic [ref=f10e46]:
+          - generic [ref=f10e47]: Schwerste Frage
+          - generic [ref=f10e48]: Welche Band veröffentlichte das meistverkaufte Album aller Zeiten?
+          - generic [ref=f10e49]: 33 % richtig
+        - generic [ref=f10e50]:
+          - generic [ref=f10e51]: Leichteste Frage
+          - generic [ref=f10e52]: Welche Band veröffentlichte das meistverkaufte Album aller Zeiten?
+          - generic [ref=f10e53]: 33 % richtig
+        - generic [ref=f10e54]:
+          - generic [ref=f10e55]: Beliebteste Falle
+          - generic [ref=f10e56]:
+            - generic [ref=f10e57]: Welche Band veröffentlichte das meistverkaufte Album aller Zeiten?
+            - generic [ref=f10e58]: B · The Beatles veröffentlichten 1967 das einflussreiche Album Sgt. Pepper's Lonely Hearts Club Band, das aber nicht das meistverkaufte Album ist. — 1× gewählt
+      - generic [ref=f10e59]:
+        - 'heading "Runde 1: Musik · Antwortzeit 7 Sek." [level=3] [ref=f10e60]'
+        - generic [ref=f10e61]:
+          - generic [ref=f10e62]:
+            - generic [ref=f10e63]:
+              - generic [ref=f10e64]: Q1
+              - generic [ref=f10e65]: 33 % richtig
+            - generic [ref=f10e66]: Welche Band veröffentlichte das meistverkaufte Album aller Zeiten?
+            - generic [ref=f10e67]: "Richtig: A · Michael Jackson veröffentlichte 1982 das bahnbrechende Album Thriller, das mit über 100 Millionen verkauften Exemplaren das meistverkaufte Album aller Zeiten ist."
+            - generic [ref=f10e68]:
+              - 'generic "A: 1×" [ref=f10e69]': A · 1
+              - 'generic "B: 1×" [ref=f10e70]': B · 1
+              - 'generic "C: 1×" [ref=f10e71]': C · 1
+          - generic [ref=f10e72]:
+            - generic [ref=f10e73]:
+              - generic [ref=f10e74]: Q2
+              - generic [ref=f10e75]: 33 % richtig
+            - generic [ref=f10e76]: Aus wie vielen Musikern besteht ein klassisches Streichquartett?
+            - generic [ref=f10e77]: "Richtig: B · Ein klassisches Streichquartett besteht aus vier Musikern mit der Besetzung von zwei Violinen, einer Viola und einem Violoncello."
+            - generic [ref=f10e78]:
+              - 'generic "B: 1×" [ref=f10e79]': B · 1
+              - 'generic "C: 1×" [ref=f10e80]': C · 1
+              - 'generic "D: 1×" [ref=f10e81]': D · 1
+          - generic [ref=f10e82]:
+            - generic [ref=f10e83]:
+              - generic [ref=f10e84]: Q3
+              - generic [ref=f10e85]: 33 % richtig
+            - generic [ref=f10e86]: Welches Instrument wird auch Königin der Instrumente genannt?
+            - generic [ref=f10e87]: "Richtig: B · Die Orgel wird aufgrund ihrer gewaltigen Klangfülle und imposanten Größe traditionell als die Königin der Instrumente bezeichnet."
+            - generic [ref=f10e88]:
+              - 'generic "B: 1×" [ref=f10e89]': B · 1
+              - 'generic "C: 1×" [ref=f10e90]': C · 1
+              - 'generic "D: 1×" [ref=f10e91]': D · 1
+          - generic [ref=f10e92]:
+            - generic [ref=f10e93]:
+              - generic [ref=f10e94]: Q4
+              - generic [ref=f10e95]: 33 % richtig
+            - generic [ref=f10e96]: In welchem Jahrzehnt wurde der Rock 'n' Roll populär?
+            - generic [ref=f10e97]: "Richtig: B · In den 1950er Jahren wurde der Rock 'n' Roll mit Legenden wie Elvis Presley, Chuck Berry und Little Richard zu einem weltweiten Phänomen."
+            - generic [ref=f10e98]:
+              - 'generic "B: 1×" [ref=f10e99]': B · 1
+              - 'generic "C: 1×" [ref=f10e100]': C · 1
+              - 'generic "D: 1×" [ref=f10e101]': D · 1
+          - generic [ref=f10e102]:
+            - generic [ref=f10e103]:
+              - generic [ref=f10e104]: Q5
+              - generic [ref=f10e105]: 33 % richtig
+            - generic [ref=f10e106]: Wer komponierte die berühmte Ode an die Freude?
+            - generic [ref=f10e107]: "Richtig: B · Ludwig van Beethoven komponierte die Ode an die Freude als Finalsatz seiner 9. Sinfonie, die 1824 uraufgeführt wurde und heute die Europahymne ist."
+            - generic [ref=f10e108]:
+              - 'generic "B: 1×" [ref=f10e109]': B · 1
+              - 'generic "C: 1×" [ref=f10e110]': C · 1
+              - 'generic "Keine Antwort: 1×" [ref=f10e111]': – · 1

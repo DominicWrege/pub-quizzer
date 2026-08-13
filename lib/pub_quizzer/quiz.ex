@@ -717,6 +717,157 @@ defmodule PubQuizzer.Quiz do
     }
   end
 
+  # Cross-quiz question performance over all finished events:
+  # [%{question, topic_name, asked_in, answers, pct, picks, trap}]
+  def get_question_report do
+    finished_ids =
+      QuizEvent
+      |> where(status: "finished")
+      |> select([e], e.id)
+      |> Repo.all()
+
+    rounds_per_topic =
+      Round
+      |> where([r], r.quiz_event_id in ^finished_ids)
+      |> group_by([r], r.topic_id)
+      |> select([r], {r.topic_id, count(r.id)})
+      |> Repo.all()
+      |> Map.new()
+
+    stats_by_question =
+      Answer
+      |> join(:inner, [a], r in Round, on: a.round_id == r.id)
+      |> where([_a, r], r.quiz_event_id in ^finished_ids)
+      |> group_by([a], [a.question_id, a.selected_index])
+      |> select([a], {a.question_id, a.selected_index, count(a.id)})
+      |> Repo.all()
+      |> Enum.reduce(%{}, fn {question_id, idx, count}, acc ->
+        Map.update(acc, question_id, %{picks: %{idx => count}, answers: count}, fn stats ->
+          %{
+            picks: Map.update(stats.picks, idx, count, &(&1 + count)),
+            answers: stats.answers + count
+          }
+        end)
+      end)
+
+    questions =
+      Question
+      |> where([q], q.id in ^Map.keys(stats_by_question))
+      |> preload(:topic)
+      |> Repo.all()
+
+    for question <- questions,
+        stats = Map.get(stats_by_question, question.id),
+        asked_in = Map.get(rounds_per_topic, question.topic_id, 0),
+        asked_in > 0 do
+      correct = Map.get(stats.picks, question.correct_index, 0)
+
+      pct =
+        if stats.answers > 0 do
+          round(correct / stats.answers * 100)
+        else
+          0
+        end
+
+      trap =
+        stats.picks
+        |> Enum.reject(fn {idx, _count} -> idx == question.correct_index end)
+        |> Enum.filter(fn {_idx, count} -> count > 0 end)
+        |> case do
+          [] -> nil
+          wrong -> Enum.max_by(wrong, &elem(&1, 1))
+        end
+
+      %{
+        question: question,
+        topic_id: question.topic_id,
+        topic_name: question.topic.name,
+        asked_in: asked_in,
+        answers: stats.answers,
+        pct: pct,
+        picks: stats.picks,
+        trap: trap
+      }
+    end
+  end
+
+  def get_event_report(event_id) do
+    event = get_event!(event_id)
+
+    rounds =
+      Round
+      |> where(quiz_event_id: ^event_id)
+      |> order_by(asc: :round_number)
+      |> preload(:topic)
+      |> Repo.all()
+
+    answers = list_answers_for_event(event_id)
+
+    team_count =
+      Team
+      |> where(quiz_event_id: ^event_id)
+      |> where([t], not is_nil(t.claimed_at))
+      |> Repo.aggregate(:count)
+
+    questions_by_topic = list_questions_for_topics(Enum.map(rounds, & &1.topic_id))
+
+    rounds_data =
+      Enum.map(rounds, fn round ->
+        %{round: round, questions: Map.get(questions_by_topic, round.topic_id, [])}
+      end)
+
+    question_stats = build_question_stats(answers, team_count)
+    timing = build_timing(event, rounds, answers)
+
+    %{
+      event: event,
+      rounds_data: rounds_data,
+      question_stats: question_stats,
+      timing: timing,
+      team_count: team_count,
+      highlights: build_highlights(rounds_data, question_stats, team_count)
+    }
+  end
+
+  # %{hardest: {question, pct} | nil, easiest: {question, pct} | nil,
+  #   trap: {question, option_index, count} | nil}
+  defp build_highlights(rounds_data, question_stats, team_count) when team_count > 0 do
+    rated =
+      for round_data <- rounds_data,
+          question <- round_data.questions,
+          stats = Map.get(question_stats, {round_data.round.id, question.id}),
+          stats do
+        pct = round(Map.get(stats.picks, question.correct_index, 0) / team_count * 100)
+        {question, pct}
+      end
+
+    hardest = if rated == [], do: nil, else: Enum.min_by(rated, &elem(&1, 1))
+    easiest = if rated == [], do: nil, else: Enum.max_by(rated, &elem(&1, 1))
+
+    trap =
+      for round_data <- rounds_data,
+          question <- round_data.questions,
+          stats = Map.get(question_stats, {round_data.round.id, question.id}),
+          stats do
+        wrong_picks =
+          stats.picks
+          |> Enum.reject(fn {idx, _count} -> idx == question.correct_index end)
+
+        Enum.map(wrong_picks, fn {idx, count} -> {question, idx, count} end)
+      end
+      |> List.flatten()
+      |> Enum.filter(fn {_q, _idx, count} -> count > 0 end)
+      |> case do
+        [] -> nil
+        traps -> Enum.max_by(traps, &elem(&1, 2))
+      end
+
+    %{hardest: hardest, easiest: easiest, trap: trap}
+  end
+
+  defp build_highlights(_rounds_data, _question_stats, _team_count),
+    do: %{hardest: nil, easiest: nil, trap: nil}
+
   # Per-question answer distribution: %{
   #   {round_id, question_id} => %{picks: %{option_index => count}, no_answer: count}
   # }
@@ -745,20 +896,25 @@ defmodule PubQuizzer.Quiz do
 
     rounds_by_id = Map.new(rounds, &{&1.id, &1})
 
-    answering_seconds =
+    {answering_seconds, per_round} =
       answers
       |> Enum.group_by(& &1.round_id)
-      |> Enum.reduce(0, fn {round_id, round_answers}, acc ->
+      |> Enum.reduce({0, %{}}, fn {round_id, round_answers}, {acc, per_round} ->
         case Map.get(rounds_by_id, round_id) do
           nil ->
-            acc
+            {acc, per_round}
 
           round ->
             last = Enum.max_by(round_answers, & &1.inserted_at, DateTime)
-            acc + max(DateTime.diff(last.inserted_at, round.inserted_at), 0)
+            seconds = max(DateTime.diff(last.inserted_at, round.inserted_at), 0)
+            {acc + seconds, Map.put(per_round, round_id, seconds)}
         end
       end)
 
-    %{total_seconds: total_seconds, answering_seconds: answering_seconds}
+    %{
+      total_seconds: total_seconds,
+      answering_seconds: answering_seconds,
+      per_round: per_round
+    }
   end
 end

@@ -34,9 +34,14 @@
         <.icon name="hero-x-mark" class="size-4" />
       </button>
     </.form>
-    <.button phx-click="start_new" id="new-event-btn">
-      <.icon name="hero-plus" class="size-4" /> Neues Quiz
-    </.button>
+    <div class="flex items-center gap-2">
+      <.link navigate={~p"/admin/question-report"} class="btn btn-soft" id="question-report-btn">
+        <.icon name="hero-document-chart-bar" class="size-4" /> Fragen-Bericht
+      </.link>
+      <.button phx-click="start_new" id="new-event-btn">
+        <.icon name="hero-plus" class="size-4" /> Neues Quiz
+      </.button>
+    </div>
   </div>
 
   <%= cond do %>

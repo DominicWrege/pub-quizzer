@@ -312,3 +312,5 @@
 [ 1768482ms] [ERROR] WebSocket connection to 'ws://localhost:4000/phoenix/live_reload/socket/websocket?vsn=2.0.0' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4000/phoenix/live_reload/frame:1384
 [ 1778051ms] [ERROR] WebSocket connection to 'ws://localhost:4000/phoenix/live_reload/socket/websocket?vsn=2.0.0' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4000/phoenix/live_reload/frame:1384
 [ 1783835ms] [LOG] phx-GMt1s-lqnXRMZAHC mount:  -  {0: Object, p: Object, s: 38, t: Ergebnisse} @ http://localhost:4000/assets/js/app.js:2
+[ 4869006ms] [LOG] phx-GMt6IYZXMioumwEJ mount:  -  {0: Object, p: Object, s: 38, t: Ergebnisse} @ http://localhost:4000/assets/js/app.js:2
+[ 5188646ms] [LOG] phx-GMt6a87KtP_peAiB mount:  -  {0: Object, p: Object, s: 34, t: Ergebnisse} @ http://localhost:4000/assets/js/app.js:2

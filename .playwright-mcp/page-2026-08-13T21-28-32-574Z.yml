@@ -1,0 +1,150 @@
+- generic [ref=f16e3]:
+  - banner [ref=f16e4]:
+    - generic [ref=f16e5]:
+      - link "Quiz for a better life" [ref=f16e7] [cursor=pointer]:
+        - /url: /
+      - group [ref=f16e10]:
+        - generic "d" [ref=f16e11] [cursor=pointer]
+    - generic [ref=f16e14]:
+      - link "Quiz" [ref=f16e15] [cursor=pointer]:
+        - /url: /admin/events
+      - link "Themen verwalten" [ref=f16e18] [cursor=pointer]:
+        - /url: /admin/topics
+      - link "Benutzer" [ref=f16e21] [cursor=pointer]:
+        - /url: /admin/users
+  - main [ref=f16e25]:
+    - generic [ref=f16e26]:
+      - generic [ref=f16e27]:
+        - heading "Bericht Demo-Bericht · 13.08.2026" [level=1] [ref=f16e30]:
+          - generic [ref=f16e31]:
+            - generic [ref=f16e32]: Bericht
+            - generic [ref=f16e33]: Demo-Bericht · 13.08.2026
+        - link "Ergebnisse" [ref=f16e35] [cursor=pointer]:
+          - /url: /admin/events/11/results
+      - generic [ref=f16e38]:
+        - generic [ref=f16e39]:
+          - generic [ref=f16e40]: Dauer gesamt
+          - generic [ref=f16e41]: 13 Sek.
+        - generic [ref=f16e42]:
+          - generic [ref=f16e43]: Reine Antwortzeit
+          - generic [ref=f16e44]: 12 Sek.
+      - generic [ref=f16e45]:
+        - generic [ref=f16e46]:
+          - generic [ref=f16e47]: Schwerste Frage
+          - generic [ref=f16e48]: Aus wie vielen Musikern besteht ein klassisches Streichquartett?
+          - generic [ref=f16e49]: 25 % richtig
+        - generic [ref=f16e50]:
+          - generic [ref=f16e51]: Leichteste Frage
+          - generic [ref=f16e52]: Welche Band veröffentlichte das meistverkaufte Album aller Zeiten?
+          - generic [ref=f16e53]: 50 % richtig
+        - generic [ref=f16e54]:
+          - generic [ref=f16e55]: Beliebteste Falle
+          - generic [ref=f16e56]:
+            - generic [ref=f16e57]: Aus wie vielen Musikern besteht ein klassisches Streichquartett?
+            - generic [ref=f16e58]: C · Ein klassisches Streichquartett besteht aus fünf Musikern, was aber ein Streichquintett wäre und eine andere Besetzung darstellt. — 2× gewählt
+      - generic [ref=f16e59]:
+        - 'heading "Runde 1: Musik · Antwortzeit 6 Sek." [level=3] [ref=f16e60]'
+        - generic [ref=f16e61]:
+          - generic [ref=f16e62]:
+            - generic [ref=f16e63]:
+              - generic [ref=f16e64]: Q1
+              - generic [ref=f16e65]: 50 % richtig
+            - generic [ref=f16e66]: Welche Band veröffentlichte das meistverkaufte Album aller Zeiten?
+            - generic [ref=f16e67]: "Richtig: A · Michael Jackson veröffentlichte 1982 das bahnbrechende Album Thriller, das mit über 100 Millionen verkauften Exemplaren das meistverkaufte Album aller Zeiten ist."
+            - generic [ref=f16e68]:
+              - 'generic "A: 2×" [ref=f16e69]': A · 2
+              - 'generic "B: 1×" [ref=f16e70]': B · 1
+              - 'generic "C: 1×" [ref=f16e71]': C · 1
+          - generic [ref=f16e72]:
+            - generic [ref=f16e73]:
+              - generic [ref=f16e74]: Q2
+              - generic [ref=f16e75]: 25 % richtig
+            - generic [ref=f16e76]: Aus wie vielen Musikern besteht ein klassisches Streichquartett?
+            - generic [ref=f16e77]: "Richtig: B · Ein klassisches Streichquartett besteht aus vier Musikern mit der Besetzung von zwei Violinen, einer Viola und einem Violoncello."
+            - generic [ref=f16e78]:
+              - 'generic "B: 1×" [ref=f16e79]': B · 1
+              - 'generic "C: 2×" [ref=f16e80]': C · 2
+              - 'generic "D: 1×" [ref=f16e81]': D · 1
+          - generic [ref=f16e82]:
+            - generic [ref=f16e83]:
+              - generic [ref=f16e84]: Q3
+              - generic [ref=f16e85]: 50 % richtig
+            - generic [ref=f16e86]: Welches Instrument wird auch Königin der Instrumente genannt?
+            - generic [ref=f16e87]: "Richtig: B · Die Orgel wird aufgrund ihrer gewaltigen Klangfülle und imposanten Größe traditionell als die Königin der Instrumente bezeichnet."
+            - generic [ref=f16e88]:
+              - 'generic "B: 2×" [ref=f16e89]': B · 2
+              - 'generic "C: 1×" [ref=f16e90]': C · 1
+              - 'generic "Keine Antwort: 1×" [ref=f16e91]': – · 1
+          - generic [ref=f16e92]:
+            - generic [ref=f16e93]:
+              - generic [ref=f16e94]: Q4
+              - generic [ref=f16e95]: 25 % richtig
+            - generic [ref=f16e96]: In welchem Jahrzehnt wurde der Rock 'n' Roll populär?
+            - generic [ref=f16e97]: "Richtig: B · In den 1950er Jahren wurde der Rock 'n' Roll mit Legenden wie Elvis Presley, Chuck Berry und Little Richard zu einem weltweiten Phänomen."
+            - generic [ref=f16e98]:
+              - 'generic "B: 1×" [ref=f16e99]': B · 1
+              - 'generic "C: 2×" [ref=f16e100]': C · 2
+              - 'generic "D: 1×" [ref=f16e101]': D · 1
+          - generic [ref=f16e102]:
+            - generic [ref=f16e103]:
+              - generic [ref=f16e104]: Q5
+              - generic [ref=f16e105]: 50 % richtig
+            - generic [ref=f16e106]: Wer komponierte die berühmte Ode an die Freude?
+            - generic [ref=f16e107]: "Richtig: B · Ludwig van Beethoven komponierte die Ode an die Freude als Finalsatz seiner 9. Sinfonie, die 1824 uraufgeführt wurde und heute die Europahymne ist."
+            - generic [ref=f16e108]:
+              - 'generic "B: 2×" [ref=f16e109]': B · 2
+              - 'generic "C: 1×" [ref=f16e110]': C · 1
+              - 'generic "D: 1×" [ref=f16e111]': D · 1
+      - generic [ref=f16e112]:
+        - 'heading "Runde 2: Wissenschaft & Natur · Antwortzeit 6 Sek." [level=3] [ref=f16e113]'
+        - generic [ref=f16e114]:
+          - generic [ref=f16e115]:
+            - generic [ref=f16e116]:
+              - generic [ref=f16e117]: Q1
+              - generic [ref=f16e118]: 50 % richtig
+            - generic [ref=f16e119]: Welches Element ist das häufigste im Universum?
+            - generic [ref=f16e120]: "Richtig: D · Wasserstoff macht etwa 75 % der gesamten sichtbaren baryonischen Masse des Universums aus und ist damit das häufigste Element."
+            - generic [ref=f16e121]:
+              - 'generic "A: 1×" [ref=f16e122]': A · 1
+              - 'generic "B: 1×" [ref=f16e123]': B · 1
+              - 'generic "D: 2×" [ref=f16e124]': D · 2
+          - generic [ref=f16e125]:
+            - generic [ref=f16e126]:
+              - generic [ref=f16e127]: Q2
+              - generic [ref=f16e128]: 25 % richtig
+            - generic [ref=f16e129]: Wie nennt man den Prozess, bei dem Pflanzen Licht in Energie umwandeln?
+            - generic [ref=f16e130]: "Richtig: B · Photosynthese ist der biochemische Vorgang, bei dem Pflanzen mithilfe von Chlorophyll Lichtenergie in chemische Energie umwandeln."
+            - generic [ref=f16e131]:
+              - 'generic "B: 1×" [ref=f16e132]': B · 1
+              - 'generic "C: 2×" [ref=f16e133]': C · 2
+              - 'generic "D: 1×" [ref=f16e134]': D · 1
+          - generic [ref=f16e135]:
+            - generic [ref=f16e136]:
+              - generic [ref=f16e137]: Q3
+              - generic [ref=f16e138]: 50 % richtig
+            - generic [ref=f16e139]: Welcher Planet unseres Sonnensystems hat die meisten Monde?
+            - generic [ref=f16e140]: "Richtig: B · Saturn ist der Ringplanet mit mindestens 146 bestätigten Monden und hält damit den Rekord in unserem Sonnensystem."
+            - generic [ref=f16e141]:
+              - 'generic "B: 2×" [ref=f16e142]': B · 2
+              - 'generic "C: 1×" [ref=f16e143]': C · 1
+              - 'generic "Keine Antwort: 1×" [ref=f16e144]': – · 1
+          - generic [ref=f16e145]:
+            - generic [ref=f16e146]:
+              - generic [ref=f16e147]: Q4
+              - generic [ref=f16e148]: 25 % richtig
+            - generic [ref=f16e149]: Was bezeichnet der Begriff DNA in der Biologie vollständig?
+            - generic [ref=f16e150]: "Richtig: A · Desoxyribonukleinsäure ist der Träger der genetischen Information in allen bekannten Lebewesen und vielen Viren."
+            - generic [ref=f16e151]:
+              - 'generic "A: 1×" [ref=f16e152]': A · 1
+              - 'generic "B: 2×" [ref=f16e153]': B · 2
+              - 'generic "C: 1×" [ref=f16e154]': C · 1
+          - generic [ref=f16e155]:
+            - generic [ref=f16e156]:
+              - generic [ref=f16e157]: Q5
+              - generic [ref=f16e158]: 50 % richtig
+            - generic [ref=f16e159]: Welches Tier hat das größte Gehirn im Verhältnis zur Körpergröße?
+            - generic [ref=f16e160]: "Richtig: D · Der Mensch besitzt im Verhältnis zur Körpergröße eines der größten Gehirne, wobei das Verhältnis bei manchen Vogelarten und Spitzmäusen sogar noch höher liegt."
+            - generic [ref=f16e161]:
+              - 'generic "A: 1×" [ref=f16e162]': A · 1
+              - 'generic "B: 1×" [ref=f16e163]': B · 1
+              - 'generic "D: 2×" [ref=f16e164]': D · 2

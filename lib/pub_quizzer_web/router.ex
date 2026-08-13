@@ -86,8 +86,10 @@ defmodule PubQuizzerWeb.Router do
       live "/topics/:topic_id/questions/:id/edit", QuestionLive, :edit
 
       live "/events", EventLive, :index
+      live "/question-report", QuestionReportLive, :index
       live "/events/:id", EventLive, :show
       live "/events/:id/results", ResultLive, :index
+      live "/events/:id/report", ReportLive, :index
       live "/events/:id/team-cards", TeamCardLive, :index
 
       live "/profile", ProfileLive, :index

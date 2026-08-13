@@ -1,0 +1,170 @@
+- generic [ref=f22e3]:
+  - banner [ref=f22e4]:
+    - generic [ref=f22e5]:
+      - link "Quiz for a better life" [ref=f22e7] [cursor=pointer]:
+        - /url: /
+      - group [ref=f22e10]:
+        - generic "d" [ref=f22e11] [cursor=pointer]
+    - generic [ref=f22e14]:
+      - link "Quiz" [ref=f22e15] [cursor=pointer]:
+        - /url: /admin/events
+      - link "Themen verwalten" [ref=f22e18] [cursor=pointer]:
+        - /url: /admin/topics
+      - link "Benutzer" [ref=f22e21] [cursor=pointer]:
+        - /url: /admin/users
+  - main [ref=f22e25]:
+    - generic [ref=f22e26]:
+      - generic [ref=f22e28]:
+        - link "Zurück" [ref=f22e30] [cursor=pointer]:
+          - /url: /admin/events
+        - heading "Fragen-Bericht 10 Fragen aus allen abgeschlossenen Quiz" [level=1] [ref=f22e34]:
+          - generic [ref=f22e35]:
+            - generic [ref=f22e36]: Fragen-Bericht
+            - generic [ref=f22e37]: 10 Fragen aus allen abgeschlossenen Quiz
+      - generic [ref=f22e39]:
+        - combobox [ref=f22e40]:
+          - option "Alle Themen" [selected]
+          - option "Musik"
+          - option "Wissenschaft & Natur"
+        - combobox [ref=f22e41]:
+          - option "Schwerste zuerst" [selected]
+          - option "Häufigste zuerst"
+      - table [ref=f22e43]:
+        - rowgroup [ref=f22e44]:
+          - row [ref=f22e45]:
+            - columnheader "Frage" [ref=f22e46]
+            - columnheader "Gefragt" [ref=f22e47]
+            - columnheader "Antworten" [ref=f22e48]
+            - columnheader "Richtig" [ref=f22e49]
+            - columnheader "Verteilung" [ref=f22e50]
+            - columnheader "Falle" [ref=f22e51]
+        - rowgroup [ref=f22e52]:
+          - row [ref=f22e53]:
+            - cell "Wie nennt man den Prozess, bei dem Pflanzen Licht in Energie umwandeln? Wissenschaft & Natur" [ref=f22e54]:
+              - generic [ref=f22e55]: Wie nennt man den Prozess, bei dem Pflanzen Licht in Energie umwandeln?
+              - generic [ref=f22e56]: Wissenschaft & Natur
+            - cell "1×" [ref=f22e57]
+            - cell "4" [ref=f22e58]
+            - cell "25 %" [ref=f22e59]
+            - cell "B · 1 C · 2 D · 1" [ref=f22e60]:
+              - generic [ref=f22e61]:
+                - 'generic "B: 1×" [ref=f22e62]': B · 1
+                - 'generic "C: 2×" [ref=f22e63]': C · 2
+                - 'generic "D: 1×" [ref=f22e64]': D · 1
+            - cell "C · 2×" [ref=f22e65]
+          - row [ref=f22e66]:
+            - cell "Was bezeichnet der Begriff DNA in der Biologie vollständig? Wissenschaft & Natur" [ref=f22e67]:
+              - generic [ref=f22e68]: Was bezeichnet der Begriff DNA in der Biologie vollständig?
+              - generic [ref=f22e69]: Wissenschaft & Natur
+            - cell "1×" [ref=f22e70]
+            - cell "4" [ref=f22e71]
+            - cell "25 %" [ref=f22e72]
+            - cell "A · 1 B · 2 C · 1" [ref=f22e73]:
+              - generic [ref=f22e74]:
+                - 'generic "A: 1×" [ref=f22e75]': A · 1
+                - 'generic "B: 2×" [ref=f22e76]': B · 2
+                - 'generic "C: 1×" [ref=f22e77]': C · 1
+            - cell "B · 2×" [ref=f22e78]
+          - row [ref=f22e79]:
+            - cell "Aus wie vielen Musikern besteht ein klassisches Streichquartett? Musik" [ref=f22e80]:
+              - generic [ref=f22e81]: Aus wie vielen Musikern besteht ein klassisches Streichquartett?
+              - generic [ref=f22e82]: Musik
+            - cell "2×" [ref=f22e83]
+            - cell "7" [ref=f22e84]
+            - cell "29 %" [ref=f22e85]
+            - cell "B · 2 C · 3 D · 2" [ref=f22e86]:
+              - generic [ref=f22e87]:
+                - 'generic "B: 2×" [ref=f22e88]': B · 2
+                - 'generic "C: 3×" [ref=f22e89]': C · 3
+                - 'generic "D: 2×" [ref=f22e90]': D · 2
+            - cell "C · 3×" [ref=f22e91]
+          - row [ref=f22e92]:
+            - cell "In welchem Jahrzehnt wurde der Rock 'n' Roll populär? Musik" [ref=f22e93]:
+              - generic [ref=f22e94]: In welchem Jahrzehnt wurde der Rock 'n' Roll populär?
+              - generic [ref=f22e95]: Musik
+            - cell "2×" [ref=f22e96]
+            - cell "7" [ref=f22e97]
+            - cell "29 %" [ref=f22e98]
+            - cell "B · 2 C · 3 D · 2" [ref=f22e99]:
+              - generic [ref=f22e100]:
+                - 'generic "B: 2×" [ref=f22e101]': B · 2
+                - 'generic "C: 3×" [ref=f22e102]': C · 3
+                - 'generic "D: 2×" [ref=f22e103]': D · 2
+            - cell "C · 3×" [ref=f22e104]
+          - row [ref=f22e105]:
+            - cell "Welche Band veröffentlichte das meistverkaufte Album aller Zeiten? Musik" [ref=f22e106]:
+              - generic [ref=f22e107]: Welche Band veröffentlichte das meistverkaufte Album aller Zeiten?
+              - generic [ref=f22e108]: Musik
+            - cell "2×" [ref=f22e109]
+            - cell "7" [ref=f22e110]
+            - cell "43 %" [ref=f22e111]
+            - cell "A · 3 B · 2 C · 2" [ref=f22e112]:
+              - generic [ref=f22e113]:
+                - 'generic "A: 3×" [ref=f22e114]': A · 3
+                - 'generic "B: 2×" [ref=f22e115]': B · 2
+                - 'generic "C: 2×" [ref=f22e116]': C · 2
+            - cell "B · 2×" [ref=f22e117]
+          - row [ref=f22e118]:
+            - cell "Welches Element ist das häufigste im Universum? Wissenschaft & Natur" [ref=f22e119]:
+              - generic [ref=f22e120]: Welches Element ist das häufigste im Universum?
+              - generic [ref=f22e121]: Wissenschaft & Natur
+            - cell "1×" [ref=f22e122]
+            - cell "4" [ref=f22e123]
+            - cell "50 %" [ref=f22e124]
+            - cell "A · 1 B · 1 D · 2" [ref=f22e125]:
+              - generic [ref=f22e126]:
+                - 'generic "A: 1×" [ref=f22e127]': A · 1
+                - 'generic "B: 1×" [ref=f22e128]': B · 1
+                - 'generic "D: 2×" [ref=f22e129]': D · 2
+            - cell "A · 1×" [ref=f22e130]
+          - row [ref=f22e131]:
+            - cell "Welches Tier hat das größte Gehirn im Verhältnis zur Körpergröße? Wissenschaft & Natur" [ref=f22e132]:
+              - generic [ref=f22e133]: Welches Tier hat das größte Gehirn im Verhältnis zur Körpergröße?
+              - generic [ref=f22e134]: Wissenschaft & Natur
+            - cell "1×" [ref=f22e135]
+            - cell "4" [ref=f22e136]
+            - cell "50 %" [ref=f22e137]
+            - cell "A · 1 B · 1 D · 2" [ref=f22e138]:
+              - generic [ref=f22e139]:
+                - 'generic "A: 1×" [ref=f22e140]': A · 1
+                - 'generic "B: 1×" [ref=f22e141]': B · 1
+                - 'generic "D: 2×" [ref=f22e142]': D · 2
+            - cell "A · 1×" [ref=f22e143]
+          - row [ref=f22e144]:
+            - cell "Welches Instrument wird auch Königin der Instrumente genannt? Musik" [ref=f22e145]:
+              - generic [ref=f22e146]: Welches Instrument wird auch Königin der Instrumente genannt?
+              - generic [ref=f22e147]: Musik
+            - cell "2×" [ref=f22e148]
+            - cell "6" [ref=f22e149]
+            - cell "50 %" [ref=f22e150]
+            - cell "B · 3 C · 2 D · 1" [ref=f22e151]:
+              - generic [ref=f22e152]:
+                - 'generic "B: 3×" [ref=f22e153]': B · 3
+                - 'generic "C: 2×" [ref=f22e154]': C · 2
+                - 'generic "D: 1×" [ref=f22e155]': D · 1
+            - cell "C · 2×" [ref=f22e156]
+          - row [ref=f22e157]:
+            - cell "Wer komponierte die berühmte Ode an die Freude? Musik" [ref=f22e158]:
+              - generic [ref=f22e159]: Wer komponierte die berühmte Ode an die Freude?
+              - generic [ref=f22e160]: Musik
+            - cell "2×" [ref=f22e161]
+            - cell "6" [ref=f22e162]
+            - cell "50 %" [ref=f22e163]
+            - cell "B · 3 C · 2 D · 1" [ref=f22e164]:
+              - generic [ref=f22e165]:
+                - 'generic "B: 3×" [ref=f22e166]': B · 3
+                - 'generic "C: 2×" [ref=f22e167]': C · 2
+                - 'generic "D: 1×" [ref=f22e168]': D · 1
+            - cell "C · 2×" [ref=f22e169]
+          - row [ref=f22e170]:
+            - cell "Welcher Planet unseres Sonnensystems hat die meisten Monde? Wissenschaft & Natur" [ref=f22e171]:
+              - generic [ref=f22e172]: Welcher Planet unseres Sonnensystems hat die meisten Monde?
+              - generic [ref=f22e173]: Wissenschaft & Natur
+            - cell "1×" [ref=f22e174]
+            - cell "3" [ref=f22e175]
+            - cell "67 %" [ref=f22e176]
+            - cell "B · 2 C · 1" [ref=f22e177]:
+              - generic [ref=f22e178]:
+                - 'generic "B: 2×" [ref=f22e179]': B · 2
+                - 'generic "C: 1×" [ref=f22e180]': C · 1
+            - cell "C · 1×" [ref=f22e181]

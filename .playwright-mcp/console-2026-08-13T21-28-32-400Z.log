@@ -1,0 +1,3 @@
+[     154ms] [LOG] phx-GMt6ocgHYSLwTBXC mount:  -  {0: Object, p: Object, s: 30, t: Bericht} @ http://localhost:4000/assets/js/app.js:2
+[  371916ms] [LOG] phx-GMt6-FYOl_BvGBrI mount:  -  {0: Object, p: Object, s: 30, t: Bericht} @ http://localhost:4000/assets/js/app.js:2
+[  442480ms] [LOG] phx-GMt7CMRe39uBmgUJ mount:  -  {0: Object, p: Object, s: 30, t: Bericht} @ http://localhost:4000/assets/js/app.js:2
