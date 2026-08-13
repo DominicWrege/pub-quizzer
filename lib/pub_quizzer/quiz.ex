@@ -696,12 +696,69 @@ defmodule PubQuizzer.Quiz do
       |> Enum.map(fn team -> {team.id, team.name, Map.get(correct_by_team, team.id, 0)} end)
       |> Enum.sort_by(&elem(&1, 2), :desc)
 
+    question_stats = build_question_stats(answers, length(teams))
+
+    total_questions = rounds_data |> Enum.map(&length(&1.questions)) |> Enum.sum()
+
+    team_accuracy =
+      Map.new(teams, fn team ->
+        {team.id, {Map.get(correct_by_team, team.id, 0), total_questions}}
+      end)
+
     %{
       event: event,
       teams: teams,
       rounds_data: rounds_data,
       answer_lookup: answer_lookup,
-      standings: standings
+      standings: standings,
+      question_stats: question_stats,
+      team_accuracy: team_accuracy,
+      timing: build_timing(event, rounds, answers)
     }
+  end
+
+  # Per-question answer distribution: %{
+  #   {round_id, question_id} => %{picks: %{option_index => count}, no_answer: count}
+  # }
+  defp build_question_stats(answers, team_count) do
+    answers
+    |> Enum.group_by(&{&1.round_id, &1.question_id})
+    |> Map.new(fn {key, round_answers} ->
+      picks =
+        Enum.reduce(round_answers, %{}, fn answer, acc ->
+          Map.update(acc, answer.selected_index, 1, &(&1 + 1))
+        end)
+
+      {key, %{picks: picks, no_answer: max(team_count - length(round_answers), 0)}}
+    end)
+  end
+
+  # Total duration from the event's own timestamps; pure answering time is
+  # the sum over rounds of (last answer submitted - round created). The round
+  # row is persisted the moment the topic is chosen, i.e. when the first
+  # question goes live, so this excludes reveal/standings/topic-choice pauses.
+  defp build_timing(event, rounds, answers) do
+    total_seconds =
+      if event.started_at && event.finished_at do
+        DateTime.diff(event.finished_at, event.started_at)
+      end
+
+    rounds_by_id = Map.new(rounds, &{&1.id, &1})
+
+    answering_seconds =
+      answers
+      |> Enum.group_by(& &1.round_id)
+      |> Enum.reduce(0, fn {round_id, round_answers}, acc ->
+        case Map.get(rounds_by_id, round_id) do
+          nil ->
+            acc
+
+          round ->
+            last = Enum.max_by(round_answers, & &1.inserted_at, DateTime)
+            acc + max(DateTime.diff(last.inserted_at, round.inserted_at), 0)
+        end
+      end)
+
+    %{total_seconds: total_seconds, answering_seconds: answering_seconds}
   end
 end

@@ -70,6 +70,26 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
         </:back>
       </.header>
 
+      <%!-- Stats: timing + question difficulty --%>
+      <%= if @results.rounds_data != [] do %>
+        <div id="result-stats" class="mb-8">
+          <div id="result-timing" class="stats border-2 border-base-300 bg-base-100">
+            <%= if @results.timing.total_seconds do %>
+              <div class="stat py-3 px-4">
+                <div class="stat-title text-xs text-base-content/60">Dauer gesamt</div>
+                <div class="stat-value text-lg">{format_duration(@results.timing.total_seconds)}</div>
+              </div>
+            <% end %>
+            <div class="stat py-3 px-4">
+              <div class="stat-title text-xs text-base-content/60">Reine Antwortzeit</div>
+              <div class="stat-value text-lg">
+                {format_duration(@results.timing.answering_seconds)}
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
       <%!-- Final standings summary --%>
       <div class="mb-8">
         <h3 class="text-lg font-semibold mb-3">
@@ -77,7 +97,7 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
         </h3>
         <div class="flex gap-3 flex-wrap">
           <div
-            :for={{{_id, name, score}, rank} <- Enum.with_index(@results.standings)}
+            :for={{{id, name, score}, rank} <- Enum.with_index(@results.standings)}
             class={[
               "rounded-lg px-4 py-3 border-2",
               rank == 0 && "border-warning bg-warning/10",
@@ -91,6 +111,7 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
               <span class="font-semibold">{name}</span>
               <span class="badge badge-primary">{score}</span>
             </div>
+            <.team_quote id={id} accuracy={Map.get(@results.team_accuracy, id)} />
           </div>
         </div>
       </div>
@@ -101,6 +122,14 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
           <h3 class="text-lg font-semibold mb-3">
             Runde {r_idx + 1}: {round_data.round.topic.name}
           </h3>
+
+          <.round_stats
+            round={round_data.round}
+            questions={round_data.questions}
+            question_stats={@results.question_stats}
+            team_count={length(@results.teams)}
+          />
+
           <div class="overflow-x-auto rounded-lg border-2 border-base-300">
             <table class="table table-sm">
               <thead>
@@ -161,7 +190,120 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
     """
   end
 
+  attr :id, :any, required: true
+  attr :accuracy, :any, default: nil
+
+  defp team_quote(assigns) do
+    ~H"""
+    <div id={"team-quote-#{@id}"} class="mt-2">
+      <%= case @accuracy do %>
+        <% {_correct, 0} -> %>
+          <div class="text-xs text-base-content/60">Quote: —</div>
+        <% {correct, total} -> %>
+          <% pct = round(correct / total * 100) %>
+          <div class="text-xs text-base-content/60 mb-1">Quote: {pct} %</div>
+          <div class="h-1.5 w-40 overflow-hidden rounded-full bg-base-300">
+            <div class="h-full bg-primary" style={"width: #{pct}%"}></div>
+          </div>
+        <% nil -> %>
+          <div class="text-xs text-base-content/60">Quote: —</div>
+      <% end %>
+    </div>
+    """
+  end
+
+  attr :round, :map, required: true
+  attr :questions, :list, required: true
+  attr :question_stats, :map, required: true
+  attr :team_count, :integer, required: true
+
+  defp round_stats(assigns) do
+    ~H"""
+    <div
+      id={"round-stats-#{@round.id}"}
+      class="mb-4 rounded-lg border-2 border-base-300 bg-base-100 p-4"
+    >
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h4 class="text-sm font-semibold">Antwortverteilung</h4>
+        <div class="flex items-center gap-3 text-xs text-base-content/60">
+          <span class="flex items-center gap-1">
+            <span class="size-2.5 rounded-sm bg-success"></span> Richtige Option
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="size-2.5 rounded-sm bg-base-300"></span> Falsche Option
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="size-2.5 rounded-sm border border-base-300 bg-base-200"></span> Keine Antwort
+          </span>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <%= for {question, q_idx} <- Enum.with_index(@questions) do %>
+          <% stats =
+            Map.get(@question_stats, {@round.id, question.id}, %{
+              picks: %{},
+              no_answer: @team_count
+            }) %>
+          <% correct_count = Map.get(stats.picks, question.correct_index, 0) %>
+          <div id={"question-stats-#{@round.id}-#{question.id}"}>
+            <div class="mb-1 text-xs text-base-content/70">
+              <span class="font-mono">Q{q_idx + 1}</span> {question.prompt} ·
+              <span class="font-semibold text-success">{correct_count}/{@team_count} richtig</span>
+            </div>
+            <div class="flex h-7 w-full overflow-hidden rounded-md border border-base-300 bg-base-200">
+              <%= for {idx, count} <- Enum.sort(stats.picks), count > 0 do %>
+                <div
+                  data-correct={to_string(idx == question.correct_index)}
+                  class={[
+                    "flex items-center justify-center overflow-hidden whitespace-nowrap text-xs font-semibold",
+                    idx == question.correct_index && "bg-success text-success-content",
+                    idx != question.correct_index && "bg-base-300 text-base-content/80"
+                  ]}
+                  style={"width: #{segment_pct(count, @team_count)}%"}
+                  title={"#{letter(idx)}: #{count}×"}
+                >
+                  {letter(idx)} · {count}
+                </div>
+              <% end %>
+              <%= if stats.no_answer > 0 do %>
+                <div
+                  data-no-answer
+                  class="flex items-center justify-center overflow-hidden whitespace-nowrap bg-base-200 text-xs text-base-content/50"
+                  style={"width: #{segment_pct(stats.no_answer, @team_count)}%"}
+                  title={"Keine Antwort: #{stats.no_answer}×"}
+                >
+                  – · {stats.no_answer}
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
+
   defp letter(index), do: letter_for_index(index)
+
+  defp segment_pct(_count, 0), do: 0
+
+  defp segment_pct(count, team_count) do
+    Float.round(count / team_count * 100, 2)
+  end
+
+  defp format_duration(nil), do: "—"
+
+  defp format_duration(seconds) when seconds < 60, do: "#{seconds} Sek."
+
+  defp format_duration(seconds) do
+    minutes = round(seconds / 60)
+
+    if minutes < 60 do
+      "#{minutes} Min."
+    else
+      "#{div(minutes, 60)} Std. #{rem(minutes, 60)} Min."
+    end
+  end
 
   defp round_score(answer_lookup, round_data, team) do
     Enum.count(round_data.questions, fn question ->
