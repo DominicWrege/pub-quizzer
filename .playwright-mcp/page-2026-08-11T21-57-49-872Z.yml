@@ -1,0 +1,92 @@
+- generic [ref=f32e3]:
+  - banner [ref=f32e4]:
+    - generic [ref=f32e5]:
+      - link "Quiz for a better life" [ref=f32e7] [cursor=pointer]:
+        - /url: /
+      - group [ref=f32e10]:
+        - generic "d" [ref=f32e11] [cursor=pointer]
+    - generic [ref=f32e14]:
+      - link "Quiz" [ref=f32e15] [cursor=pointer]:
+        - /url: /admin/events
+      - link "Themen verwalten" [ref=f32e18] [cursor=pointer]:
+        - /url: /admin/topics
+      - link "Benutzer" [ref=f32e21] [cursor=pointer]:
+        - /url: /admin/users
+  - main [ref=f32e25]:
+    - generic [ref=f32e26]:
+      - generic [ref=f32e27]:
+        - textbox "Nach Name oder Beschreibung suchen..." [ref=f32e29]
+        - button "Neues Thema" [ref=f32e30] [cursor=pointer]
+      - generic [ref=f32e33]:
+        - generic [ref=f32e34]:
+          - generic [ref=f32e35]:
+            - generic [ref=f32e36]:
+              - heading "Erdkunde" [level=3] [ref=f32e37]
+              - generic [ref=f32e38]: Aktiv
+            - paragraph [ref=f32e39]: Hauptstädte, Flüsse, Berge und mehr.
+            - paragraph [ref=f32e40]: 5 Fragen
+          - generic [ref=f32e41]:
+            - link "Bearbeiten" [ref=f32e42] [cursor=pointer]:
+              - /url: /admin/topics/1/questions
+            - link "PDF" [ref=f32e45] [cursor=pointer]:
+              - /url: /admin/topics/1/export
+        - generic [ref=f32e48]:
+          - generic [ref=f32e49]:
+            - generic [ref=f32e50]:
+              - heading "Filme & Serien" [level=3] [ref=f32e51]
+              - generic [ref=f32e52]: Aktiv
+            - paragraph [ref=f32e53]: Von Hollywood-Blockbustern bis zu Kultserien.
+            - paragraph [ref=f32e54]: 5 Fragen
+          - generic [ref=f32e55]:
+            - link "Bearbeiten" [ref=f32e56] [cursor=pointer]:
+              - /url: /admin/topics/3/questions
+            - link "PDF" [ref=f32e59] [cursor=pointer]:
+              - /url: /admin/topics/3/export
+        - generic [ref=f32e62]:
+          - generic [ref=f32e63]:
+            - generic [ref=f32e64]:
+              - heading "Geschichte" [level=3] [ref=f32e65]
+              - generic [ref=f32e66]: Aktiv
+            - paragraph [ref=f32e67]: Von antiken Zivilisationen bis zu modernen Ereignissen.
+            - paragraph [ref=f32e68]: 5 Fragen
+          - generic [ref=f32e69]:
+            - link "Bearbeiten" [ref=f32e70] [cursor=pointer]:
+              - /url: /admin/topics/5/questions
+            - link "PDF" [ref=f32e73] [cursor=pointer]:
+              - /url: /admin/topics/5/export
+        - generic [ref=f32e76]:
+          - generic [ref=f32e77]:
+            - generic [ref=f32e78]:
+              - heading "Lange Texte" [level=3] [ref=f32e79]
+              - generic [ref=f32e80]: Aktiv
+            - paragraph [ref=f32e81]: Fragen mit besonders langen Texten zum Testen des Layouts.
+            - paragraph [ref=f32e82]: 2 Fragen
+          - generic [ref=f32e83]:
+            - link "Bearbeiten" [ref=f32e84] [cursor=pointer]:
+              - /url: /admin/topics/6/questions
+            - link "PDF" [ref=f32e87] [cursor=pointer]:
+              - /url: /admin/topics/6/export
+        - generic [ref=f32e90]:
+          - generic [ref=f32e91]:
+            - generic [ref=f32e92]:
+              - heading "Musik" [level=3] [ref=f32e93]
+              - generic [ref=f32e94]: Aktiv
+            - paragraph [ref=f32e95]: Von Klassik bis Pop und alles dazwischen.
+            - paragraph [ref=f32e96]: 5 Fragen
+          - generic [ref=f32e97]:
+            - link "Bearbeiten" [ref=f32e98] [cursor=pointer]:
+              - /url: /admin/topics/4/questions
+            - link "PDF" [ref=f32e101] [cursor=pointer]:
+              - /url: /admin/topics/4/export
+        - generic [ref=f32e104]:
+          - generic [ref=f32e105]:
+            - generic [ref=f32e106]:
+              - heading "Wissenschaft & Natur" [level=3] [ref=f32e107]
+              - generic [ref=f32e108]: Aktiv
+            - paragraph [ref=f32e109]: Biologie, Chemie, Physik und die Natur.
+            - paragraph [ref=f32e110]: 5 Fragen
+          - generic [ref=f32e111]:
+            - link "Bearbeiten" [ref=f32e112] [cursor=pointer]:
+              - /url: /admin/topics/2/questions
+            - link "PDF" [ref=f32e115] [cursor=pointer]:
+              - /url: /admin/topics/2/export

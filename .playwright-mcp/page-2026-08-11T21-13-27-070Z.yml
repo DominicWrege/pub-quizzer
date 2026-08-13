@@ -1,0 +1,19 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - link "Quiz for a better life" [ref=e5] [cursor=pointer]:
+        - /url: /
+    - main [ref=e7]:
+      - generic [ref=e11]:
+        - heading "Login" [level=1] [ref=e14]
+        - paragraph [ref=e15]: Gib deine E-Mail-Adresse ein, um einen Login-Link zu erhalten.
+        - generic [ref=e16]:
+          - textbox [ref=e19]:
+            - /placeholder: name@beispiel.de
+          - button "Login-Link anfordern" [ref=e20] [cursor=pointer]
+        - link "Zurück zur Startseite" [ref=e23] [cursor=pointer]:
+          - /url: /
+  - alert [ref=e24]:
+    - generic [ref=e25]:
+      - paragraph [ref=e29]: "User not found: e2e@localhost.test"
+      - button "close" [ref=e30] [cursor=pointer]

@@ -1,0 +1,14 @@
+- generic [ref=f28e2]:
+  - banner [ref=f28e3]:
+    - link "Quiz for a better life" [ref=f28e5] [cursor=pointer]:
+      - /url: /
+  - main [ref=f28e7]:
+    - generic [ref=f28e11]:
+      - heading "Login" [level=1] [ref=f28e14]
+      - paragraph [ref=f28e15]: Gib deine E-Mail-Adresse ein, um einen Login-Link zu erhalten.
+      - generic [ref=f28e16]:
+        - textbox [ref=f28e19]:
+          - /placeholder: name@beispiel.de
+        - button "Login-Link anfordern" [ref=f28e20] [cursor=pointer]
+      - link "Zurück zur Startseite" [ref=f28e23] [cursor=pointer]:
+        - /url: /

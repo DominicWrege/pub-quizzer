@@ -1,0 +1,167 @@
+- generic [ref=f32e119]:
+  - banner [ref=f32e120]:
+    - generic [ref=f32e121]:
+      - link "Quiz for a better life" [ref=f32e123] [cursor=pointer]:
+        - /url: /
+      - group [ref=f32e126]:
+        - generic "d" [ref=f32e127] [cursor=pointer]
+    - generic [ref=f32e130]:
+      - link "Quiz" [ref=f32e131] [cursor=pointer]:
+        - /url: /admin/events
+      - link "Themen verwalten" [ref=f32e134] [cursor=pointer]:
+        - /url: /admin/topics
+      - link "Benutzer" [ref=f32e137] [cursor=pointer]:
+        - /url: /admin/users
+  - main [ref=f32e141]:
+    - generic [ref=f32e142]:
+      - generic [ref=f32e146]:
+        - link "Zurück" [ref=f32e147] [cursor=pointer]:
+          - /url: /admin/topics
+        - heading "Erdkunde" [level=1] [ref=f32e151]
+        - generic [ref=f32e152]: "5"
+        - button "Thema bearbeiten" [ref=f32e153] [cursor=pointer]
+      - generic [ref=f32e156]:
+        - generic [ref=f32e158]:
+          - generic [ref=f32e159]:
+            - textbox "Suchen..." [ref=f32e161]
+            - button "Fragenliste ausblenden" [ref=f32e162] [cursor=pointer]
+          - link "Neue Frage" [ref=f32e166] [cursor=pointer]:
+            - /url: /admin/topics/1/questions/new
+          - generic [ref=f32e169]:
+            - generic [ref=f32e170] [cursor=pointer]:
+              - link "Frage 1 öffnen" [ref=f32e171]:
+                - /url: /admin/topics/1/questions/1/edit
+              - generic [ref=f32e173]:
+                - generic [ref=f32e174]: "1"
+                - generic [ref=f32e175]:
+                  - generic [ref=f32e176]: Welches Land hat die meisten Nachbarländer weltweit?
+                  - generic [ref=f32e178]:
+                    - generic [ref=f32e180]: Live
+                    - generic [ref=f32e181]: ·
+                    - generic [ref=f32e182]: 09.08.26
+                  - generic [ref=f32e183]:
+                    - button "Nach oben verschieben" [disabled]
+                    - button "Nach unten verschieben" [ref=f32e184]
+                    - generic [ref=f32e187]: ⠿
+                    - button "Löschen" [ref=f32e189]
+            - generic [ref=f32e192] [cursor=pointer]:
+              - link "Frage 2 öffnen" [ref=f32e193]:
+                - /url: /admin/topics/1/questions/2/edit
+              - generic [ref=f32e195]:
+                - generic [ref=f32e196]: "2"
+                - generic [ref=f32e197]:
+                  - generic [ref=f32e198]: Der Amazonas-Regenwald erstreckt sich hauptsächlich über welches Land?
+                  - generic [ref=f32e200]:
+                    - generic [ref=f32e202]: Live
+                    - generic [ref=f32e203]: ·
+                    - generic [ref=f32e204]: 09.08.26
+                  - generic [ref=f32e205]:
+                    - button "Nach oben verschieben" [ref=f32e206]
+                    - button "Nach unten verschieben" [ref=f32e209]
+                    - generic [ref=f32e212]: ⠿
+                    - button "Löschen" [ref=f32e214]
+            - generic [ref=f32e217] [cursor=pointer]:
+              - link "Frage 3 öffnen" [ref=f32e218]:
+                - /url: /admin/topics/1/questions/3/edit
+              - generic [ref=f32e220]:
+                - generic [ref=f32e221]: "3"
+                - generic [ref=f32e222]:
+                  - generic [ref=f32e223]: Welche Meerenge trennt Europa von Afrika?
+                  - generic [ref=f32e225]:
+                    - generic [ref=f32e227]: Live
+                    - generic [ref=f32e228]: ·
+                    - generic [ref=f32e229]: 09.08.26
+                  - generic [ref=f32e230]:
+                    - button "Nach oben verschieben" [ref=f32e231]
+                    - button "Nach unten verschieben" [ref=f32e234]
+                    - generic [ref=f32e237]: ⠿
+                    - button "Löschen" [ref=f32e239]
+            - generic [ref=f32e242] [cursor=pointer]:
+              - link "Frage 4 öffnen" [ref=f32e243]:
+                - /url: /admin/topics/1/questions/4/edit
+              - generic [ref=f32e245]:
+                - generic [ref=f32e246]: "4"
+                - generic [ref=f32e247]:
+                  - generic [ref=f32e248]: Welches ist das flächenmäßig größte Binnenland der Welt?
+                  - generic [ref=f32e250]:
+                    - generic [ref=f32e252]: Live
+                    - generic [ref=f32e253]: ·
+                    - generic [ref=f32e254]: 09.08.26
+                  - generic [ref=f32e255]:
+                    - button "Nach oben verschieben" [ref=f32e256]
+                    - button "Nach unten verschieben" [ref=f32e259]
+                    - generic [ref=f32e262]: ⠿
+                    - button "Löschen" [ref=f32e264]
+            - generic [ref=f32e267] [cursor=pointer]:
+              - link "Frage 5 öffnen" [ref=f32e268]:
+                - /url: /admin/topics/1/questions/5/edit
+              - generic [ref=f32e270]:
+                - generic [ref=f32e271]: "5"
+                - generic [ref=f32e272]:
+                  - generic [ref=f32e273]: Der Mount Everest liegt an der Grenze zwischen welchen zwei Ländern?
+                  - generic [ref=f32e275]:
+                    - generic [ref=f32e277]: Live
+                    - generic [ref=f32e278]: ·
+                    - generic [ref=f32e279]: 09.08.26
+                  - generic [ref=f32e280]:
+                    - button "Nach oben verschieben" [ref=f32e281]
+                    - button "Nach unten verschieben" [disabled]
+                    - generic [ref=f32e284]: ⠿
+                    - button "Löschen" [ref=f32e286]
+        - generic [ref=f32e290]:
+          - generic [ref=f32e291]:
+            - generic [ref=f32e292]:
+              - heading "Frage 1" [level=2] [ref=f32e293]
+              - button "Speichern" [ref=f32e295] [cursor=pointer]
+            - generic [ref=f32e298]:
+              - generic [ref=f32e300]:
+                - generic [ref=f32e305]:
+                  - generic [ref=f32e306]: Veröffentlicht
+                  - generic [ref=f32e307]: Sichtbar im Live-Quiz
+                - checkbox [checked] [ref=f32e309] [cursor=pointer]
+              - generic [ref=f32e311]:
+                - generic [ref=f32e312]:
+                  - generic [ref=f32e313]: Frage
+                  - generic [ref=f32e314]: "Richtige Antwort: B"
+                - textbox "Wie lautet die Frage?" [ref=f32e315]: Welches Land hat die meisten Nachbarländer weltweit?
+                - generic [ref=f32e316]:
+                  - generic [ref=f32e317]: Keine Bilder ausgewählt
+                  - generic [ref=f32e322] [cursor=pointer]:
+                    - generic [ref=f32e325]: Bilder hinzufügen
+                    - button "Bilder hinzufügen" [ref=f32e326]
+              - generic [ref=f32e327]:
+                - generic [ref=f32e328]:
+                  - generic [ref=f32e329]: Antwortoptionen
+                  - generic [ref=f32e330]: Klick zum Auswählen · Ziehen zum Sortieren
+                - generic [ref=f32e331]:
+                  - generic [ref=f32e332] [cursor=pointer]:
+                    - generic [ref=f32e333]:
+                      - generic [ref=f32e334]: ⠿
+                      - generic [ref=f32e336]: A
+                      - textbox "Option A" [ref=f32e337]: Deutschland grenzt an insgesamt 9 direkte Nachbarn in Mitteleuropa, darunter Frankreich, Polen und die Niederlande.
+                      - generic "Bild hinzufügen" [ref=f32e338]
+                    - button [ref=f32e344]
+                  - generic [ref=f32e345] [cursor=pointer]:
+                    - generic [ref=f32e346]:
+                      - generic [ref=f32e347]: ⠿
+                      - generic [ref=f32e349]: B
+                      - textbox "Option B" [ref=f32e350]: Russland teilt seine Grenzen mit insgesamt 14 direkten Nachbarn quer über Eurasien, von Norwegen bis Nordkorea.
+                      - generic "Bild hinzufügen" [ref=f32e351]
+                    - button [ref=f32e357]
+                  - generic [ref=f32e358] [cursor=pointer]:
+                    - generic [ref=f32e359]:
+                      - generic [ref=f32e360]: ⠿
+                      - generic [ref=f32e362]: C
+                      - textbox "Option C" [ref=f32e363]: China hat insgesamt 14 direkte Nachbarn in Ostasien, darunter Indien, Russland und Vietnam.
+                      - generic "Bild hinzufügen" [ref=f32e364]
+                    - button [ref=f32e370]
+                  - generic [ref=f32e371] [cursor=pointer]:
+                    - generic [ref=f32e372]:
+                      - generic [ref=f32e373]: ⠿
+                      - generic [ref=f32e375]: D
+                      - textbox "Option D" [ref=f32e376]: Brasilien grenzt an insgesamt 10 direkte Nachbarn in Südamerika, mehr als jedes andere Land des Kontinents.
+                      - generic "Bild hinzufügen" [ref=f32e377]
+                    - button [ref=f32e383]
+          - generic [ref=f32e385]:
+            - button "Seitenleiste einblenden" [ref=f32e386] [cursor=pointer]
+            - generic [ref=f32e390]: Metadaten

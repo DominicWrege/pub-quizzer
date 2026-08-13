@@ -1,0 +1,92 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "Quiz for a better life" [ref=e7] [cursor=pointer]:
+        - /url: /
+      - group [ref=e10]:
+        - generic "d" [ref=e11] [cursor=pointer]
+    - generic [ref=e14]:
+      - link "Quiz" [ref=e15] [cursor=pointer]:
+        - /url: /admin/events
+      - link "Themen verwalten" [ref=e18] [cursor=pointer]:
+        - /url: /admin/topics
+      - link "Benutzer" [ref=e21] [cursor=pointer]:
+        - /url: /admin/users
+  - main [ref=e25]:
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - textbox "Nach Name oder Beschreibung suchen..." [ref=e29]
+        - button "Neues Thema" [ref=e30] [cursor=pointer]
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - heading "Erdkunde" [level=3] [ref=e37]
+              - generic [ref=e38]: Aktiv
+            - paragraph [ref=e39]: Hauptstädte, Flüsse, Berge und mehr.
+            - paragraph [ref=e40]: 5 Fragen
+          - generic [ref=e41]:
+            - link "Bearbeiten" [ref=e42] [cursor=pointer]:
+              - /url: /admin/topics/1/questions
+            - link "PDF" [ref=e45] [cursor=pointer]:
+              - /url: /admin/topics/1/export
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e50]:
+              - heading "Filme & Serien" [level=3] [ref=e51]
+              - generic [ref=e52]: Aktiv
+            - paragraph [ref=e53]: Von Hollywood-Blockbustern bis zu Kultserien.
+            - paragraph [ref=e54]: 5 Fragen
+          - generic [ref=e55]:
+            - link "Bearbeiten" [ref=e56] [cursor=pointer]:
+              - /url: /admin/topics/3/questions
+            - link "PDF" [ref=e59] [cursor=pointer]:
+              - /url: /admin/topics/3/export
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - generic [ref=e64]:
+              - heading "Geschichte" [level=3] [ref=e65]
+              - generic [ref=e66]: Aktiv
+            - paragraph [ref=e67]: Von antiken Zivilisationen bis zu modernen Ereignissen.
+            - paragraph [ref=e68]: 5 Fragen
+          - generic [ref=e69]:
+            - link "Bearbeiten" [ref=e70] [cursor=pointer]:
+              - /url: /admin/topics/5/questions
+            - link "PDF" [ref=e73] [cursor=pointer]:
+              - /url: /admin/topics/5/export
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - heading "Lange Texte" [level=3] [ref=e79]
+              - generic [ref=e80]: Aktiv
+            - paragraph [ref=e81]: Fragen mit besonders langen Texten zum Testen des Layouts.
+            - paragraph [ref=e82]: 2 Fragen
+          - generic [ref=e83]:
+            - link "Bearbeiten" [ref=e84] [cursor=pointer]:
+              - /url: /admin/topics/6/questions
+            - link "PDF" [ref=e87] [cursor=pointer]:
+              - /url: /admin/topics/6/export
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - heading "Musik" [level=3] [ref=e93]
+              - generic [ref=e94]: Aktiv
+            - paragraph [ref=e95]: Von Klassik bis Pop und alles dazwischen.
+            - paragraph [ref=e96]: 5 Fragen
+          - generic [ref=e97]:
+            - link "Bearbeiten" [ref=e98] [cursor=pointer]:
+              - /url: /admin/topics/4/questions
+            - link "PDF" [ref=e101] [cursor=pointer]:
+              - /url: /admin/topics/4/export
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]:
+              - heading "Wissenschaft & Natur" [level=3] [ref=e107]
+              - generic [ref=e108]: Aktiv
+            - paragraph [ref=e109]: Biologie, Chemie, Physik und die Natur.
+            - paragraph [ref=e110]: 5 Fragen
+          - generic [ref=e111]:
+            - link "Bearbeiten" [ref=e112] [cursor=pointer]:
+              - /url: /admin/topics/2/questions
+            - link "PDF" [ref=e115] [cursor=pointer]:
+              - /url: /admin/topics/2/export

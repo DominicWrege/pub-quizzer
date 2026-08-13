@@ -1,0 +1,139 @@
+- generic [ref=f2e3]:
+  - banner [ref=f2e4]:
+    - generic [ref=f2e5]:
+      - link "Quiz for a better life" [ref=f2e7] [cursor=pointer]:
+        - /url: /
+      - group [ref=f2e10]:
+        - generic "d" [ref=f2e11] [cursor=pointer]
+    - generic [ref=f2e14]:
+      - link "Quiz" [ref=f2e15] [cursor=pointer]:
+        - /url: /admin/events
+      - link "Themen verwalten" [ref=f2e18] [cursor=pointer]:
+        - /url: /admin/topics
+      - link "Benutzer" [ref=f2e21] [cursor=pointer]:
+        - /url: /admin/users
+  - main [ref=f2e25]:
+    - generic [ref=f2e26]:
+      - generic [ref=f2e28]:
+        - link "Zurück" [ref=f2e30] [cursor=pointer]:
+          - /url: /admin/events
+        - heading "Ergebnisse Demo-Quiz Statistiken · Code 2275" [level=1] [ref=f2e34]:
+          - generic [ref=f2e35]:
+            - generic [ref=f2e36]: Ergebnisse
+            - generic [ref=f2e37]: Demo-Quiz Statistiken · Code 2275
+      - generic [ref=f2e39]:
+        - generic [ref=f2e40]:
+          - generic [ref=f2e41]: Dauer gesamt
+          - generic [ref=f2e42]: 8 Sek.
+        - generic [ref=f2e43]:
+          - generic [ref=f2e44]: Reine Antwortzeit
+          - generic [ref=f2e45]: 7 Sek.
+      - generic [ref=f2e46]:
+        - heading "Gesamtwertung" [level=3] [ref=f2e47]
+        - generic [ref=f2e50]:
+          - generic [ref=f2e51]:
+            - generic [ref=f2e52]:
+              - generic [ref=f2e53]: "1."
+              - generic [ref=f2e54]: Team 1
+              - generic [ref=f2e55]: "5"
+            - generic [ref=f2e56]: "Quote: 100 %"
+          - generic [ref=f2e60]:
+            - generic [ref=f2e61]:
+              - generic [ref=f2e62]: "2."
+              - generic [ref=f2e63]: Team 2
+              - generic [ref=f2e64]: "0"
+            - generic [ref=f2e65]: "Quote: 0 %"
+          - generic [ref=f2e68]:
+            - generic [ref=f2e69]:
+              - generic [ref=f2e70]: "3."
+              - generic [ref=f2e71]: Team 3
+              - generic [ref=f2e72]: "0"
+            - generic [ref=f2e73]: "Quote: 0 %"
+      - generic [ref=f2e76]:
+        - 'heading "Runde 1: Musik" [level=3] [ref=f2e77]'
+        - generic [ref=f2e78]:
+          - generic [ref=f2e79]:
+            - heading "Antwortverteilung" [level=4] [ref=f2e80]
+            - generic [ref=f2e81]:
+              - generic [ref=f2e82]: Richtige Option
+              - generic [ref=f2e84]: Falsche Option
+              - generic [ref=f2e86]: Keine Antwort
+          - generic [ref=f2e88]:
+            - generic [ref=f2e89]:
+              - generic [ref=f2e90]: Q1 Welche Band veröffentlichte das meistverkaufte Album aller Zeiten? · 1/3 richtig
+              - generic [ref=f2e91]:
+                - 'generic "A: 1×" [ref=f2e92]': A · 1
+                - 'generic "B: 1×" [ref=f2e93]': B · 1
+                - 'generic "C: 1×" [ref=f2e94]': C · 1
+            - generic [ref=f2e95]:
+              - generic [ref=f2e96]: Q2 Aus wie vielen Musikern besteht ein klassisches Streichquartett? · 1/3 richtig
+              - generic [ref=f2e97]:
+                - 'generic "B: 1×" [ref=f2e98]': B · 1
+                - 'generic "C: 1×" [ref=f2e99]': C · 1
+                - 'generic "D: 1×" [ref=f2e100]': D · 1
+            - generic [ref=f2e101]:
+              - generic [ref=f2e102]: Q3 Welches Instrument wird auch Königin der Instrumente genannt? · 1/3 richtig
+              - generic [ref=f2e103]:
+                - 'generic "B: 1×" [ref=f2e104]': B · 1
+                - 'generic "C: 1×" [ref=f2e105]': C · 1
+                - 'generic "D: 1×" [ref=f2e106]': D · 1
+            - generic [ref=f2e107]:
+              - generic [ref=f2e108]: Q4 In welchem Jahrzehnt wurde der Rock 'n' Roll populär? · 1/3 richtig
+              - generic [ref=f2e109]:
+                - 'generic "B: 1×" [ref=f2e110]': B · 1
+                - 'generic "C: 1×" [ref=f2e111]': C · 1
+                - 'generic "D: 1×" [ref=f2e112]': D · 1
+            - generic [ref=f2e113]:
+              - generic [ref=f2e114]: Q5 Wer komponierte die berühmte Ode an die Freude? · 1/3 richtig
+              - generic [ref=f2e115]:
+                - 'generic "B: 1×" [ref=f2e116]': B · 1
+                - 'generic "C: 1×" [ref=f2e117]': C · 1
+                - 'generic "Keine Antwort: 1×" [ref=f2e118]': – · 1
+        - table [ref=f2e120]:
+          - rowgroup [ref=f2e121]:
+            - row [ref=f2e122]:
+              - columnheader "Frage" [ref=f2e123]
+              - columnheader "Team 1" [ref=f2e124]
+              - columnheader "Team 2" [ref=f2e125]
+              - columnheader "Team 3" [ref=f2e126]
+          - rowgroup [ref=f2e127]:
+            - row [ref=f2e128]:
+              - 'cell "Q1 Welche Band veröffentlichte das meistverkaufte Album aller Zeiten? Richtig: A" [ref=f2e129]':
+                - generic [ref=f2e130]: Q1 Welche Band veröffentlichte das meistverkaufte Album aller Zeiten?
+                - generic [ref=f2e131]: "Richtig: A"
+              - cell "A" [ref=f2e132]
+              - cell "B" [ref=f2e136]
+              - cell "C" [ref=f2e140]
+            - row [ref=f2e144]:
+              - 'cell "Q2 Aus wie vielen Musikern besteht ein klassisches Streichquartett? Richtig: B" [ref=f2e145]':
+                - generic [ref=f2e146]: Q2 Aus wie vielen Musikern besteht ein klassisches Streichquartett?
+                - generic [ref=f2e147]: "Richtig: B"
+              - cell "B" [ref=f2e148]
+              - cell "C" [ref=f2e152]
+              - cell "D" [ref=f2e156]
+            - row [ref=f2e160]:
+              - 'cell "Q3 Welches Instrument wird auch Königin der Instrumente genannt? Richtig: B" [ref=f2e161]':
+                - generic [ref=f2e162]: Q3 Welches Instrument wird auch Königin der Instrumente genannt?
+                - generic [ref=f2e163]: "Richtig: B"
+              - cell "B" [ref=f2e164]
+              - cell "C" [ref=f2e168]
+              - cell "D" [ref=f2e172]
+            - row [ref=f2e176]:
+              - 'cell "Q4 In welchem Jahrzehnt wurde der Rock ''n'' Roll populär? Richtig: B" [ref=f2e177]':
+                - generic [ref=f2e178]: Q4 In welchem Jahrzehnt wurde der Rock 'n' Roll populär?
+                - generic [ref=f2e179]: "Richtig: B"
+              - cell "B" [ref=f2e180]
+              - cell "C" [ref=f2e184]
+              - cell "D" [ref=f2e188]
+            - row [ref=f2e192]:
+              - 'cell "Q5 Wer komponierte die berühmte Ode an die Freude? Richtig: B" [ref=f2e193]':
+                - generic [ref=f2e194]: Q5 Wer komponierte die berühmte Ode an die Freude?
+                - generic [ref=f2e195]: "Richtig: B"
+              - cell "B" [ref=f2e196]
+              - cell "C" [ref=f2e200]
+              - cell "—" [ref=f2e204]
+            - row [ref=f2e205]:
+              - cell "Punkte" [ref=f2e206]
+              - cell "5" [ref=f2e207]
+              - cell "0" [ref=f2e208]
+              - cell "0" [ref=f2e209]

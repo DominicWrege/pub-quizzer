@@ -1,0 +1,9 @@
+[     154ms] [LOG] phx-GMrfEc5sG6XqigSI mount:  -  {0: Object, p: Object, s: 27, t: Themen} @ http://localhost:4000/assets/js/app.js:2
+[    5188ms] [LOG] phx-GMrfEc5sG6XqigSI destroyed: the child has been removed from the parent -  undefined @ http://localhost:4000/assets/js/app.js:2
+[    5208ms] [LOG] phx-GMrfEc5sG6XqigSI mount:  -  {0: Object, p: Object, s: 46, t: Erdkunde} @ http://localhost:4000/assets/js/app.js:2
+[   18724ms] [LOG] phx-GMrfEc5sG6XqigSI update:  -  {0: Object, p: Object} @ http://localhost:4000/assets/js/app.js:2
+[   19350ms] [LOG] phx-GMrfEc5sG6XqigSI update:  -  {0: Object, p: Object} @ http://localhost:4000/assets/js/app.js:2
+[   27602ms] [LOG] phx-GMrfEc5sG6XqigSI update:  -  {0: Object, p: Object} @ http://localhost:4000/assets/js/app.js:2
+[   28028ms] [LOG] phx-GMrfEc5sG6XqigSI update:  -  {0: Object, p: Object} @ http://localhost:4000/assets/js/app.js:2
+[   35559ms] [LOG] phx-GMrfEc5sG6XqigSI update:  -  {0: Object, p: Object} @ http://localhost:4000/assets/js/app.js:2
+[   35977ms] [LOG] phx-GMrfEc5sG6XqigSI update:  -  {0: Object, p: Object} @ http://localhost:4000/assets/js/app.js:2

@@ -1,0 +1,31 @@
+- generic [ref=f4e3]:
+  - banner [ref=f4e4]:
+    - generic [ref=f4e5]:
+      - link "Quiz for a better life" [ref=f4e7] [cursor=pointer]:
+        - /url: /
+      - group [ref=f4e10]:
+        - generic "d" [ref=f4e11] [cursor=pointer]
+    - generic [ref=f4e14]:
+      - link "Quiz" [ref=f4e15] [cursor=pointer]:
+        - /url: /admin/events
+      - link "Themen verwalten" [ref=f4e18] [cursor=pointer]:
+        - /url: /admin/topics
+      - link "Benutzer" [ref=f4e21] [cursor=pointer]:
+        - /url: /admin/users
+  - main [ref=f4e25]:
+    - generic [ref=f4e26]:
+      - generic [ref=f4e27]:
+        - generic [ref=f4e28]:
+          - generic [ref=f4e29]:
+            - link "Zurück" [ref=f4e31] [cursor=pointer]:
+              - /url: /admin/events/9
+            - generic [ref=f4e35]:
+              - heading "Team-Karten" [level=1] [ref=f4e36]
+              - paragraph [ref=f4e37]: 6770 · 4 Teams
+          - button "Drucken" [ref=f4e39] [cursor=pointer]
+        - generic [ref=f4e42]: Jede Karte ist eine eigene Seite. Code-URLs sind bereits eingetragen — einfach auf Karteindruck drucken und die Karten austeilen.
+      - generic [ref=f4e46]:
+        - generic [ref=f4e47]: Team 1
+        - generic [ref=f4e1141]: Team 2
+        - generic [ref=f4e2235]: Team 3
+        - generic [ref=f4e3329]: Team 4
