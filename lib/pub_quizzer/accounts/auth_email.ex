@@ -1,6 +1,6 @@
 defmodule PubQuizzer.Accounts.AuthEmail do
   @moduledoc """
-  Email composition and delivery for authentication (magic links)
+  Email composition and delivery for authentication (one-time login codes)
   and account notifications (first moderator login).
   """
 
@@ -9,15 +9,27 @@ defmodule PubQuizzer.Accounts.AuthEmail do
   alias PubQuizzer.Accounts.User
   alias PubQuizzer.Mailer
 
-  def deliver_magic_link(%User{} = user, url) do
+  def deliver_login_code(%User{} = user, code) do
     {name, email} = from_email()
 
     new()
     |> to({user.name, user.email})
     |> from({name, email})
-    |> subject("Dein Quiz for a better life Login-Link")
-    |> html_body(rendered_html(user.name, url))
-    |> text_body(plain_text(user.name, url))
+    |> subject("Dein Quiz for a better life Login-Code")
+    |> html_body(code_html(user.name, code, "deinen Login"))
+    |> text_body(code_text(user.name, code))
+    |> Mailer.deliver()
+  end
+
+  def deliver_invite_code(%User{} = user, code) do
+    {name, email} = from_email()
+
+    new()
+    |> to({user.name, user.email})
+    |> from({name, email})
+    |> subject("Deine Einladung zu Quiz for a better life")
+    |> html_body(code_html(user.name, code, "deine Anmeldung"))
+    |> text_body(code_text(user.name, code))
     |> Mailer.deliver()
   end
 
@@ -41,33 +53,30 @@ defmodule PubQuizzer.Accounts.AuthEmail do
     {"Quiz for a better life", email}
   end
 
-  defp rendered_html(name, url) do
+  defp code_html(name, code, context) do
     """
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #333;">
       <h2 style="font-size: 22px; margin-bottom: 8px;">🏆 Quiz for a better life</h2>
       <p style="font-size: 16px; line-height: 1.5;">
         Moin #{esc(name)}! Schön, dass du da bist!<br>
-        Klicke auf den Link, um dich anzumelden:
+        Hier ist der Code für #{esc(context)}:
       </p>
-      <p style="margin: 28px 0;">
-        <a href="#{url}" style="display: inline-block; background: #B8860B; color: #fff; padding: 14px 36px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
-          Anmelden
-        </a>
+      <p style="margin: 28px 0; text-align: center;">
+        <span style="display: inline-block; background: #f5f0e6; color: #333; padding: 16px 28px; border-radius: 8px; font-family: monospace; font-weight: bold; font-size: 32px; letter-spacing: 10px;">
+          #{esc(code)}
+        </span>
       </p>
       <p style="color: #666; font-size: 14px; line-height: 1.5;">
-        Der Link ist 10 Minuten gültig.<br>
+        Gib diesen Code auf der Login-Seite ein.<br>
+        Der Code ist 10 Minuten gültig und kann nur einmal verwendet werden.<br>
         Falls du keinen Login angefordert hast, ignoriere diese E-Mail einfach.
-      </p>
-      <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 28px 0;">
-      <p style="color: #999; font-size: 12px; margin: 0;">
-        Direkter Link: #{url}
       </p>
     </div>
     """
   end
 
-  defp plain_text(name, url) do
-    "Moin #{name}!\n\nLogin-Link: #{url}\nDer Link ist 10 Minuten gültig."
+  defp code_text(name, code) do
+    "Moin #{name}!\n\nDein Login-Code: #{code}\nDer Code ist 10 Minuten gültig und kann nur einmal verwendet werden."
   end
 
   defp notice_html(%User{} = moderator) do

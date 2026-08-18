@@ -99,14 +99,6 @@ const CopyLink = {
   }
 } satisfies Partial<ViewHook>
 
-const ClipboardCopy = {
-  mounted(this: ViewHook) {
-    this.handleEvent("copy_to_clipboard", ({ url }: { url: string }) => {
-      navigator.clipboard.writeText(url)
-    })
-  }
-}
-
 const ScrollToBottom = {
   mounted(this: ViewHook) {
     this.handleEvent("scroll_to_bottom", () => {
@@ -604,7 +596,6 @@ const liveSocket = new LiveSocket("/live", Socket, {
     OptionImagePreview,
     AutoResize,
     CopyLink,
-    ClipboardCopy,
     ScrollToBottom,
     OptionSorter,
     QuestionSorter,
@@ -616,7 +607,8 @@ const liveSocket = new LiveSocket("/live", Socket, {
 liveSocket.connect()
 
 import "./guide"
-import "./login_wait"
+import "./code-input"
+import "./dropdown-dismiss"
 import "./admin-shell"
 import "./clear-input"
 import "./viewport-height"

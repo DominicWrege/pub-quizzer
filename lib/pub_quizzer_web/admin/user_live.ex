@@ -22,7 +22,6 @@ defmodule PubQuizzerWeb.Admin.UserLive do
 
       true ->
         users = Accounts.list_users()
-        base_url = connect_base_url(socket)
 
         {:ok,
          socket
@@ -32,8 +31,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
          |> assign(:confirm_action, nil)
          |> assign(:pending_delete_id, nil)
          |> assign(:editing_user, nil)
-         |> assign(:edit_form, nil)
-         |> assign(:base_url, base_url)}
+         |> assign(:edit_form, nil)}
     end
   end
 
@@ -44,15 +42,13 @@ defmodule PubQuizzerWeb.Admin.UserLive do
     if Accounts.can_manage_users?(current_user) do
       case Accounts.create_user(%{email: email, name: name, role: "moderator"}) do
         {:ok, user} ->
-          {:ok, raw_token} = Accounts.generate_invite_link(user)
-          url = "#{socket.assigns.base_url}/admin/magic?token=#{raw_token}"
+          {:ok, _code} = Accounts.deliver_invite_code(user)
 
           {:noreply,
            socket
            |> assign(:users, Accounts.list_users())
            |> assign(:form, to_form(%{"email" => "", "name" => ""}))
-           |> push_event("copy_to_clipboard", %{url: url})
-           |> put_flash(:info, "Moderator hinzugefügt – Login-Link kopiert.")}
+           |> put_flash(:info, "Moderator hinzugefügt – Login-Code per E-Mail gesendet.")}
 
         {:error, _changeset} ->
           {:noreply,
@@ -66,13 +62,13 @@ defmodule PubQuizzerWeb.Admin.UserLive do
   def handle_event("resend_link", %{"id" => id}, socket) do
     user = Accounts.get_user!(id)
 
-    {:ok, raw_token} = Accounts.generate_invite_link(user)
-    url = "#{socket.assigns.base_url}/admin/magic?token=#{raw_token}"
+    case Accounts.deliver_invite_code(user) do
+      {:ok, _code} ->
+        {:noreply, put_flash(socket, :info, "Login-Code für #{user.email} gesendet.")}
 
-    {:noreply,
-     socket
-     |> push_event("copy_to_clipboard", %{url: url})
-     |> put_flash(:info, "Login-Link für #{user.email} kopiert.")}
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Code konnte nicht gesendet werden.")}
+    end
   end
 
   def handle_event("ask_delete", %{"id" => id}, socket) do
@@ -149,13 +145,6 @@ defmodule PubQuizzerWeb.Admin.UserLive do
     end
   end
 
-  defp connect_base_url(socket) do
-    case Phoenix.LiveView.get_connect_info(socket, :uri) do
-      nil -> "http://localhost:4000"
-      uri -> "#{uri.scheme}://#{uri.host}:#{uri.port}"
-    end
-  end
-
   @impl true
   def render(assigns) do
     ~H"""
@@ -167,7 +156,7 @@ defmodule PubQuizzerWeb.Admin.UserLive do
     >
       <.header>
         Benutzer
-        <:subtitle>Moderatoren verwalten und Login-Links generieren.</:subtitle>
+        <:subtitle>Moderatoren verwalten und Login-Codes senden.</:subtitle>
       </.header>
 
       <.form
@@ -196,8 +185,6 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           <.icon name="hero-plus" class="size-4" /> Hinzufügen
         </button>
       </.form>
-
-      <div id="clipboard" phx-hook="ClipboardCopy" class="hidden" />
 
       <!-- User list -->
       <%!-- Mobile: cards --%>
@@ -249,9 +236,9 @@ defmodule PubQuizzerWeb.Admin.UserLive do
                 phx-click="resend_link"
                 phx-value-id={user.id}
                 class="btn btn-xs btn-soft"
-                title="Neuen Login-Link senden"
+                title="Neuen Login-Code senden"
               >
-                Link
+                Code
               </button>
               <button
                 phx-click="ask_delete"
@@ -324,9 +311,9 @@ defmodule PubQuizzerWeb.Admin.UserLive do
                       phx-click="resend_link"
                       phx-value-id={user.id}
                       class="btn btn-xs btn-soft"
-                      title="Neuen Login-Link senden"
+                      title="Neuen Login-Code senden"
                     >
-                      Link
+                      Code
                     </button>
                     <button
                       phx-click="ask_delete"

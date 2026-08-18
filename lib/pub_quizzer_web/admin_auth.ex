@@ -1,6 +1,6 @@
 defmodule PubQuizzerWeb.AdminAuth do
   @moduledoc """
-  Plug-based authentication via magic link sessions.
+  Plug-based authentication via one-time login code sessions.
 
   Reads `:user_id` from the session, loads the user, and sets `current_scope`.
   The plug supports `:moderator_auth` (any active user).

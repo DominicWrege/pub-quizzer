@@ -37,4 +37,32 @@ defmodule PubQuizzer.Accounts.AuthEmailTest do
       end)
     end
   end
+
+  describe "deliver_login_code/2" do
+    test "includes the code in both bodies" do
+      user =
+        Accounts.create_user!(%{email: "coder@test", name: "Coder", role: "moderator"})
+
+      assert {:ok, _} = AuthEmail.deliver_login_code(user, "ABC123")
+
+      assert_email_sent(fn email ->
+        email.html_body =~ "ABC123" and email.text_body =~ "ABC123" and
+          email.subject =~ "Login-Code"
+      end)
+    end
+  end
+
+  describe "deliver_invite_code/2" do
+    test "includes the code and an invitation subject" do
+      user =
+        Accounts.create_user!(%{email: "newbie@test", name: "Newbie", role: "moderator"})
+
+      assert {:ok, _} = AuthEmail.deliver_invite_code(user, "XYZ789")
+
+      assert_email_sent(fn email ->
+        email.html_body =~ "XYZ789" and email.text_body =~ "XYZ789" and
+          email.subject =~ "Einladung"
+      end)
+    end
+  end
 end

@@ -1,0 +1,140 @@
+<Layouts.app
+  flash={@flash}
+  max_width="max-w-full"
+  main_class="px-0 sm:px-6 lg:px-8 bg-base-200/50"
+>
+  <div id="admin-login-wrap" class="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+    <div
+      id="admin-login-card"
+      class="card bg-base-100 shadow-lg border border-base-300 w-full max-w-md mx-4 relative overflow-hidden"
+    >
+      <div class="card-body items-center text-center pt-3 pb-4">
+        <div class="flex items-center justify-center size-14 rounded-full bg-primary/15">
+          <.icon name="hero-key" class="size-7 text-primary" />
+        </div>
+
+        <h1 class="card-title text-2xl mt-1">Code eingeben</h1>
+
+        <p class="text-base-content/80 text-sm max-w-xs leading-relaxed">
+          Wir haben einen Login-Code an <strong class="text-base-content">{@email}</strong>
+          gesendet. Gib ihn unten ein.
+        </p>
+
+        <%= if assigns[:resent] do %>
+          <div id="code-resent" class="alert alert-success alert-sm py-1.5 mt-1" role="status">
+            <.icon name="hero-check-circle" class="size-4" />
+            <span class="text-sm">Ein neuer Code wurde gesendet.</span>
+          </div>
+        <% end %>
+
+        <%= if @error do %>
+          <div id="code-error" class="alert alert-error alert-sm py-1.5 mt-1" role="alert">
+            <.icon name="hero-exclamation-circle" class="size-4" />
+            <span class="text-sm">{@error}</span>
+          </div>
+        <% end %>
+
+        <form
+          action={~p"/admin/login/verify"}
+          method="post"
+          id="admin-code-form"
+          class="w-full mt-2"
+          data-1p-ignore
+          data-form-type="other"
+        >
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+          <input
+            type="hidden"
+            name="email"
+            value={@email}
+            autocomplete="off"
+            data-bwignore="true"
+            data-lpignore="true"
+          />
+
+          <div
+            id="admin-code-boxes"
+            data-code-input
+            class="relative flex justify-center gap-2 sm:gap-2.5 cursor-text"
+          >
+            <input
+              type="text"
+              name="code"
+              id="admin-code"
+              value=""
+              required
+              maxlength="6"
+              autocomplete="one-time-code"
+              inputmode="text"
+              autocapitalize="characters"
+              spellcheck="false"
+              autofocus
+              aria-label="Login-Code"
+              data-1p-ignore
+              data-bwignore="true"
+              data-lpignore="true"
+              class="absolute inset-0 size-full opacity-0"
+            />
+            <div
+              :for={_i <- 1..6}
+              data-code-slot
+              class="flex size-11 sm:size-13 items-center justify-center rounded-lg border-2 border-base-300 bg-base-100 font-mono text-2xl font-bold uppercase text-base-content"
+            >
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block mt-2.5"
+            id="admin-code-submit"
+          >
+            Anmelden
+          </button>
+        </form>
+
+        <form
+          action={~p"/admin/login/resend"}
+          method="post"
+          id="admin-resend-form"
+          class="mt-1"
+          data-1p-ignore
+          data-form-type="other"
+        >
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+          <input
+            type="hidden"
+            name="email"
+            value={@email}
+            autocomplete="off"
+            data-bwignore="true"
+            data-lpignore="true"
+          />
+          <button type="submit" class="link link-hover text-sm text-primary font-semibold">
+            Code erneut senden
+          </button>
+        </form>
+
+        <div class="divider mt-2 mb-1.5"></div>
+
+        <div class="w-full text-left">
+          <ul class="text-sm text-base-content/60 space-y-1">
+            <li class="flex items-start gap-2">
+              <span class="text-primary/70 mt-0.5 shrink-0">•</span>
+              <span>Der Code ist 10 Minuten gültig</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-primary/70 mt-0.5 shrink-0">•</span>
+              <span>Nach 5 Fehlversuchen brauchst du einen neuen Code</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-3">
+          <.link navigate={~p"/admin/login"} class="link link-hover text-sm text-base-content/60">
+            Andere E-Mail-Adresse verwenden
+          </.link>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

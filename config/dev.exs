@@ -76,8 +76,10 @@ end
 # different ports.
 
 # Mailer: use Resend when API key is present, otherwise fall back to Local adapter
-# (Local adapter emails are viewable at /dev/mailbox)
-if System.get_env("RESEND_API_KEY") do
+# (Local adapter emails are viewable at /dev/mailbox). E2E always fakes mail:
+# its webServer inherits the shell env (including RESEND_API_KEY), so gate on
+# E2E to never deliver real emails from tests.
+if System.get_env("RESEND_API_KEY") && System.get_env("E2E") != "1" do
   config :pub_quizzer, PubQuizzer.Mailer,
     adapter: Swoosh.Adapters.Resend,
     api_key: System.get_env("RESEND_API_KEY")

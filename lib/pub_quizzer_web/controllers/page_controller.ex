@@ -13,7 +13,7 @@ defmodule PubQuizzerWeb.PageController do
         if not Accounts.has_users?() do
           redirect(conn, to: "/setup")
         else
-          render(conn, :home, current_scope: nil, load_live_socket?: false)
+          render(conn, :home, current_scope: nil)
         end
     end
   end

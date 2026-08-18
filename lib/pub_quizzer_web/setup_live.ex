@@ -8,13 +8,10 @@ defmodule PubQuizzerWeb.SetupLive do
     if Accounts.has_users?() do
       {:ok, push_navigate(socket, to: ~p"/admin/login")}
     else
-      base_url = connect_base_url(socket)
-
       {:ok,
        assign(socket,
          form: to_form(%{"email" => "", "name" => ""}),
-         magic_link_url: nil,
-         base_url: base_url
+         login_code: nil
        )}
     end
   end
@@ -26,9 +23,8 @@ defmodule PubQuizzerWeb.SetupLive do
     else
       case Accounts.create_user(%{email: email, name: name, role: "superadmin"}) do
         {:ok, user} ->
-          {:ok, raw_token} = Accounts.generate_invite_link(user)
-          url = "#{socket.assigns.base_url}/admin/magic?token=#{raw_token}"
-          {:noreply, assign(socket, magic_link_url: url)}
+          {:ok, code} = Accounts.generate_login_code_for(user)
+          {:noreply, assign(socket, login_code: code)}
 
         {:error, changeset} ->
           {:noreply,
@@ -39,27 +35,31 @@ defmodule PubQuizzerWeb.SetupLive do
     end
   end
 
-  defp connect_base_url(socket) do
-    case Phoenix.LiveView.get_connect_info(socket, :uri) do
-      nil -> PubQuizzerWeb.Endpoint.url()
-      uri -> "#{uri.scheme}://#{uri.host}:#{uri.port}"
-    end
-  end
-
   @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} max_width="max-w-full" main_class="px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <div class="text-center max-w-sm w-full">
-          <%= if @magic_link_url do %>
+          <%= if @login_code do %>
             <.icon name="hero-check-circle" class="size-[4rem] mx-auto text-success" />
             <h1 class="text-3xl font-bold mt-4">Superadmin erstellt!</h1>
             <p class="py-4 text-base-content/70">
-              Ein Login-Link wurde generiert. Klicke darauf, um dich anzumelden.
+              Dein Login-Code lautet:
+            </p>
+            <div
+              id="setup-login-code"
+              class="font-mono text-3xl font-bold tracking-[0.3em] text-primary bg-base-200 rounded-lg py-4 mb-2"
+            >
+              {@login_code}
+            </div>
+            <p class="text-sm text-base-content/60">
+              Der Code ist 10 Minuten gültig. Gib ihn auf der Login-Seite ein.
             </p>
             <div class="mt-4">
-              <a href={@magic_link_url} class="btn btn-primary btn-block">Anmelden</a>
+              <.link navigate={~p"/admin/login"} class="btn btn-primary btn-block">
+                Zum Login
+              </.link>
             </div>
           <% else %>
             <.icon name="hero-wrench-screwdriver" class="size-[4rem] mx-auto text-primary" />

@@ -1,0 +1,29 @@
+- generic [ref=f5e2]:
+  - banner [ref=f5e3]:
+    - link "Quiz for a better life" [ref=f5e5] [cursor=pointer]:
+      - /url: /
+    - list [ref=f5e8]:
+      - listitem [ref=f5e9]:
+        - link "Moderator" [ref=f5e10] [cursor=pointer]:
+          - /url: /admin/login
+  - main [ref=f5e11]:
+    - generic [ref=f5e15]:
+      - heading "Code eingeben" [level=1] [ref=f5e19]
+      - paragraph [ref=f5e20]:
+        - text: Wir haben einen Login-Code an
+        - strong [ref=f5e21]: dominic@dwrege.de
+        - text: gesendet. Gib ihn unten ein.
+      - generic [ref=f5e22]:
+        - textbox [ref=f5e25]:
+          - /placeholder: ABC123
+        - button "Anmelden" [ref=f5e26] [cursor=pointer]
+      - button "Code erneut senden" [ref=f5e28] [cursor=pointer]
+      - list [ref=f5e31]:
+        - listitem [ref=f5e32]:
+          - generic [ref=f5e33]: •
+          - generic [ref=f5e34]: Der Code ist 10 Minuten gültig
+        - listitem [ref=f5e35]:
+          - generic [ref=f5e36]: •
+          - generic [ref=f5e37]: Nach 5 Fehlversuchen brauchst du einen neuen Code
+      - link "Andere E-Mail-Adresse verwenden" [ref=f5e39] [cursor=pointer]:
+        - /url: /admin/login

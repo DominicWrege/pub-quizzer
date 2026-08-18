@@ -1,7 +1,7 @@
 defmodule PubQuizzer.Accounts do
   @moduledoc """
   The Accounts context for managing users (superadmins and moderators)
-  with magic link authentication.
+  with one-time login code authentication.
   """
 
   import Ecto.Query
@@ -9,7 +9,11 @@ defmodule PubQuizzer.Accounts do
   alias PubQuizzer.Accounts.{User, AuthEmail}
   alias PubQuizzer.Repo
 
-  @magic_link_expiry_minutes 10
+  @login_code_expiry_minutes 10
+  @login_code_length 6
+  @max_login_code_attempts 5
+  # Unambiguous alphabet: no 0/O, 1/I/L to avoid transcription errors.
+  @code_alphabet String.codepoints("ABCDEFGHJKMNPQRSTUVWXYZ23456789")
 
   # --- Queries ---
 
@@ -71,51 +75,74 @@ defmodule PubQuizzer.Accounts do
     User.changeset(user, %{})
   end
 
-  # --- Magic Link ---
+  # --- Login codes ---
 
-  def generate_magic_link(email) do
+  @doc """
+  Generates a one-time login code for the user with the given email.
+  Returns the raw (unhashed) code so it can be delivered out-of-band.
+  """
+  def generate_login_code(email) do
     case get_user_by_email(email) do
       %User{} = user ->
-        {:ok, raw_token} = do_generate_magic_link(user)
-        {:ok, raw_token, user}
+        {:ok, code} = do_generate_login_code(user)
+        {:ok, code, user}
 
       nil ->
         {:error, :not_found}
     end
   end
 
-  def generate_invite_link(%User{} = user) do
-    do_generate_magic_link(user)
+  @doc "Generates a one-time login code for an already-loaded user (invites, setup)."
+  def generate_login_code_for(%User{} = user) do
+    do_generate_login_code(user)
   end
 
-  defp do_generate_magic_link(user) do
-    raw_token = generate_token()
-    token_hash = hash_token(raw_token)
+  defp do_generate_login_code(%User{id: id}) do
+    # Re-fetch so the changeset diffs against fresh DB state (a stale struct
+    # could otherwise make cast/2 skip the attempts reset).
+    user = Repo.get!(User, id)
+    code = generate_code()
+    code_hash = hash_code(code)
 
     {:ok, _} =
       user
       |> User.changeset(%{
-        magic_link_token: token_hash,
-        magic_link_sent_at: DateTime.utc_now() |> DateTime.truncate(:second)
+        login_code_hash: code_hash,
+        login_code_sent_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        login_code_attempts: 0
       })
       |> Repo.update()
 
-    {:ok, raw_token}
+    {:ok, code}
   end
 
-  def verify_magic_link(raw_token) when is_binary(raw_token) do
-    token_hash = hash_token(raw_token)
+  @doc """
+  Verifies a login code for the given email. On success the code is cleared and
+  the (updated) user returned. Wrong codes increment an attempt counter; after
+  #{@max_login_code_attempts} failures the code is invalidated.
+  """
+  def verify_login_code(email, code) when is_binary(email) and is_binary(code) do
+    normalized = normalize_code(code)
 
-    case Repo.get_by(User, magic_link_token: token_hash) do
-      %User{magic_link_sent_at: sent_at} = user
-      when not is_nil(sent_at) ->
-        if within_expiry?(sent_at) do
-          {:ok, updated} = clear_magic_link(user)
+    case get_user_by_email(email) do
+      %User{login_code_hash: hash, login_code_sent_at: sent_at} = user
+      when not is_nil(hash) and not is_nil(sent_at) ->
+        cond do
+          not within_expiry?(sent_at) ->
+            {:ok, _} = clear_login_code(user)
+            {:error, :expired}
 
-          {:ok, updated}
-        else
-          {:ok, _} = clear_magic_link(user)
-          {:error, :expired}
+          user.login_code_attempts >= @max_login_code_attempts ->
+            {:ok, _} = clear_login_code(user)
+            {:error, :too_many_attempts}
+
+          hash_code(normalized) == hash ->
+            {:ok, updated} = clear_login_code(user)
+            {:ok, updated}
+
+          true ->
+            {:ok, _} = record_failed_attempt(user)
+            {:error, :invalid}
         end
 
       _ ->
@@ -123,23 +150,51 @@ defmodule PubQuizzer.Accounts do
     end
   end
 
-  defp clear_magic_link(%User{} = user) do
+  def verify_login_code(_, _), do: {:error, :invalid}
+
+  defp clear_login_code(%User{} = user) do
     user
-    |> User.changeset(%{magic_link_token: nil, magic_link_sent_at: nil})
+    |> User.changeset(%{login_code_hash: nil, login_code_sent_at: nil, login_code_attempts: 0})
+    |> Repo.update()
+  end
+
+  defp record_failed_attempt(%User{} = user) do
+    user
+    |> User.changeset(%{login_code_attempts: user.login_code_attempts + 1})
     |> Repo.update()
   end
 
   defp within_expiry?(sent_at) do
     diff = DateTime.diff(DateTime.utc_now(), sent_at, :second)
-    diff < @magic_link_expiry_minutes * 60
+    diff < @login_code_expiry_minutes * 60
   end
 
-  defp generate_token do
-    :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
+  defp normalize_code(code) do
+    code |> String.trim() |> String.upcase()
   end
 
-  defp hash_token(token) do
-    :crypto.hash(:sha256, token) |> Base.encode16(case: :lower)
+  defp generate_code do
+    alphabet_size = length(@code_alphabet)
+
+    for _ <- 1..@login_code_length, into: "" do
+      Enum.at(@code_alphabet, random_index(alphabet_size))
+    end
+  end
+
+  # Rejection sampling over crypto-random bytes to avoid modulo bias.
+  defp random_index(size) do
+    limit = 256 - rem(256, size)
+    <<byte, _rest::binary>> = :crypto.strong_rand_bytes(1)
+
+    if byte < limit do
+      rem(byte, size)
+    else
+      random_index(size)
+    end
+  end
+
+  defp hash_code(code) do
+    :crypto.hash(:sha256, code) |> Base.encode16(case: :lower)
   end
 
   # --- Auth helpers ---
@@ -205,40 +260,46 @@ defmodule PubQuizzer.Accounts do
 
   # --- Email delivery ---
 
-  def deliver_magic_link(email, base_url) do
-    case generate_magic_link(email) do
-      {:ok, raw_token, user} ->
-        url = "#{base_url}/admin/magic?token=#{raw_token}"
-        deliver_email_async(user, url, email)
-        {:ok, url}
+  @doc """
+  Generates a login code for the given email and delivers it asynchronously.
+  Returns `{:ok, code}` (the raw code, for dev/test visibility) or
+  `{:error, :not_found}` if no user matches.
+  """
+  def deliver_login_code(email) do
+    case generate_login_code(email) do
+      {:ok, code, user} ->
+        deliver_code_async(user, code, email)
+        {:ok, code}
 
       {:error, :not_found} ->
         {:error, :not_found}
     end
   end
 
-  defp deliver_email_async(user, url, email) do
+  defp deliver_code_async(user, code, email) do
     Task.Supervisor.start_child(PubQuizzer.TaskSupervisor, fn ->
-      case AuthEmail.deliver_magic_link(user, url) do
+      case AuthEmail.deliver_login_code(user, code) do
         {:ok, _} ->
           :ok
 
         {:error, reason} ->
-          Logger.error("Failed to deliver magic link to #{email}: #{inspect(reason)}")
+          Logger.error("Failed to deliver login code to #{email}: #{inspect(reason)}")
       end
     end)
   end
 
-  def deliver_invite_link(%User{} = user, base_url) do
-    {:ok, raw_token} = generate_invite_link(user)
-    url = "#{base_url}/admin/magic?token=#{raw_token}"
+  @doc """
+  Generates a login code for an invited/created user and emails it to them.
+  """
+  def deliver_invite_code(%User{} = user) do
+    {:ok, code} = generate_login_code_for(user)
 
-    case AuthEmail.deliver_magic_link(user, url) do
+    case AuthEmail.deliver_invite_code(user, code) do
       {:ok, _} ->
-        {:ok, url}
+        {:ok, code}
 
       {:error, reason} ->
-        Logger.error("Failed to deliver invite link to #{user.email}: #{inspect(reason)}")
+        Logger.error("Failed to deliver invite code to #{user.email}: #{inspect(reason)}")
         {:error, :delivery_failed}
     end
   end

@@ -2,7 +2,7 @@ defmodule PubQuizzerWeb.DevAuthController do
   @moduledoc """
   Dev-only auth backdoor for E2E tests.
 
-  Logs in as the user matching the given email, bypassing the magic-link
+  Logs in as the user matching the given email, bypassing the login-code
   email flow entirely. Only mounted when `:dev_routes` is enabled.
   """
 

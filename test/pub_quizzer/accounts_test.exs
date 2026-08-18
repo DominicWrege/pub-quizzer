@@ -102,4 +102,90 @@ defmodule PubQuizzer.AccountsTest do
       end)
     end
   end
+
+  describe "login codes" do
+    setup do
+      user =
+        Accounts.create_user!(%{email: "coder@test", name: "Coder", role: "moderator"})
+
+      %{user: user}
+    end
+
+    test "generate_login_code/1 returns a 6-char code from the safe alphabet", %{user: user} do
+      assert {:ok, code, returned_user} = Accounts.generate_login_code(user.email)
+      assert returned_user.id == user.id
+      assert String.length(code) == 6
+      assert code =~ ~r/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/
+    end
+
+    test "generate_login_code/1 returns :not_found for unknown email" do
+      assert {:error, :not_found} = Accounts.generate_login_code("ghost@test")
+    end
+
+    test "verify_login_code/2 succeeds with the right code and clears it", %{user: user} do
+      {:ok, code} = Accounts.generate_login_code_for(user)
+
+      assert {:ok, verified} = Accounts.verify_login_code(user.email, code)
+      assert verified.id == user.id
+
+      reloaded = Accounts.get_user!(user.id)
+      assert is_nil(reloaded.login_code_hash)
+      assert is_nil(reloaded.login_code_sent_at)
+      assert reloaded.login_code_attempts == 0
+    end
+
+    test "verify_login_code/2 is case-insensitive and trims whitespace", %{user: user} do
+      {:ok, code} = Accounts.generate_login_code_for(user)
+      assert {:ok, _} = Accounts.verify_login_code(user.email, "  #{String.downcase(code)}  ")
+    end
+
+    test "verify_login_code/2 rejects a wrong code and counts the attempt", %{user: user} do
+      {:ok, _code} = Accounts.generate_login_code_for(user)
+
+      assert {:error, :invalid} = Accounts.verify_login_code(user.email, "ZZZZZZ")
+      assert Accounts.get_user!(user.id).login_code_attempts == 1
+    end
+
+    test "verify_login_code/2 rejects an unknown email" do
+      assert {:error, :invalid} = Accounts.verify_login_code("ghost@test", "ABC123")
+    end
+
+    test "verify_login_code/2 rejects an expired code", %{user: user} do
+      {:ok, code} = Accounts.generate_login_code_for(user)
+
+      eleven_min_ago =
+        DateTime.utc_now()
+        |> DateTime.add(-11, :minute)
+        |> DateTime.truncate(:second)
+
+      {:ok, _} =
+        user
+        |> Ecto.Changeset.change(%{login_code_sent_at: eleven_min_ago})
+        |> PubQuizzer.Repo.update()
+
+      assert {:error, :expired} = Accounts.verify_login_code(user.email, code)
+    end
+
+    test "verify_login_code/2 locks out after 5 failed attempts", %{user: user} do
+      {:ok, code} = Accounts.generate_login_code_for(user)
+
+      for _ <- 1..5 do
+        assert {:error, :invalid} = Accounts.verify_login_code(user.email, "ZZZZZZ")
+      end
+
+      assert {:error, :too_many_attempts} = Accounts.verify_login_code(user.email, code)
+    end
+
+    test "generating a new code resets attempts and replaces the old code", %{user: user} do
+      {:ok, old_code} = Accounts.generate_login_code_for(user)
+      assert {:error, :invalid} = Accounts.verify_login_code(user.email, "ZZZZZZ")
+      assert Accounts.get_user!(user.id).login_code_attempts == 1
+
+      {:ok, new_code} = Accounts.generate_login_code_for(user)
+      assert Accounts.get_user!(user.id).login_code_attempts == 0
+
+      assert {:error, :invalid} = Accounts.verify_login_code(user.email, old_code)
+      assert {:ok, _} = Accounts.verify_login_code(user.email, new_code)
+    end
+  end
 end

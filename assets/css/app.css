@@ -325,3 +325,21 @@ dialog::backdrop {
     max-width: 60mm;
   }
 }
+
+/* Segmented login-code input (assets/js/code-input.ts): one box per
+   character. The real <input> is visually hidden; state classes drive the
+   per-slot styling. */
+[data-code-slot] {
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.code-slot-filled {
+  border-color: color-mix(in oklab, var(--color-base-content) 35%, transparent);
+}
+
+.code-slot-active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 22%, transparent);
+}

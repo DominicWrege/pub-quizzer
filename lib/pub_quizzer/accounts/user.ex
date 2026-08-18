@@ -7,8 +7,9 @@ defmodule PubQuizzer.Accounts.User do
     field :name, :string
     field :role, :string, default: "moderator"
     field :active, :boolean, default: false
-    field :magic_link_token, :string
-    field :magic_link_sent_at, :utc_datetime
+    field :login_code_hash, :string
+    field :login_code_sent_at, :utc_datetime
+    field :login_code_attempts, :integer, default: 0
     field :last_signed_in_at, :utc_datetime
     field :guide_seen, :boolean, default: false
 
@@ -23,8 +24,9 @@ defmodule PubQuizzer.Accounts.User do
       :role,
       :active,
       :guide_seen,
-      :magic_link_token,
-      :magic_link_sent_at,
+      :login_code_hash,
+      :login_code_sent_at,
+      :login_code_attempts,
       :last_signed_in_at
     ])
     |> validate_required([:email, :name, :role])

@@ -31,11 +31,9 @@ defmodule PubQuizzerWeb.Router do
     # Admin session (login/logout)
     get "/admin/login", AdminSessionController, :new
     post "/admin/login", AdminSessionController, :create
-    get "/admin/login/status", AdminSessionController, :status
+    post "/admin/login/verify", AdminSessionController, :verify
+    post "/admin/login/resend", AdminSessionController, :resend
     post "/admin/logout", AdminSessionController, :delete
-
-    # Magic link
-    get "/admin/magic", MagicLinkController, :show
 
     # First-run setup
     live "/setup", SetupLive, :index

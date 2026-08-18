@@ -29,14 +29,10 @@ defmodule PubQuizzerWeb.AdminSessionController do
   end
 
   def create(conn, %{"email" => email}) do
-    # Use the configured endpoint URL rather than the request host so a spoofed
-    # Host header can't redirect magic-link emails to an attacker-controlled domain.
-    base_url = PubQuizzerWeb.Endpoint.url()
-
-    case Accounts.deliver_magic_link(email, base_url) do
-      {:ok, _url} ->
+    case Accounts.deliver_login_code(email) do
+      {:ok, _code} ->
         conn
-        |> render(:link_sent, email: email)
+        |> render(:code_entry, email: email, error: nil)
 
       {:error, :not_found} ->
         conn
@@ -45,11 +41,54 @@ defmodule PubQuizzerWeb.AdminSessionController do
     end
   end
 
-  def status(conn, _params) do
-    conn
-    |> put_resp_header("cache-control", "no-store")
-    |> json(%{authenticated: get_session(conn, :user_id) != nil})
+  def create(conn, _params), do: redirect(conn, to: "/admin/login")
+
+  def verify(conn, %{"email" => email, "code" => code}) do
+    case Accounts.verify_login_code(email, code) do
+      {:ok, user} ->
+        {:ok, _} = Accounts.sign_in_user(user)
+
+        conn
+        |> put_session(:user_id, user.id)
+        |> put_flash(:info, "Willkommen, #{user.name}!")
+        |> redirect(to: "/admin/topics")
+
+      {:error, :expired} ->
+        conn
+        |> render(:code_entry,
+          email: email,
+          error: "Der Code ist abgelaufen. Bitte fordere einen neuen an."
+        )
+
+      {:error, :too_many_attempts} ->
+        conn
+        |> render(:code_entry,
+          email: email,
+          error: "Zu viele Fehlversuche. Bitte fordere einen neuen Code an."
+        )
+
+      {:error, :invalid} ->
+        conn
+        |> render(:code_entry, email: email, error: "Ungültiger Code. Bitte versuche es erneut.")
+    end
   end
+
+  def verify(conn, _params), do: redirect(conn, to: "/admin/login")
+
+  def resend(conn, %{"email" => email}) do
+    case Accounts.deliver_login_code(email) do
+      {:ok, _code} ->
+        conn
+        |> render(:code_entry, email: email, error: nil, resent: true)
+
+      {:error, :not_found} ->
+        conn
+        |> put_flash(:error, %{message: "E-Mail-Adresse nicht gefunden.", duration: 5000})
+        |> redirect(to: "/admin/login")
+    end
+  end
+
+  def resend(conn, _params), do: redirect(conn, to: "/admin/login")
 
   def delete(conn, _params) do
     conn
