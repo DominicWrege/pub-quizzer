@@ -13,6 +13,30 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
     topic
   end
 
+  defp create_status_question(topic, status) do
+    {:ok, question} =
+      Quiz.create_question(%{
+        prompt: "Published status",
+        options: ["A", "B", "C", "D"],
+        correct_index: 0,
+        topic_id: topic.id,
+        status: status
+      })
+
+    question
+  end
+
+  defp render_status_change(view, published) do
+    render_change(view, "validate", %{
+      "question" => %{
+        "prompt" => "Published status",
+        "options" => %{"0" => "A", "1" => "B", "2" => "C", "3" => "D"},
+        "correct_index" => "0",
+        "published" => published
+      }
+    })
+  end
+
   describe "index" do
     test "lists questions for a topic", %{conn: conn} do
       topic = create_topic()
@@ -581,6 +605,86 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
 
       assert Quiz.get_question!(question.id).status == "draft"
     end
+
+    test "autosaves status when toggled off without pressing save", %{conn: conn} do
+      topic = create_topic()
+      question = create_status_question(topic, "published")
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      render_status_change(view, "false")
+
+      assert Quiz.get_question!(question.id).status == "draft"
+    end
+
+    test "autosaves status when toggled on without pressing save", %{conn: conn} do
+      topic = create_topic()
+      question = create_status_question(topic, "draft")
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      render_status_change(view, "true")
+
+      assert Quiz.get_question!(question.id).status == "published"
+    end
+
+    test "toggling status on the new form creates nothing", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/new")
+
+      render_status_change(view, "false")
+
+      assert Quiz.list_questions_for_topic(topic.id) == []
+    end
+
+    test "status autosave keeps unsaved edits out of the database", %{conn: conn} do
+      topic = create_topic()
+      question = create_status_question(topic, "published")
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      render_change(view, "validate", %{
+        "question" => %{
+          "prompt" => "Edited but unsaved",
+          "options" => %{"0" => "A", "1" => "B", "2" => "C", "3" => "D"},
+          "correct_index" => "0",
+          "published" => "false"
+        }
+      })
+
+      saved = Quiz.get_question!(question.id)
+      assert saved.status == "draft"
+      assert saved.prompt == "Published status"
+      assert has_element?(view, "textarea#question_prompt", "Edited but unsaved")
+    end
+
+    test "status autosave records an edit-history version", %{conn: conn} do
+      topic = create_topic()
+      question = create_status_question(topic, "published")
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      render_status_change(view, "false")
+
+      assert [version] = Quiz.list_question_versions(question.id)
+      assert version.action == "status"
+    end
   end
 
   describe "edit topic from question list" do
@@ -651,6 +755,45 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       |> render_submit()
 
       assert Quiz.get_topic!(topic.id).enabled == true
+    end
+
+    test "topic deletion confirmation shows the cascade warning", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view |> element("button[phx-click='start_edit_topic']") |> render_click()
+      view |> element("button[phx-click='ask_delete_topic']") |> render_click()
+
+      assert has_element?(
+               view,
+               "#delete-topic-modal p",
+               "Thema und alle Fragen löschen?"
+             )
+    end
+
+    test "topic deletion confirmation replaces and restores the editor", %{conn: conn} do
+      topic = create_topic()
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/topics/#{topic}/questions")
+
+      view |> element("button[phx-click='start_edit_topic']") |> render_click()
+      view |> element("button[phx-click='ask_delete_topic']") |> render_click()
+
+      refute has_element?(view, "#topic-form-modal")
+      assert has_element?(view, "#delete-topic-modal")
+      assert has_element?(view, "#delete-topic-modal-cancel", "Abbrechen")
+
+      view |> element("#delete-topic-modal-cancel") |> render_click()
+
+      assert has_element?(view, "#topic-form-modal")
+      refute has_element?(view, "#delete-topic-modal")
     end
 
     test "deletes the topic and redirects to the overview", %{conn: conn} do

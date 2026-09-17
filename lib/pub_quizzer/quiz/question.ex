@@ -38,7 +38,7 @@ defmodule PubQuizzer.Quiz.Question do
     |> validate_inclusion(:status, @statuses)
     |> validate_inclusion(:image_position, @image_positions)
     |> validate_inclusion(:layout, @layouts)
-    |> validate_length(:prompt, min: 1, max: 500)
+    |> validate_length(:prompt, min: 1, max: 2000)
     |> validate_length(:options, min: 2, max: 6)
     |> validate_options_text()
     |> validate_correct_index()

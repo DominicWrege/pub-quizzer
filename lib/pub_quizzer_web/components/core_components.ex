@@ -715,6 +715,7 @@ defmodule PubQuizzerWeb.CoreComponents do
   attr :title, :string, default: "Bestätigung"
   attr :message, :string, default: "Bist du sicher?"
   attr :confirm_label, :string, default: "Bestätigen"
+  attr :cancel_label, :string, default: "Abbrechen"
   attr :confirm_class, :string, default: "btn-error"
   attr :confirm_event, :string, default: "confirm"
   attr :cancel_event, :string, default: "cancel_confirm"
@@ -741,17 +742,27 @@ defmodule PubQuizzerWeb.CoreComponents do
             <.icon name="hero-x-mark" class="size-5" />
           </button>
         </div>
-        <%= if @inner_block do %>
+        <%= if @inner_block != [] do %>
           <div class="pt-4">
             {render_slot(@inner_block)}
           </div>
         <% else %>
           <p class="pt-4">{@message}</p>
         <% end %>
-        <div class="flex mt-6">
+        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
+            id={"#{@id}-cancel"}
+            type="button"
+            phx-click={@cancel_event}
+            class="btn btn-sm min-h-11 sm:min-h-0"
+          >
+            {@cancel_label}
+          </button>
+          <button
+            id={"#{@id}-confirm"}
+            type="button"
             phx-click={@confirm_event}
-            class={["btn btn-sm w-full sm:w-auto sm:ml-auto min-h-11 sm:min-h-0", @confirm_class]}
+            class={["btn btn-sm min-h-11 sm:min-h-0", @confirm_class]}
           >
             {@confirm_label}
           </button>

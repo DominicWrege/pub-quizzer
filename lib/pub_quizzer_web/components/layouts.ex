@@ -141,6 +141,12 @@ defmodule PubQuizzerWeb.Layouts do
             </.link>
             <%= if @current_scope.user.role == "superadmin" do %>
               <.link
+                navigate={~p"/admin/import"}
+                class={nav_tab_class(@current_path, "/admin/import")}
+              >
+                <.icon name="hero-arrow-down-tray" class="size-4 hidden sm:inline" /> Import
+              </.link>
+              <.link
                 navigate={~p"/admin/users"}
                 class={nav_tab_class(@current_path, "/admin/users")}
               >
@@ -201,6 +207,12 @@ defmodule PubQuizzerWeb.Layouts do
               <.icon name="hero-bookmark" class="size-4" /> Themen verwalten
             </.link>
             <%= if @current_scope.user.role == "superadmin" do %>
+              <.link
+                navigate={~p"/admin/import"}
+                class={drawer_link_class(@current_path, "/admin/import")}
+              >
+                <.icon name="hero-arrow-down-tray" class="size-4" /> Import
+              </.link>
               <.link
                 navigate={~p"/admin/users"}
                 class={drawer_link_class(@current_path, "/admin/users")}

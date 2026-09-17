@@ -831,6 +831,13 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   end
 
   def handle_event("cancel_confirm", _params, socket) do
+    socket =
+      if socket.assigns.confirm_action == :delete_topic do
+        assign(socket, :editing_topic, true)
+      else
+        socket
+      end
+
     {:noreply, socket |> assign(:confirm_action, nil) |> assign(:pending_delete_id, nil)}
   end
 
@@ -862,7 +869,10 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   end
 
   def handle_event("ask_delete_topic", _params, socket) do
-    {:noreply, assign(socket, :confirm_action, :delete_topic)}
+    {:noreply,
+     socket
+     |> assign(:editing_topic, false)
+     |> assign(:confirm_action, :delete_topic)}
   end
 
   def handle_event("confirm_delete_topic", _params, socket) do
@@ -885,9 +895,19 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   def handle_event("validate", params, socket) do
     question_params = normalize_params(params)
     question = Map.get(socket.assigns, :question)
-    changeset = build_changeset(question, question_params)
 
-    {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
+    previous_status =
+      socket.assigns.form && Phoenix.HTML.Form.input_value(socket.assigns.form, :status)
+
+    new_status = question_params["status"]
+
+    if question && is_binary(new_status) && new_status != previous_status &&
+         not uploads_pending?(socket) do
+      autosave_status(socket, question, question_params)
+    else
+      changeset = build_changeset(question, question_params)
+      {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
+    end
   end
 
   def handle_event("cancel_upload", %{"ref" => ref}, socket) do
@@ -984,6 +1004,30 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   def handle_event("close_image", _, socket) do
     {:noreply, assign(socket, :viewing_image, nil)}
+  end
+
+  # Toggling draft <-> published saves immediately, without the Speichern
+  # button. Only the status field is written: any unsaved prompt/option edits
+  # stay in the form (and are not persisted until the user saves).
+  defp autosave_status(socket, question, question_params) do
+    case Quiz.update_question(question, %{"status" => question_params["status"]}) do
+      {:ok, saved} ->
+        record_version(saved, socket.assigns.current_scope.user, "status")
+        changeset = build_changeset(saved, question_params)
+
+        {:noreply,
+         socket
+         |> assign(:question, saved)
+         |> assign(:form, to_form(changeset, action: :validate))
+         |> assign(:versions, Quiz.list_question_versions(saved.id) |> compute_version_diffs())
+         |> restream_questions()}
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> assign(:form_submitted, true)
+         |> assign(:form, to_form(changeset, action: :update))}
+    end
   end
 
   defp do_save(socket, params) do

@@ -79,6 +79,8 @@ defmodule PubQuizzerWeb.Router do
       on_mount: [{PubQuizzerWeb.AdminAuth, :ensure_authenticated}] do
       live "/topics", TopicLive, :index
 
+      live "/import", ImportLive, :index
+
       live "/topics/:topic_id/questions", QuestionLive, :index
       live "/topics/:topic_id/questions/new", QuestionLive, :new
       live "/topics/:topic_id/questions/:id/edit", QuestionLive, :edit

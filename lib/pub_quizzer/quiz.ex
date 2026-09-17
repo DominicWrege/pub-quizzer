@@ -34,6 +34,15 @@ defmodule PubQuizzer.Quiz do
     |> Repo.all()
   end
 
+  @doc """
+  Returns every topic name (enabled or not), used by the catalog importer to
+  detect name collisions.
+  """
+  def list_all_topic_names do
+    from(t in Topic, order_by: [asc: t.name], select: t.name)
+    |> Repo.all()
+  end
+
   def get_topic!(id) do
     Topic
     |> preload(:questions)
