@@ -4,7 +4,7 @@ defmodule PubQuizzer.MixProject do
   def project do
     [
       app: :pub_quizzer,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -58,8 +58,7 @@ defmodule PubQuizzer.MixProject do
       {:eqrcode, "~> 0.2"},
       {:bandit, "~> 1.5"},
       {:swoosh, "~> 1.26"},
-      {:req, "~> 0.5"},
-      {:pdf, "~> 0.8"}
+      {:req, "~> 0.5"}
     ]
   end
 

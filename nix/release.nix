@@ -9,13 +9,13 @@
 
 let
   pname = "pub_quizzer";
-  version = "0.1.0";
+  version = "0.1.1";
   src = ./..;
 
   mixFodDeps = beamPackages.fetchMixDeps {
     pname = "mix-deps-${pname}";
     inherit src version;
-    hash = "sha256-AgBbpaGylLNpSUz9EGUn7haytiXIYOqoZPdWNwSwiVU=";
+    hash = "sha256-iJjyAEqnvd6sZW4L5edgAIWjpOo8aNyKdQZ/jbaTv7o=";
     mixEnv = "prod";
   };
 

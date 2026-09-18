@@ -8,7 +8,7 @@ Realtime pub-quiz ("Kneipenquiz") for teams. Phoenix LiveView + SQLite. German-l
 - `Quiz` context + schemas: `Topic`, `Question`/`QuestionVersion`, `QuizEvent`, `Round`, `Team`, `Answer`.
 - `Quiz.Engine` — one GenServer per running quiz event (via `DynamicSupervisor` + `Registry`), persists rounds/answers and broadcasts state over PubSub (`quiz:event:<id>`). Client API: `start_quiz`, `choose_topic`, `submit_answer`, `next_question`, `reveal_round`, `reveal_standings`, `next_round`, `finish_quiz`, `reveal_final_results`.
 - `Quiz.EngineState` — pure state struct + transition functions (no side effects). Key helpers: `strip_for_team/2` (redacts opponents' answers for team clients), `answer_distribution/1`, `standings_with_deltas/1`, `answered_teams/1`.
-- `Accounts` (users, magic-link auth email), `OptionShuffle`, `Uploads`, `Names`, `Quiz.TopicPdf`.
+- `Accounts` (users, magic-link auth email), `OptionShuffle`, `Uploads`, `Names`.
 
 **Web** (`lib/pub_quizzer_web/`):
 - Quiz LiveViews: `QuizLive.HostLobby` (moderator "shadow console" — sees the question prompt, live answer-distribution bars, standings, drives reveal), `QuizLive.TeamLobby` (public, per-team answer UI).

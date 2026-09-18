@@ -95,6 +95,9 @@
   <% else %>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <%= for topic <- @filtered_topics do %>
+        <% question_count = length(topic.questions) %>
+        <% draft_count = Enum.count(topic.questions, &(&1.status == "draft")) %>
+        <% published_count = question_count - draft_count %>
         <div
           id={"topics-#{topic.id}"}
           class={[
@@ -112,7 +115,23 @@
               <% end %>
             </div>
             <p class="text-sm text-base-content/80">{topic.description}</p>
-            <p class="text-sm text-base-content/70">{length(topic.questions)} Fragen</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <p id={"topic-question-count-#{topic.id}"} class="text-sm text-base-content/70">
+                <%= if draft_count > 0 do %>
+                  {published_count} von {question_count} veröffentlicht
+                <% else %>
+                  {question_count} Fragen
+                <% end %>
+              </p>
+              <%= if draft_count > 0 do %>
+                <span
+                  id={"topic-draft-count-#{topic.id}"}
+                  class="badge badge-warning badge-soft badge-sm"
+                >
+                  {draft_count} {if draft_count == 1, do: "Entwurf", else: "Entwürfe"}
+                </span>
+              <% end %>
+            </div>
           </div>
           <div class="flex justify-end gap-2 px-6 py-3 border-t border-base-300">
             <.link
@@ -120,12 +139,6 @@
               class="btn btn-primary btn-sm"
             >
               <.icon name="hero-pencil" class="size-4" /> Bearbeiten
-            </.link>
-            <.link
-              href={~p"/admin/topics/#{topic}/export"}
-              class="btn btn-primary btn-sm hidden lg:inline-flex"
-            >
-              <.icon name="hero-arrow-down-tray" class="size-4" /> PDF
             </.link>
           </div>
         </div>

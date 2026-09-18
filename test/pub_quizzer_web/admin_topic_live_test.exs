@@ -22,34 +22,45 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
       assert html =~ "World facts"
     end
 
-    test "shows question count per topic", %{conn: conn} do
+    test "highlights draft questions in the topic summary", %{conn: conn} do
       {:ok, topic} = Quiz.create_topic(%{name: "Science"})
 
-      {:ok, _q} =
-        Quiz.create_question(%{
-          prompt: "What is H2O?",
-          options: ["Water", "Salt", "Sugar", "Acid"],
-          correct_index: 0,
-          topic_id: topic.id
-        })
+      for number <- 1..5 do
+        status = if number == 5, do: "draft", else: "published"
 
-      {:ok, _view, html} =
+        {:ok, _question} =
+          Quiz.create_question(%{
+            prompt: "Question #{number}",
+            options: ["Correct", "Wrong"],
+            correct_index: 0,
+            status: status,
+            topic_id: topic.id
+          })
+      end
+
+      {:ok, view, _html} =
         conn
         |> auth_conn()
         |> live(~p"/admin/topics")
 
-      assert html =~ "1"
+      assert has_element?(
+               view,
+               "#topic-question-count-#{topic.id}",
+               "4 von 5 veröffentlicht"
+             )
+
+      assert has_element?(view, "#topic-draft-count-#{topic.id}", "1 Entwurf")
     end
 
-    test "shows a PDF export link per topic", %{conn: conn} do
+    test "does not offer a PDF export", %{conn: conn} do
       {:ok, topic} = Quiz.create_topic(%{name: "Geography"})
 
-      {:ok, _view, html} =
+      {:ok, view, _html} =
         conn
         |> auth_conn()
         |> live(~p"/admin/topics")
 
-      assert html =~ "/admin/topics/#{topic.id}/export"
+      refute has_element?(view, "#topics-#{topic.id} a[href='/admin/topics/#{topic.id}/export']")
     end
   end
 
