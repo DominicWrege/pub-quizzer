@@ -1,6 +1,32 @@
 import { test, expect, createEvent, joinTeams, waitForLiveView } from "./fixtures"
 
+test.use({ video: "off" })
+
 test.describe("event management", () => {
+  test("mobile host can add and remove team cards", async ({ hostPage }) => {
+    await hostPage.setViewportSize({ width: 390, height: 844 })
+    const errors: string[] = []
+    hostPage.on("pageerror", error => errors.push(error.message))
+    hostPage.on("console", message => {
+      if (message.type() === "error") errors.push(message.text())
+    })
+
+    await createEvent(hostPage)
+    const back = await hostPage.getByRole("link", { name: "Zurück" }).boundingBox()
+    expect(back?.width).toBeGreaterThanOrEqual(40)
+    expect(back?.width).toBeLessThanOrEqual(46)
+    expect(back?.height).toBeGreaterThanOrEqual(28)
+    await expect(hostPage.locator("#event-team-cards > div")).toHaveCount(4)
+    const badges = await hostPage.locator("[data-testid='event-code']").boundingBox()
+    const teamCards = await hostPage.locator("#event-team-cards").boundingBox()
+    expect(badges!.y).toBeGreaterThan(teamCards!.y + teamCards!.height)
+    await hostPage.locator("#event-team-cards button[phx-click='remove_team']").last().click()
+    await expect(hostPage.locator("#event-team-cards > div")).toHaveCount(3)
+    await hostPage.getByRole("button", { name: "Hinzufügen" }).click()
+    await expect(hostPage.locator("#event-team-cards > div")).toHaveCount(4)
+    expect(errors).toEqual([])
+  })
+
   test("host can rename a team", async ({ browser, hostPage }) => {
     test.setTimeout(60_000)
 

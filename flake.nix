@@ -38,7 +38,13 @@
               (writeShellScriptBin "dev" "exec mix phx.server $@")
             ];
 
-            PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
+            # E2E uses Chromium; pulling in all browsers also builds WebKit,
+            # whose upstream binary currently fails auto-patchelf on libmanette.
+            PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.selectBrowsers {
+              withFirefox = false;
+              withWebkit = false;
+            }}";
+            PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
             PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
 
             shellHook = ''

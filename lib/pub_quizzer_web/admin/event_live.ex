@@ -130,8 +130,10 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   end
 
   def handle_event("add_slot", _params, socket) do
-    {:ok, event, _team} = Quiz.add_team_slot(socket.assigns.event)
-    {:noreply, assign(socket, :event, event)}
+    case Quiz.add_team_slot(socket.assigns.event) do
+      {:ok, event, _team} -> {:noreply, assign(socket, :event, event)}
+      {:error, :max_teams} -> {:noreply, put_flash(socket, :error, "Maximal 10 Teams möglich.")}
+    end
   end
 
   def handle_event("remove_slot", _params, socket) do
@@ -154,9 +156,14 @@ defmodule PubQuizzerWeb.Admin.EventLive do
 
     with {id, ""} <- Integer.parse(team_id),
          {:ok, team} <- fetch_team_in_event(id, event_id) do
-      Quiz.delete_team(team)
-      event = Quiz.get_event_with_teams!(event_id)
-      {:noreply, reconcile_connections(socket, event)}
+      case Quiz.delete_team(team) do
+        {:ok, _} ->
+          event = Quiz.get_event_with_teams!(event_id)
+          {:noreply, reconcile_connections(socket, event)}
+
+        {:error, :last_team} ->
+          {:noreply, put_flash(socket, :error, "Mindestens ein Team muss bleiben.")}
+      end
     else
       _ -> {:noreply, socket}
     end

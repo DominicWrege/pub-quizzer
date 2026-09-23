@@ -89,8 +89,26 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
         |> auth_conn()
         |> live(~p"/admin/events/#{event.id}")
 
-      view |> element("button", "Team hinzufügen") |> render_click()
+      view |> element("button", "Hinzufügen") |> render_click()
       assert has_element?(view, "#event-teams tr", "4")
+    end
+
+    test "mobile team cards can remove an unused team and update the count", %{conn: conn} do
+      {:ok, event} = Quiz.create_event(%{team_count: 4})
+      team = List.last(event.teams)
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/events/#{event.id}")
+
+      view
+      |> element("#team-card-#{team.id} button[phx-click='remove_team']")
+      |> render_click()
+
+      refute has_element?(view, "#team-card-#{team.id}")
+      assert has_element?(view, "h3", "3 Teams")
+      assert Quiz.get_event!(event.id).team_count == 3
     end
 
     test "links to printable team cards", %{conn: conn} do

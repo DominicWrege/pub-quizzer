@@ -75,6 +75,13 @@ defmodule PubQuizzer.EventsTest do
       assert team.slot_index == 3
     end
 
+    test "add_team_slot refuses an eleventh team without inserting a slot" do
+      {:ok, event} = Quiz.create_event(%{team_count: 10})
+
+      assert {:error, :max_teams} = Quiz.add_team_slot(event)
+      assert length(Quiz.list_teams_for_event(event.id)) == 10
+    end
+
     test "remove_team_slot removes the last unclaimed slot" do
       {:ok, event} = Quiz.create_event(%{team_count: 3})
       {:ok, updated} = Quiz.remove_team_slot(event)
@@ -88,6 +95,25 @@ defmodule PubQuizzer.EventsTest do
       {:ok, _} = Quiz.claim_next_team_slot(event)
       {:ok, _} = Quiz.claim_next_team_slot(event)
       assert {:error, :team_claimed} = Quiz.remove_team_slot(event)
+    end
+
+    test "delete_team cannot leave an event with no teams" do
+      {:ok, event} = Quiz.create_event(%{team_count: 1})
+
+      assert {:error, :last_team} = Quiz.delete_team(hd(event.teams))
+      assert Quiz.get_event!(event.id).team_count == 1
+      assert length(Quiz.list_teams_for_event(event.id)) == 1
+    end
+
+    test "adding a team after removing a middle slot never duplicates a slot index" do
+      {:ok, event} = Quiz.create_event(%{team_count: 4})
+      {:ok, _} = Quiz.delete_team(Enum.at(event.teams, 1))
+
+      {:ok, updated, new_team} = Quiz.add_team_slot(Quiz.get_event!(event.id))
+
+      assert updated.team_count == 4
+      assert new_team.slot_index == 4
+      assert Enum.map(updated.teams, & &1.slot_index) == [0, 2, 3, 4]
     end
 
     test "update_team_name renames a team" do

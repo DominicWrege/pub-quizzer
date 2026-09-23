@@ -91,129 +91,145 @@
     </dialog>
   <% end %>
 
-  <div class="flex items-center gap-2 mb-4">
-    <span data-testid="event-code" class="badge badge-lg font-mono tracking-widest">{@event.code}</span>
-    <span class="badge badge-lg">{status_label(@event.status)}</span>
-  </div>
+  <div class="flex flex-col">
+    <div class="flex items-center gap-2 order-last mt-4 sm:order-first sm:mt-0 sm:mb-4">
+      <span data-testid="event-code" class="badge badge-lg font-mono tracking-widest">{@event.code}</span>
+      <span class="badge badge-lg">{status_label(@event.status)}</span>
+    </div>
 
-  <%= if @event.status == "lobby" do %>
-    <div class="card bg-base-200 shadow-sm">
-      <div class="card-body">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h3 class="card-title text-base sm:text-lg">{@event.team_count} Teams</h3>
-          <div class="flex items-center gap-2">
-            <button phx-click="add_slot" class="btn btn-soft btn-sm">
-              <.icon name="hero-plus" class="size-4" /> Team hinzufügen
-            </button>
-            <button
-              phx-click="do_start"
-              class="btn btn-primary btn-sm"
-              disabled={!@all_teams_connected}
+    <%= if @event.status == "lobby" do %>
+      <div class="card bg-base-200 shadow-sm">
+        <div class="card-body">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="card-title text-base sm:text-lg">{@event.team_count} Teams</h3>
+            <div class="flex items-center gap-2">
+              <button
+                phx-click="add_slot"
+                class="btn btn-soft btn-sm"
+                disabled={@event.team_count >= 10}
+              >
+                <.icon name="hero-plus" class="size-4" /> Hinzufügen
+              </button>
+              <button
+                phx-click="do_start"
+                class="btn btn-primary btn-sm"
+                disabled={!@all_teams_connected}
+              >
+                ▶ Quiz starten
+              </button>
+            </div>
+          </div>
+
+          <%!-- Mobile: cards --%>
+          <div id="event-team-cards" class="space-y-3 lg:hidden">
+            <div
+              :for={team <- @event.teams}
+              id={"team-card-#{team.id}"}
+              class="bg-base-100 border-2 border-base-300 rounded-xl px-4 pt-3 pb-3"
             >
-              ▶ Quiz starten
-            </button>
-          </div>
-        </div>
-
-        <%!-- Mobile: cards --%>
-        <div id="event-team-cards" class="space-y-3 lg:hidden">
-          <div
-            :for={team <- @event.teams}
-            id={"team-card-#{team.id}"}
-            class="bg-base-100 border-2 border-base-300 rounded-xl px-4 pt-3 pb-3"
-          >
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <span class="text-base font-semibold opacity-60">Team {team.slot_index + 1}</span>
-              <%= if team.claimed_at do %>
-                <%= if team.id in @connected_team_ids do %>
-                  <span class="badge badge-success transition-colors duration-200">Beigetreten</span>
+              <div class="flex items-center justify-end mb-2">
+                <%= if team.claimed_at do %>
+                  <%= if team.id in @connected_team_ids do %>
+                    <span class="badge badge-success transition-colors duration-200">Beigetreten</span>
+                  <% else %>
+                    <span class="badge badge-warning transition-colors duration-200">Getrennt</span>
+                  <% end %>
                 <% else %>
-                  <span class="badge badge-warning transition-colors duration-200">Getrennt</span>
+                  <span class="badge badge-neutral transition-colors duration-200">Wartend</span>
                 <% end %>
-              <% else %>
-                <span class="badge badge-neutral transition-colors duration-200">Wartend</span>
-              <% end %>
-            </div>
-            <input
-              type="text"
-              value={team.name}
-              class="input input-bordered w-full"
-              phx-blur="rename_team"
-              phx-value-team_id={team.id}
-              data-team-id={team.id}
-            />
-            <div class="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-base-300">
-              <%= if team.claimed_at do %>
-                <button
-                  phx-click="kick_team"
-                  phx-value-team_id={team.id}
-                  class="btn btn-soft"
-                  title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
-                >
-                  <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Rauswerfen
-                </button>
-              <% end %>
-            </div>
-          </div>
-        </div>
-
-        <%!-- Desktop: table --%>
-        <div class="text-lg hidden lg:block">
-          <.table id="event-teams" rows={@event.teams} row_id={fn team -> "team-#{team.id}" end}>
-            <:col :let={team} label="#">
-              <span class="opacity-60">{team.slot_index + 1}</span>
-            </:col>
-            <:col :let={team} label="Team-Name">
+              </div>
               <input
                 type="text"
                 value={team.name}
+                aria-label={"Name für Team #{team.slot_index + 1}"}
                 class="input input-bordered w-full"
                 phx-blur="rename_team"
                 phx-value-team_id={team.id}
                 data-team-id={team.id}
               />
-            </:col>
-            <:col :let={team} label="Status">
-              <%= if team.claimed_at do %>
-                <%= if team.id in @connected_team_ids do %>
-                  <span class="badge badge-lg badge-success transition-colors duration-200">Beigetreten</span>
-                <% else %>
-                  <span class="badge badge-lg badge-warning transition-colors duration-200">Getrennt</span>
-                <% end %>
-              <% else %>
-                <span class="badge badge-lg badge-neutral transition-colors duration-200">Wartend</span>
-              <% end %>
-            </:col>
-            <:action :let={team}>
-              <div class="flex gap-1">
+              <div class="flex items-center justify-end gap-2 mt-2">
                 <%= if team.claimed_at do %>
                   <button
                     phx-click="kick_team"
                     phx-value-team_id={team.id}
-                    class="btn btn-sm btn-soft"
+                    class="btn btn-soft"
                     title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
                   >
-                    <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
+                    <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Rauswerfen
                   </button>
                 <% end %>
                 <button
                   phx-click="remove_team"
                   phx-value-team_id={team.id}
-                  class="btn btn-sm btn-danger-soft"
-                  title="Team entfernen"
+                  class="btn btn-danger-soft btn-sm"
+                  disabled={@event.team_count <= 1}
+                  aria-label={"Team #{team.slot_index + 1} entfernen"}
                 >
-                  <.icon name="hero-x-mark" class="size-4" />
+                  <.icon name="hero-x-mark" class="size-4" /> Entfernen
                 </button>
               </div>
-            </:action>
-          </.table>
+            </div>
+          </div>
+
+          <%!-- Desktop: table --%>
+          <div class="text-lg hidden lg:block">
+            <.table id="event-teams" rows={@event.teams} row_id={fn team -> "team-#{team.id}" end}>
+              <:col :let={team} label="#">
+                <span class="opacity-60">{team.slot_index + 1}</span>
+              </:col>
+              <:col :let={team} label="Team-Name">
+                <input
+                  type="text"
+                  value={team.name}
+                  class="input input-bordered w-full"
+                  phx-blur="rename_team"
+                  phx-value-team_id={team.id}
+                  data-team-id={team.id}
+                />
+              </:col>
+              <:col :let={team} label="Status">
+                <%= if team.claimed_at do %>
+                  <%= if team.id in @connected_team_ids do %>
+                    <span class="badge badge-lg badge-success transition-colors duration-200">Beigetreten</span>
+                  <% else %>
+                    <span class="badge badge-lg badge-warning transition-colors duration-200">Getrennt</span>
+                  <% end %>
+                <% else %>
+                  <span class="badge badge-lg badge-neutral transition-colors duration-200">Wartend</span>
+                <% end %>
+              </:col>
+              <:action :let={team}>
+                <div class="flex gap-1">
+                  <%= if team.claimed_at do %>
+                    <button
+                      phx-click="kick_team"
+                      phx-value-team_id={team.id}
+                      class="btn btn-sm btn-soft"
+                      title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
+                    >
+                      <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
+                    </button>
+                  <% end %>
+                  <button
+                    phx-click="remove_team"
+                    phx-value-team_id={team.id}
+                    class="btn btn-sm btn-danger-soft"
+                    title="Team entfernen"
+                    disabled={@event.team_count <= 1}
+                  >
+                    <.icon name="hero-x-mark" class="size-4" />
+                  </button>
+                </div>
+              </:action>
+            </.table>
+          </div>
         </div>
       </div>
-    </div>
-  <% else %>
-    <div class="alert alert-info text-base py-4">
-      <.icon name="hero-information-circle" class="size-6" />
-      <span>Dieses Event wurde bereits gestartet. Gehe zur Moderator-Konsole, um das Quiz zu leiten.</span>
-    </div>
-  <% end %>
+    <% else %>
+      <div class="alert alert-info text-base py-4">
+        <.icon name="hero-information-circle" class="size-6" />
+        <span>Dieses Event wurde bereits gestartet. Gehe zur Moderator-Konsole, um das Quiz zu leiten.</span>
+      </div>
+    <% end %>
+  </div>
 </Layouts.app>

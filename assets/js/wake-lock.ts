@@ -1,29 +1,91 @@
-// Screen Wake Lock — keeps host console and team devices awake during a quiz.
-// Active on /quiz/:code/host and /quiz/:code/lobby only. The browser releases
-// the lock automatically when the tab is hidden, so it is re-acquired whenever
-// the document becomes visible again. Unsupported browsers (or non-secure
-// contexts) are silently ignored via feature detection.
+import type { ViewHook } from "phoenix_live_view"
 
-let wakeLock: WakeLockSentinel | null = null
-
-async function acquire(): Promise<void> {
-  if (!("wakeLock" in navigator) || wakeLock) return
-  try {
-    wakeLock = await navigator.wakeLock.request("screen")
-    wakeLock.addEventListener("release", () => {
-      wakeLock = null
-    })
-  } catch {
-    // Refused — battery saver, permissions policy, hidden document, …
-    wakeLock = null
-  }
+interface HostScreenHook extends ViewHook {
+  onForeground: () => void
+  cleanupScreen: () => void
 }
 
-const isQuizPage = /^\/quiz\/[^/]+\/(host|lobby)$/.test(location.pathname)
+// The host owns its wake lock for exactly as long as its LiveView is mounted.
+// Safari releases screen locks when a tab is backgrounded or restored from the
+// back/forward cache, so check both visibilitychange and pageshow.
+const HostScreen = {
+  mounted(this: HostScreenHook) {
+    let wakeLock: WakeLockSentinel | null = null
+    let acquiring = false
+    let destroyed = false
 
-if (isQuizPage) {
-  void acquire()
+    const acquire = async () => {
+      if (destroyed || document.visibilityState !== "visible" || acquiring || (wakeLock && !wakeLock.released)) return
+      if (!("wakeLock" in navigator)) return
+
+      acquiring = true
+      try {
+        const lock = await navigator.wakeLock.request("screen")
+        if (destroyed || document.visibilityState !== "visible") {
+          await lock.release()
+          return
+        }
+        wakeLock = lock
+        lock.addEventListener("release", () => {
+          if (wakeLock === lock) wakeLock = null
+        })
+      } catch {
+        // silent
+      } finally {
+        acquiring = false
+      }
+    }
+
+    this.onForeground = () => {
+      if (document.visibilityState !== "visible") return
+      void acquire()
+      this.pushEvent("refresh", {})
+    }
+    const onVisibility = () => this.onForeground()
+    const onPageShow = () => this.onForeground()
+    document.addEventListener("visibilitychange", onVisibility)
+    window.addEventListener("pageshow", onPageShow)
+
+    this.cleanupScreen = () => {
+      destroyed = true
+      document.removeEventListener("visibilitychange", onVisibility)
+      window.removeEventListener("pageshow", onPageShow)
+      void wakeLock?.release()
+    }
+
+    void acquire()
+  },
+
+  reconnected(this: HostScreenHook) {
+    this.onForeground()
+  },
+
+  destroyed(this: HostScreenHook) {
+    this.cleanupScreen()
+  },
+}
+
+export default HostScreen
+
+// Team pages already relied on a screen lock while answering. They have no
+// host refresh action, so keep their lightweight lock independent of the
+// moderator-only hook above.
+if (/^\/quiz\/[^/]+\/lobby$/.test(location.pathname)) {
+  let teamLock: WakeLockSentinel | null = null
+
+  const acquireTeamLock = async () => {
+    if (!("wakeLock" in navigator) || teamLock || document.visibilityState !== "visible") return
+    try {
+      teamLock = await navigator.wakeLock.request("screen")
+      teamLock.addEventListener("release", () => { teamLock = null })
+    } catch {
+      teamLock = null
+    }
+  }
+
+  void acquireTeamLock()
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") void acquire()
+    if (document.visibilityState === "visible") void acquireTeamLock()
   })
+  window.addEventListener("pageshow", () => { void acquireTeamLock() })
 }

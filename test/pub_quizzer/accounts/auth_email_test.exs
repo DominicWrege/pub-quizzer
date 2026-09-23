@@ -47,7 +47,7 @@ defmodule PubQuizzer.Accounts.AuthEmailTest do
 
       assert_email_sent(fn email ->
         email.html_body =~ "ABC123" and email.text_body =~ "ABC123" and
-          email.subject =~ "Login-Code"
+          String.starts_with?(email.subject, "ABC123 ") and email.subject =~ "Login-Code"
       end)
     end
   end
@@ -61,7 +61,7 @@ defmodule PubQuizzer.Accounts.AuthEmailTest do
 
       assert_email_sent(fn email ->
         email.html_body =~ "XYZ789" and email.text_body =~ "XYZ789" and
-          email.subject =~ "Einladung"
+          String.starts_with?(email.subject, "XYZ789 ") and email.subject =~ "Einladung"
       end)
     end
   end

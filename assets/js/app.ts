@@ -1,6 +1,7 @@
 import "phoenix_html"
 import { Socket } from "phoenix"
 import { LiveSocket, type ViewHook } from "phoenix_live_view"
+import HostScreen from "./wake-lock"
 
 // Phoenix LiveView hooks accept plain object literals — `this` is bound to the
 // hook instance at runtime. We type `this: ViewHook` on each method so TS knows
@@ -596,6 +597,7 @@ const liveSocket = new LiveSocket("/live", Socket, {
     OptionImagePreview,
     AutoResize,
     CopyLink,
+    HostScreen,
     ScrollToBottom,
     OptionSorter,
     QuestionSorter,
@@ -612,4 +614,3 @@ import "./dropdown-dismiss"
 import "./admin-shell"
 import "./clear-input"
 import "./viewport-height"
-import "./wake-lock"

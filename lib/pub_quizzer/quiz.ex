@@ -470,10 +470,16 @@ defmodule PubQuizzer.Quiz do
     |> Repo.update()
   end
 
+  def add_team_slot(%QuizEvent{team_count: count}) when count >= 10, do: {:error, :max_teams}
+
   def add_team_slot(event) do
     new_slot =
       list_teams_for_event(event.id)
-      |> length()
+      |> List.last()
+      |> case do
+        nil -> 0
+        team -> team.slot_index + 1
+      end
 
     name = Names.generate(existing_team_names(event.id))
 
@@ -509,13 +515,18 @@ defmodule PubQuizzer.Quiz do
   end
 
   def delete_team(team) do
-    Repo.transaction(fn ->
-      event = get_event_with_teams!(team.quiz_event_id)
-      Repo.delete!(team)
-      update_event(event, %{team_count: event.team_count - 1})
-    end)
+    result =
+      Repo.transaction(fn ->
+        event = get_event_with_teams!(team.quiz_event_id)
+        if event.team_count <= 1, do: Repo.rollback(:last_team)
 
-    broadcast_team_update(team.quiz_event_id)
+        Repo.delete!(team)
+        {:ok, updated} = update_event(event, %{team_count: event.team_count - 1})
+        updated
+      end)
+
+    if match?({:ok, _}, result), do: broadcast_team_update(team.quiz_event_id)
+    result
   end
 
   def delete_event(event) do

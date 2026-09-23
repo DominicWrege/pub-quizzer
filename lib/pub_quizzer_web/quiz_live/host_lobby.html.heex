@@ -5,17 +5,14 @@
   main_class="px-4 py-4 sm:pt-2 sm:pb-10 sm:px-6 lg:px-8"
 >
   <div class="border-b border-base-300 host-header">
-    <.header>
+    <.header inline_actions>
       <:back>
         <%= if @engine_state.status == :finished do %>
           <.back_link navigate={~p"/admin/events"} />
         <% end %>
       </:back>
-      Moderatoren-Konsole
-      <:subtitle>
-        Quiz-Code: <span class="font-mono font-bold">{@event.code}</span>
-        · Runde {(@engine_state.round_number || 0) + 1}
-      </:subtitle>
+      Moderator
+      <:subtitle></:subtitle>
       <:actions>
         <%= if @engine_state.status != :finished do %>
           <button
@@ -28,6 +25,8 @@
       </:actions>
     </.header>
   </div>
+
+  <div id="host-screen-control" phx-hook="HostScreen" phx-update="ignore" class="hidden"></div>
 
   <div id="host-lobby-main" phx-hook="ScrollToBottom" class="mx-auto space-y-6">
     <%!-- Topic selection phase --%>
@@ -117,46 +116,37 @@
               <.multiline_text text={question.prompt} />
             </h4>
 
-            <ul class="mt-2 space-y-2" data-test="answer-distribution">
+            <ul class="mt-2 divide-y divide-base-300" data-test="answer-distribution">
               <%= for {option, idx} <- Enum.with_index(question.options) do %>
                 <% count = Map.get(@answer_distribution, idx, 0) %>
-                <% pct =
-                  if total_picks > 0, do: Integer.floor_div(count * 100, total_picks), else: 0 %>
-                <li class="flex items-center gap-3" data-test="distribution-row">
+                <li class="flex items-center gap-3 py-3" data-test="distribution-row">
                   <span class="font-mono w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded bg-base-300 text-base-content/70 text-sm sm:text-base shrink-0">
                     {letter_for_index(idx)}
                   </span>
                   <span class="flex-1 min-w-0 text-base sm:text-lg break-words">
                     <.multiline_text text={option["text"]} />
                   </span>
-                  <div class="flex items-center gap-2 w-28 sm:w-40 shrink-0">
-                    <div class="flex-1 h-3 bg-base-300 rounded overflow-hidden">
-                      <div
-                        class="h-full bg-primary transition-all duration-300"
-                        style={"width: #{pct}%"}
-                      >
-                      </div>
-                    </div>
-                    <span class="tabular-nums text-sm sm:text-base w-6 text-right">{count}</span>
-                  </div>
+                  <span class="tabular-nums text-sm sm:text-base w-6 text-right shrink-0">{count}</span>
                 </li>
               <% end %>
             </ul>
           </div>
         </div>
 
-        <button
-          phx-click="next_question"
-          disabled={!all_answered}
-          class="btn btn-primary btn-lg w-full text-lg"
-          data-test="advance-button"
-        >
-          <%= if has_next do %>
-            <.icon name="hero-chevron-right" class="size-5" /> Nächste Frage
-          <% else %>
-            <.icon name="hero-eye" class="size-5" /> Runde auflösen
-          <% end %>
-        </button>
+        <div class="sticky bottom-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 pt-2 bg-base-100/95 backdrop-blur border-t border-base-300">
+          <button
+            phx-click="next_question"
+            disabled={!all_answered}
+            class="btn btn-primary btn-lg w-full text-lg"
+            data-test="advance-button"
+          >
+            <%= if has_next do %>
+              <.icon name="hero-chevron-right" class="size-5" /> Nächste Frage
+            <% else %>
+              <.icon name="hero-eye" class="size-5" /> Runde auflösen
+            <% end %>
+          </button>
+        </div>
       </div>
     <% end %>
 
@@ -182,13 +172,9 @@
                   <.multiline_text text={question.prompt} />
                 </h4>
 
-                <ul class="mt-2 space-y-1.5">
+                <ul class="mt-2 divide-y divide-base-300">
                   <%= for {option, idx} <- Enum.with_index(question.options) do %>
                     <% count = Map.get(distribution, idx, 0) %>
-                    <% pct =
-                      if q_total_picks > 0,
-                        do: Integer.floor_div(count * 100, q_total_picks),
-                        else: 0 %>
                     <% is_correct = idx == question.correct_index %>
                     <li class={[
                       "flex items-center gap-3 rounded px-2 py-1.5",
@@ -207,24 +193,7 @@
                       <%= if is_correct do %>
                         <.icon name="hero-check-circle" class="size-4 text-success shrink-0" />
                       <% end %>
-                      <div class="flex items-center gap-2 w-24 sm:w-32 shrink-0">
-                        <div class={[
-                          "flex-1 h-2.5 rounded overflow-hidden",
-                          is_correct && "bg-success/30",
-                          !is_correct && "bg-base-300"
-                        ]}>
-                          <div
-                            class={[
-                              "h-full transition-all duration-300",
-                              is_correct && "bg-success",
-                              !is_correct && "bg-base-content/40"
-                            ]}
-                            style={"width: #{pct}%"}
-                          >
-                          </div>
-                        </div>
-                        <span class="tabular-nums text-xs sm:text-sm w-5 text-right">{count}</span>
-                      </div>
+                      <span class="tabular-nums text-xs sm:text-sm w-5 text-right shrink-0">{count}</span>
                     </li>
                   <% end %>
                 </ul>
@@ -354,6 +323,10 @@
       </div>
     <% end %>
   </div>
+
+  <p class="text-center text-sm text-base-content/60 mt-6">
+    Quiz-Code: <span class="font-mono font-bold">{@event.code}</span>
+  </p>
 
   <.confirm_modal
     id="finish-quiz-modal"
