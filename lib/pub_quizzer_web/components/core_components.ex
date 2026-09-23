@@ -443,6 +443,7 @@ defmodule PubQuizzerWeb.CoreComponents do
 
   slot :col, required: true do
     attr :label, :string
+    attr :class, :string
   end
 
   slot :action, doc: "the slot for showing user actions in the last table column"
@@ -458,7 +459,7 @@ defmodule PubQuizzerWeb.CoreComponents do
       <table class={["table", @class]}>
         <thead>
           <tr class="bg-base-300 border-b-2 border-base-300">
-            <th :for={col <- @col}>{col[:label]}</th>
+            <th :for={col <- @col} class={col[:class]}>{col[:label]}</th>
             <th :if={@action != []}>
               <span class="sr-only">Aktionen</span>
             </th>
@@ -477,7 +478,7 @@ defmodule PubQuizzerWeb.CoreComponents do
             <td
               :for={col <- @col}
               phx-click={@row_click && @row_click.(row)}
-              class={@row_click && "hover:cursor-pointer"}
+              class={[col[:class], @row_click && "hover:cursor-pointer"]}
             >
               {render_slot(col, @row_item.(row))}
             </td>

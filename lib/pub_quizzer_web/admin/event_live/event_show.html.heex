@@ -170,7 +170,7 @@
           <%!-- Desktop: table --%>
           <div class="text-lg hidden lg:block">
             <.table id="event-teams" rows={@event.teams} row_id={fn team -> "team-#{team.id}" end}>
-              <:col :let={team} label="#">
+              <:col :let={team} label="#" class="w-1">
                 <span class="opacity-60">{team.slot_index + 1}</span>
               </:col>
               <:col :let={team} label="Team-Name">
