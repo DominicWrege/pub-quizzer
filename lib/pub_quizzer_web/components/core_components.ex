@@ -467,7 +467,7 @@ defmodule PubQuizzerWeb.CoreComponents do
         <tbody
           id={@id}
           phx-update={is_struct(@rows, Phoenix.LiveView.LiveStream) && "stream"}
-          class="divide-y divide-base-300"
+          class="divide-y divide-base-content/15"
         >
           <tr
             :for={row <- @rows}

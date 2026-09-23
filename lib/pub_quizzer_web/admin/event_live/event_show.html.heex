@@ -94,12 +94,11 @@
   <div class="flex flex-col">
     <div class="flex items-center gap-2 order-last mt-4">
       <span data-testid="event-code" class="badge badge-lg font-mono tracking-widest">{@event.code}</span>
-      <span class="badge badge-lg">{status_label(@event.status)}</span>
+      <span class="badge badge-lg badge-info badge-soft">{status_label(@event.status)}</span>
     </div>
 
     <%= if @event.status == "lobby" do %>
-      <div class="card bg-base-200 shadow-sm">
-        <div class="card-body">
+      <section class="mt-2">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <h3 class="card-title text-base sm:text-lg">{@event.team_count} Teams</h3>
             <div class="flex items-center gap-2">
@@ -121,55 +120,50 @@
           </div>
 
           <%!-- Mobile: cards --%>
-          <div id="event-team-cards" class="space-y-3 lg:hidden">
+          <div id="event-team-cards" class="space-y-1.5 lg:hidden">
             <div
               :for={team <- @event.teams}
               id={"team-card-#{team.id}"}
-              class="bg-base-100 border-2 border-base-300 rounded-xl px-2.5 pt-3 pb-2.5"
+              class="flex items-center gap-2 bg-base-200 border border-base-content/10 rounded-lg px-2 py-1.5"
             >
-              <div class="flex items-center justify-end mb-2">
-                <%= if team.claimed_at do %>
-                  <%= if team.id in @connected_team_ids do %>
-                    <span class="badge badge-success badge-outline transition-colors duration-200">Beigetreten</span>
-                  <% else %>
-                    <span class="badge badge-warning badge-outline transition-colors duration-200">Getrennt</span>
-                  <% end %>
-                <% else %>
-                  <span class="badge badge-neutral badge-outline transition-colors duration-200">Wartend</span>
-                <% end %>
-              </div>
               <input
                 type="text"
                 value={team.name}
                 aria-label={"Name für Team #{team.slot_index + 1}"}
-                class="input input-bordered w-full"
+                class="input input-bordered input-sm flex-1 min-w-0"
                 phx-blur="rename_team"
                 phx-value-team_id={team.id}
                 data-team-id={team.id}
               />
-              <div class="flex items-center justify-end gap-2 mt-2">
-                <%= if team.claimed_at do %>
-                  <button
-                    phx-click="kick_team"
-                    phx-value-team_id={team.id}
-                    class="btn btn-soft btn-sm px-2.5"
-                    title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
-                  >
-                    <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
-                    <span class="hidden min-[400px]:inline">Rauswerfen</span>
-                  </button>
+              <%= if team.claimed_at do %>
+                <%= if team.id in @connected_team_ids do %>
+                  <span class="badge badge-sm badge-success badge-soft shrink-0">OK</span>
+                <% else %>
+                  <span class="badge badge-sm badge-warning badge-soft shrink-0">Getrennt</span>
                 <% end %>
+              <% else %>
+                <span class="badge badge-sm badge-neutral badge-soft shrink-0">Wartend</span>
+              <% end %>
+              <%= if team.claimed_at do %>
                 <button
-                  phx-click="remove_team"
+                  phx-click="kick_team"
                   phx-value-team_id={team.id}
-                  class="btn btn-outline btn-error btn-sm px-2.5 border-2"
-                  disabled={@event.team_count <= 1}
-                  aria-label={"Team #{team.slot_index + 1} entfernen"}
+                  class="btn btn-soft btn-xs btn-square shrink-0"
+                  title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
+                  aria-label={"Team #{team.slot_index + 1} rauswerfen"}
                 >
-                  <.icon name="hero-x-mark" class="size-4" />
-                  <span class="hidden min-[400px]:inline">Entfernen</span>
+                  <.icon name="hero-arrow-right-on-rectangle" class="size-3.5" />
                 </button>
-              </div>
+              <% end %>
+              <button
+                phx-click="remove_team"
+                phx-value-team_id={team.id}
+                class="btn btn-outline btn-error btn-xs btn-square border-2 shrink-0"
+                disabled={@event.team_count <= 1}
+                aria-label={"Team #{team.slot_index + 1} entfernen"}
+              >
+                <.icon name="hero-x-mark" class="size-3.5" />
+              </button>
             </div>
           </div>
 
@@ -192,12 +186,12 @@
               <:col :let={team} label="Status">
                 <%= if team.claimed_at do %>
                   <%= if team.id in @connected_team_ids do %>
-                    <span class="badge badge-lg badge-success badge-outline transition-colors duration-200">Beigetreten</span>
+                    <span class="badge badge-lg badge-success badge-soft transition-colors duration-200">Beigetreten</span>
                   <% else %>
-                    <span class="badge badge-lg badge-warning badge-outline transition-colors duration-200">Getrennt</span>
+                    <span class="badge badge-lg badge-warning badge-soft transition-colors duration-200">Getrennt</span>
                   <% end %>
                 <% else %>
-                  <span class="badge badge-lg badge-neutral badge-outline transition-colors duration-200">Wartend</span>
+                  <span class="badge badge-lg badge-neutral badge-soft transition-colors duration-200">Wartend</span>
                 <% end %>
               </:col>
               <:action :let={team}>
@@ -225,8 +219,7 @@
               </:action>
             </.table>
           </div>
-        </div>
-      </div>
+      </section>
     <% else %>
       <div class="alert alert-info text-base py-4">
         <.icon name="hero-information-circle" class="size-6" />
