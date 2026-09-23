@@ -356,7 +356,7 @@ defmodule PubQuizzerWeb.CoreComponents do
     <header class={[
       @actions != [] &&
         if(@inline_actions,
-          do: "flex flex-wrap items-start gap-x-2 gap-y-2 sm:gap-x-4",
+          do: "flex flex-wrap items-center gap-x-1.5 gap-y-2 sm:gap-x-4",
           else:
             "flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 lg:gap-6"
         ),
@@ -364,10 +364,10 @@ defmodule PubQuizzerWeb.CoreComponents do
       @class
     ]}>
       <div class={[
-        "flex",
+        "flex items-center",
         if(@inline_actions,
-          do: "items-start gap-2 sm:gap-4 min-w-0 flex-1",
-          else: "items-center gap-4"
+          do: "gap-2 min-w-0 flex-1",
+          else: "gap-2 sm:gap-3.5"
         )
       ]}>
         <div :if={@back != []} class="flex-none">
@@ -379,7 +379,7 @@ defmodule PubQuizzerWeb.CoreComponents do
             else: "flex items-baseline gap-2 flex-wrap"
           )
         }>
-          <h1 class={["text-lg font-semibold leading-8", @inline_actions && "truncate min-w-0"]}>
+          <h1 class={["flex min-w-0 items-center gap-2 text-base sm:text-lg font-semibold leading-8", @inline_actions && ""]}>
             {render_slot(@inner_block)}
           </h1>
           <p :if={@subtitle != []} class="text-sm text-base-content/70">
@@ -398,8 +398,9 @@ defmodule PubQuizzerWeb.CoreComponents do
   end
 
   @doc """
-  Consistent back-navigation button: icon-only on mobile, icon + label from
-  `sm:` up. Use for every admin back link so they never drift apart in style.
+  Consistent back-navigation button: harmonized square soft button matching the
+  page-header icon buttons on every breakpoint. Use for every admin back link
+  so they never drift apart in style.
   """
   attr :navigate, :string, required: true
   attr :label, :string, default: "Zurück"
@@ -409,10 +410,10 @@ defmodule PubQuizzerWeb.CoreComponents do
     <.link
       navigate={@navigate}
       aria-label={@label}
-      class="btn btn-xs sm:btn-sm btn-soft gap-1"
+      title={@label}
+      class="btn btn-soft btn-sm btn-square shrink-0"
     >
-      <.icon name="hero-arrow-left" class="size-5 sm:size-4" />
-      <span class="hidden sm:inline">{@label}</span>
+      <.icon name="hero-arrow-left" class="size-4" />
     </.link>
     """
   end
@@ -691,6 +692,10 @@ defmodule PubQuizzerWeb.CoreComponents do
 
       "arrow-down-tray" ->
         ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>)
+
+            "qr-code" ->
+        ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M3.5 3.5h5v5h-5v-5ZM15.5 3.5h5v5h-5v-5ZM3.5 15.5h5v5h-5v-5ZM14.5 14.5h2m2 0h2v2h-2v-2Zm-2 4h2v2h-2v-2Zm4 0h2v2h-2v-2Z"/>
+)
 
       "arrow-left" ->
         ~s(<path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>)

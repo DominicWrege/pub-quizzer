@@ -12,24 +12,24 @@
       <:back>
         <.back_link navigate={~p"/admin/events"} />
       </:back>
-      <span class="inline-flex items-center gap-2 min-w-0">
+      <span class="inline-flex min-w-0 flex-nowrap items-center gap-2">
         <%= if @event.name && @event.name != "" do %>
-          <span class="truncate">{@event.name}</span>
+          <span class="min-w-0 flex-1 truncate">{@event.name}</span>
         <% else %>
-          <span class="text-base-content/60">Event vom {Calendar.strftime(
+          <span class="min-w-0 flex-1 truncate text-base-content/60">Event vom {Calendar.strftime(
             @event.inserted_at,
             "%d.%m.%Y"
           )}</span>
         <% end %>
-        <button
-          phx-click="open_edit_name"
-          class="btn btn-soft btn-sm btn-square shrink-0"
-          aria-label="Event-Name bearbeiten"
-        >
-          <.icon name="hero-pencil" class="size-4" />
-        </button>
       </span>
       <:actions>
+        <button
+          phx-click="open_edit_name"
+          class="btn btn-soft btn-sm gap-1 rounded-lg shrink-0 px-2"
+          aria-label="Event-Name bearbeiten"
+        >
+          <span class="max-sm:hidden"><.icon name="hero-pencil" class="size-3.5" /></span> Bearbeiten
+        </button>
         <%= if @event.status != "lobby" do %>
           <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-soft">
             <%= if @event.status == "finished" do %>
@@ -43,7 +43,7 @@
           <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary">Moderator-Konsole</.link>
         <% end %>
         <.link navigate={~p"/admin/events/#{@event}/team-cards"} class="btn btn-sm btn-soft">
-          <.icon name="hero-arrow-down-tray" class="size-4" /> Team-Karten
+          <span class="max-sm:hidden"><.icon name="hero-qr-code" class="size-4" /></span> QR-Karten
         </.link>
         <button
           id="copy-join-link"
@@ -51,7 +51,7 @@
           data-url={@join_url}
           class="btn btn-sm btn-soft"
         >
-          <.icon name="hero-clipboard" class="size-4" /> Link kopieren
+          <span class="max-sm:hidden"><.icon name="hero-clipboard" class="size-4" /></span> Link kopieren
         </button>
       </:actions>
     </.header>
@@ -125,17 +125,17 @@
             <div
               :for={team <- @event.teams}
               id={"team-card-#{team.id}"}
-              class="bg-base-100 border-2 border-base-300 rounded-xl px-4 pt-3 pb-3"
+              class="bg-base-100 border-2 border-base-300 rounded-xl px-2.5 pt-3 pb-2.5"
             >
               <div class="flex items-center justify-end mb-2">
                 <%= if team.claimed_at do %>
                   <%= if team.id in @connected_team_ids do %>
-                    <span class="badge badge-success transition-colors duration-200">Beigetreten</span>
+                    <span class="badge badge-success badge-outline transition-colors duration-200">Beigetreten</span>
                   <% else %>
-                    <span class="badge badge-warning transition-colors duration-200">Getrennt</span>
+                    <span class="badge badge-warning badge-outline transition-colors duration-200">Getrennt</span>
                   <% end %>
                 <% else %>
-                  <span class="badge badge-neutral transition-colors duration-200">Wartend</span>
+                  <span class="badge badge-neutral badge-outline transition-colors duration-200">Wartend</span>
                 <% end %>
               </div>
               <input
@@ -147,25 +147,27 @@
                 phx-value-team_id={team.id}
                 data-team-id={team.id}
               />
-              <div class="flex flex-wrap items-center justify-end gap-2 mt-2">
+              <div class="flex items-center justify-end gap-2 mt-2">
                 <%= if team.claimed_at do %>
                   <button
                     phx-click="kick_team"
                     phx-value-team_id={team.id}
-                    class="btn btn-soft btn-sm"
+                    class="btn btn-soft btn-sm px-2.5"
                     title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
                   >
-                    <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Rauswerfen
+                    <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
+                    <span class="hidden min-[400px]:inline">Rauswerfen</span>
                   </button>
                 <% end %>
                 <button
                   phx-click="remove_team"
                   phx-value-team_id={team.id}
-                  class="btn btn-danger-soft btn-sm"
+                  class="btn btn-outline btn-error btn-sm px-2.5"
                   disabled={@event.team_count <= 1}
                   aria-label={"Team #{team.slot_index + 1} entfernen"}
                 >
-                  <.icon name="hero-x-mark" class="size-4" /> Entfernen
+                  <.icon name="hero-x-mark" class="size-4" />
+                  <span class="hidden min-[400px]:inline">Entfernen</span>
                 </button>
               </div>
             </div>
@@ -190,12 +192,12 @@
               <:col :let={team} label="Status">
                 <%= if team.claimed_at do %>
                   <%= if team.id in @connected_team_ids do %>
-                    <span class="badge badge-lg badge-success transition-colors duration-200">Beigetreten</span>
+                    <span class="badge badge-lg badge-success badge-outline transition-colors duration-200">Beigetreten</span>
                   <% else %>
-                    <span class="badge badge-lg badge-warning transition-colors duration-200">Getrennt</span>
+                    <span class="badge badge-lg badge-warning badge-outline transition-colors duration-200">Getrennt</span>
                   <% end %>
                 <% else %>
-                  <span class="badge badge-lg badge-neutral transition-colors duration-200">Wartend</span>
+                  <span class="badge badge-lg badge-neutral badge-outline transition-colors duration-200">Wartend</span>
                 <% end %>
               </:col>
               <:action :let={team}>
@@ -213,7 +215,7 @@
                   <button
                     phx-click="remove_team"
                     phx-value-team_id={team.id}
-                    class="btn btn-sm btn-danger-soft"
+                    class="btn btn-sm btn-outline btn-error"
                     title="Team entfernen"
                     disabled={@event.team_count <= 1}
                   >

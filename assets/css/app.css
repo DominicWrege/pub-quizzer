@@ -326,6 +326,13 @@ dialog::backdrop {
   }
 }
 
+/* Tighter daisyUI card padding on mobile (default 1.5rem is too roomy on phones) */
+@media (max-width: 639px) {
+  .card-body {
+    padding: 1rem;
+  }
+}
+
 /* Segmented login-code input (Slack-style connected boxes) */
 .code-seg {
   height: 3.5rem;
