@@ -147,12 +147,12 @@
                 phx-value-team_id={team.id}
                 data-team-id={team.id}
               />
-              <div class="flex items-center justify-end gap-2 mt-2">
+              <div class="flex flex-wrap items-center justify-end gap-2 mt-2">
                 <%= if team.claimed_at do %>
                   <button
                     phx-click="kick_team"
                     phx-value-team_id={team.id}
-                    class="btn btn-soft"
+                    class="btn btn-soft btn-sm"
                     title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
                   >
                     <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Rauswerfen

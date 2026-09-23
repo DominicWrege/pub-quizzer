@@ -64,3 +64,6 @@ e2e/_inspect.spec.ts
 # `mix phx.digest` locally, clear its stray output with: git clean -fd priv/static
 /priv/static/assets/
 /priv/static/cache_manifest.json
+
+# Playwright MCP session artifacts (snapshots, console logs, screenshots)
+.playwright-mcp/

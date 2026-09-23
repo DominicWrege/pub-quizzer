@@ -43,7 +43,9 @@ defmodule PubQuizzerWeb.AdminSessionController do
 
   def create(conn, _params), do: redirect(conn, to: "/admin/login")
 
-  def verify(conn, %{"email" => email, "code" => code}) do
+  def verify(conn, %{"email" => email} = params) do
+    code = code_from_params(params)
+
     case Accounts.verify_login_code(email, code) do
       {:ok, user} ->
         {:ok, _} = Accounts.sign_in_user(user)
@@ -74,6 +76,16 @@ defmodule PubQuizzerWeb.AdminSessionController do
   end
 
   def verify(conn, _params), do: redirect(conn, to: "/admin/login")
+
+  defp code_from_params(params) do
+    case params["code"] do
+      code when is_binary(code) and code != "" ->
+        code
+
+      _ ->
+        Enum.map_join(0..5, fn i -> params["code_seg_#{i}"] || "" end)
+    end
+  end
 
   def resend(conn, %{"email" => email}) do
     case Accounts.deliver_login_code(email) do

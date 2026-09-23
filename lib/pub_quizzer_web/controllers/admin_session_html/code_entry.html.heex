@@ -54,27 +54,54 @@
 
           <div
             id="admin-code-boxes"
-            data-code-input
-            class="w-full"
+            data-code-boxes
+            class="w-full flex justify-center"
           >
             <input
-              type="text"
+              type="hidden"
               name="code"
               id="admin-code"
-              value=""
-              required
-              maxlength="32"
-              autocomplete="one-time-code"
-              inputmode="text"
-              autocapitalize="characters"
-              spellcheck="false"
-              autofocus
-              aria-label="Login-Code"
-              data-1p-ignore
-              data-bwignore="true"
-              data-lpignore="true"
-              class="input w-full h-14 text-center font-mono text-2xl tracking-[0.25em] uppercase"
+              class="w-full"
             />
+
+            <div class="flex">
+              <input
+                type="text"
+                id="admin-code-seg-0"
+                name="code_seg_0"
+                data-code-seg
+                maxlength="1"
+                autocomplete="off"
+                inputmode="text"
+                autocapitalize="characters"
+                spellcheck="false"
+                autofocus
+                aria-label="Login-Code Zeichen 1"
+                data-1p-ignore
+                data-bwignore="true"
+                data-lpignore="true"
+                class="code-seg w-12 sm:w-14 h-14 text-center font-mono text-2xl uppercase"
+              />
+
+              <%= for i <- 1..5 do %>
+                <input
+                  type="text"
+                  id={"admin-code-seg-#{i}"}
+                  name={"code_seg_#{i}"}
+                  data-code-seg
+                  maxlength="1"
+                  autocomplete="off"
+                  inputmode="text"
+                  autocapitalize="characters"
+                  spellcheck="false"
+                  aria-label={"Login-Code Zeichen #{i + 1}"}
+                  data-1p-ignore
+                  data-bwignore="true"
+                  data-lpignore="true"
+                  class="code-seg w-12 sm:w-14 h-14 text-center font-mono text-2xl uppercase"
+                />
+              <% end %>
+            </div>
           </div>
 
           <button

@@ -325,3 +325,33 @@ dialog::backdrop {
     max-width: 60mm;
   }
 }
+
+/* Segmented login-code input (Slack-style connected boxes) */
+.code-seg {
+  height: 3.5rem;
+  border: 1px solid var(--color-base-300);
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+  outline: none;
+}
+
+.code-seg:not(:first-child) {
+  margin-left: -1px;
+}
+
+.code-seg:first-child {
+  border-top-left-radius: var(--radius-field);
+  border-bottom-left-radius: var(--radius-field);
+}
+
+.code-seg:last-child {
+  border-top-right-radius: var(--radius-field);
+  border-bottom-right-radius: var(--radius-field);
+}
+
+.code-seg:focus {
+  position: relative;
+  z-index: 10;
+  border-color: var(--color-primary);
+}
+
