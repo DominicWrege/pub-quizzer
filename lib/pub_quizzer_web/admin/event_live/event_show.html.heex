@@ -162,7 +162,7 @@
                 <button
                   phx-click="remove_team"
                   phx-value-team_id={team.id}
-                  class="btn btn-outline btn-error btn-sm px-2.5"
+                  class="btn btn-outline btn-error btn-sm px-2.5 border-2"
                   disabled={@event.team_count <= 1}
                   aria-label={"Team #{team.slot_index + 1} entfernen"}
                 >
@@ -215,7 +215,7 @@
                   <button
                     phx-click="remove_team"
                     phx-value-team_id={team.id}
-                    class="btn btn-sm btn-outline btn-error"
+                    class="btn btn-sm btn-outline btn-error border-2"
                     title="Team entfernen"
                     disabled={@event.team_count <= 1}
                   >
