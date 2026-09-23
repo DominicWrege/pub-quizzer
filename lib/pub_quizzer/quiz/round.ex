@@ -4,6 +4,8 @@ defmodule PubQuizzer.Quiz.Round do
 
   schema "rounds" do
     field :round_number, :integer
+    field :questions_snapshot, {:array, :map}, default: []
+    field :abandoned, :boolean, default: false
 
     belongs_to :topic, PubQuizzer.Quiz.Topic
     belongs_to :quiz_event, PubQuizzer.Quiz.QuizEvent
@@ -17,7 +19,14 @@ defmodule PubQuizzer.Quiz.Round do
 
   def changeset(round, attrs) do
     round
-    |> cast(attrs, [:round_number, :topic_id, :quiz_event_id, :chosen_by_team_id, :winner_team_id])
+    |> cast(attrs, [
+      :round_number,
+      :topic_id,
+      :quiz_event_id,
+      :chosen_by_team_id,
+      :winner_team_id,
+      :questions_snapshot
+    ])
     |> validate_required([:round_number, :quiz_event_id])
   end
 end

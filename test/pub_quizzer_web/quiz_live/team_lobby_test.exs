@@ -161,7 +161,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
   end
 
   describe "question phase" do
-    test "shows option buttons without question or answers", %{
+    test "shows question and options without marking the right answer", %{
       conn: conn,
       event: event,
       topic: topic,
@@ -174,7 +174,9 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
 
       assert has_element?(view, "button[phx-click='select_answer']")
-      refute html =~ "What is 2+2?"
+      assert html =~ "What is 2+2?"
+      refute html =~ "Capital of France?"
+      refute html =~ "Richtige Antwort"
     end
 
     test "clicking an option submits the answer", %{
@@ -196,6 +198,28 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       assert Map.has_key?(answers, team.id)
     end
 
+    test "a delayed tap from the previous question is not counted on the new question", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      team: team
+    } do
+      Engine.start_quiz(event.id)
+      {:ok, first} = Engine.choose_topic(event.id, topic.id)
+      old_question_id = hd(first.current_questions).id
+
+      {:ok, view, _html} = conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
+      {:ok, _} = Engine.next_question(event.id)
+
+      render_click(view, "select_answer", %{
+        "index" => "0",
+        "question_id" => Integer.to_string(old_question_id)
+      })
+
+      {:ok, state} = Engine.get_state(event.id)
+      assert Map.get(state.answers, 1, %{}) == %{}
+    end
+
     test "shows answered message after submitting", %{
       conn: conn,
       event: event,
@@ -214,7 +238,11 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       assert html =~ "Antwort abgegeben!"
     end
 
-    test "shows no question text or image on team device", %{conn: conn, event: event, team: team} do
+    test "shows the current question prompt on the team device", %{
+      conn: conn,
+      event: event,
+      team: team
+    } do
       {:ok, topic_with_image} = Quiz.create_topic(%{name: "Image Topic"})
 
       {:ok, _} =
@@ -234,9 +262,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       {:ok, _view, html} =
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
 
-      refute html =~ "What is in this picture?"
-      refute html =~ "test_image.jpg"
-      refute html =~ "Fragebild"
+      assert html =~ "What is in this picture?"
     end
   end
 

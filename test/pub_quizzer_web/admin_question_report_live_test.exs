@@ -163,5 +163,16 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
       refute has_element?(view, "#question-report-#{qc.id}")
       assert has_element?(view, "#question-report-empty")
     end
+
+    test "marks the correct option even when every team picked a wrong one", %{conn: conn} do
+      {:ok, topic} = Quiz.create_topic(%{name: "Tricky Topic"})
+      question = create_question(topic, "Everyone missed this", 2)
+      {_event, [team | _], round} = finished_event_with_round(topic, "Tricky Quiz")
+      insert_answer(round, question, team, 0)
+
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+
+      assert has_element?(view, "#question-report-#{question.id}", "Richtig: C")
+    end
   end
 end

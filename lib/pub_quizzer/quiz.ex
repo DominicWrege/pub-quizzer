@@ -149,6 +149,37 @@ defmodule PubQuizzer.Quiz do
     end)
   end
 
+  @doc "Returns the questions actually used in this round (or the catalog for legacy rounds)."
+  def round_questions_for_engine(%Round{questions_snapshot: [_ | _] = snapshot}) do
+    Enum.map(snapshot, fn q ->
+      %{
+        id: q["id"],
+        prompt: q["prompt"],
+        options: q["options"],
+        correct_index: q["correct_index"],
+        position: q["position"],
+        images: q["images"],
+        image_position: q["image_position"],
+        layout: q["layout"]
+      }
+    end)
+  end
+
+  def round_questions_for_engine(%Round{topic_id: topic_id}),
+    do: load_questions_for_engine(topic_id)
+
+  defp result_questions(round, questions_by_topic) do
+    case round.questions_snapshot do
+      [_ | _] ->
+        Enum.map(round_questions_for_engine(round), fn q ->
+          struct(Question, Map.put(q, :topic_id, round.topic_id))
+        end)
+
+      _ ->
+        Map.get(questions_by_topic, round.topic_id, [])
+    end
+  end
+
   @doc """
   Loads questions for several topics in a single query (plus one batched
   last-editor query), grouped by `topic_id`. Used by the results page to avoid
@@ -625,7 +656,7 @@ defmodule PubQuizzer.Quiz do
 
   def list_rounds_for_event(event_id) do
     Round
-    |> where(quiz_event_id: ^event_id)
+    |> where(quiz_event_id: ^event_id, abandoned: false)
     |> order_by(asc: :round_number)
     |> Repo.all()
   end
@@ -633,7 +664,7 @@ defmodule PubQuizzer.Quiz do
   def list_answers_for_event(event_id) do
     Answer
     |> join(:inner, [a], r in Round, on: a.round_id == r.id)
-    |> where([_, r], r.quiz_event_id == ^event_id)
+    |> where([_, r], r.quiz_event_id == ^event_id and r.abandoned == false)
     |> preload(:question)
     |> Repo.all()
   end
@@ -651,14 +682,32 @@ defmodule PubQuizzer.Quiz do
   standings without an N+1 over rounds.
   """
   def count_correct_answers_for_rounds(round_ids) do
+    rounds = Repo.all(from r in Round, where: r.id in ^round_ids)
+
+    correct_indices =
+      for round <- rounds,
+          question <- round_questions_for_engine(round),
+          into: %{},
+          do: {{round.id, question.id}, question.correct_index}
+
     Answer
-    |> join(:inner, [a], q in assoc(a, :question))
     |> where([a], a.round_id in ^round_ids)
-    |> where([a, q], a.selected_index == q.correct_index)
-    |> group_by([a], a.team_id)
-    |> select([a], {a.team_id, count(a.id)})
+    |> preload(:question)
     |> Repo.all()
-    |> Map.new()
+    |> Enum.reduce(%{}, fn answer, scores ->
+      correct_index =
+        Map.get(
+          correct_indices,
+          {answer.round_id, answer.question_id},
+          answer.question.correct_index
+        )
+
+      if answer.selected_index == correct_index do
+        Map.update(scores, answer.team_id, 1, &(&1 + 1))
+      else
+        scores
+      end
+    end)
   end
 
   # --- Results ---
@@ -669,7 +718,7 @@ defmodule PubQuizzer.Quiz do
 
     rounds =
       Round
-      |> where(quiz_event_id: ^event_id)
+      |> where(quiz_event_id: ^event_id, abandoned: false)
       |> order_by(asc: :round_number)
       |> preload(:topic)
       |> Repo.all()
@@ -686,14 +735,27 @@ defmodule PubQuizzer.Quiz do
 
     rounds_data =
       Enum.map(rounds, fn round ->
-        %{round: round, questions: Map.get(questions_by_topic, round.topic_id, [])}
+        %{round: round, questions: result_questions(round, questions_by_topic)}
       end)
 
     # One pass over answers to tally correct picks per team, instead of
     # scanning the full answer list once per team.
+    correct_indices =
+      for %{round: round, questions: questions} <- rounds_data,
+          question <- questions,
+          into: %{},
+          do: {{round.id, question.id}, question.correct_index}
+
     correct_by_team =
       Enum.reduce(answers, %{}, fn answer, acc ->
-        if answer.selected_index == answer.question.correct_index do
+        correct_index =
+          Map.get(
+            correct_indices,
+            {answer.round_id, answer.question_id},
+            answer.question.correct_index
+          )
+
+        if answer.selected_index == correct_index do
           Map.update(acc, answer.team_id, 1, &(&1 + 1))
         else
           acc
@@ -705,7 +767,7 @@ defmodule PubQuizzer.Quiz do
       |> Enum.map(fn team -> {team.id, team.name, Map.get(correct_by_team, team.id, 0)} end)
       |> Enum.sort_by(&elem(&1, 2), :desc)
 
-    question_stats = build_question_stats(answers, length(teams))
+    question_stats = build_question_stats(rounds_data, answers, length(teams))
 
     total_questions = rounds_data |> Enum.map(&length(&1.questions)) |> Enum.sum()
 
@@ -735,41 +797,92 @@ defmodule PubQuizzer.Quiz do
       |> select([e], e.id)
       |> Repo.all()
 
-    rounds_per_topic =
-      Round
-      |> where([r], r.quiz_event_id in ^finished_ids)
-      |> group_by([r], r.topic_id)
-      |> select([r], {r.topic_id, count(r.id)})
-      |> Repo.all()
-      |> Map.new()
+    rounds =
+      Repo.all(from r in Round, where: r.quiz_event_id in ^finished_ids and r.abandoned == false)
 
-    stats_by_question =
-      Answer
-      |> join(:inner, [a], r in Round, on: a.round_id == r.id)
-      |> where([_a, r], r.quiz_event_id in ^finished_ids)
-      |> group_by([a], [a.question_id, a.selected_index])
-      |> select([a], {a.question_id, a.selected_index, count(a.id)})
-      |> Repo.all()
-      |> Enum.reduce(%{}, fn {question_id, idx, count}, acc ->
-        Map.update(acc, question_id, %{picks: %{idx => count}, answers: count}, fn stats ->
-          %{
-            picks: Map.update(stats.picks, idx, count, &(&1 + count)),
-            answers: stats.answers + count
-          }
+    round_ids = Enum.map(rounds, & &1.id)
+    rounds_by_id = Map.new(rounds, &{&1.id, &1})
+
+    rounds_per_topic = Enum.frequencies_by(rounds, & &1.topic_id)
+
+    asked_by_question =
+      Enum.reduce(rounds, %{}, fn round, acc ->
+        Enum.reduce(round.questions_snapshot || [], acc, fn q, counts ->
+          Map.update(counts, q["id"], 1, &(&1 + 1))
         end)
+      end)
+
+    correct_indices =
+      for round <- rounds,
+          question <- round_questions_for_engine(round),
+          into: %{},
+          do: {{round.id, question.id}, question.correct_index}
+
+    answers = Repo.all(from a in Answer, where: a.round_id in ^round_ids)
+
+    correct_options =
+      Enum.reduce(correct_indices, %{}, fn {{_round_id, question_id}, index}, acc ->
+        Map.update(acc, question_id, MapSet.new([index]), &MapSet.put(&1, index))
       end)
 
     questions =
       Question
-      |> where([q], q.id in ^Map.keys(stats_by_question))
+      |> where(
+        [q],
+        q.id in ^Enum.uniq(Map.keys(asked_by_question) ++ Enum.map(answers, & &1.question_id))
+      )
       |> preload(:topic)
       |> Repo.all()
 
+    questions_by_id = Map.new(questions, &{&1.id, &1})
+
+    stats_by_question =
+      Enum.reduce(answers, %{}, fn answer, acc ->
+        round = Map.fetch!(rounds_by_id, answer.round_id)
+        question = Map.fetch!(questions_by_id, answer.question_id)
+        correct_index = Map.get(correct_indices, {round.id, question.id}, question.correct_index)
+
+        stats =
+          Map.get(acc, question.id, %{
+            picks: %{},
+            correct_picks: %{},
+            wrong_picks: %{},
+            answers: 0,
+            correct: 0
+          })
+
+        correct_picks =
+          if answer.selected_index == correct_index,
+            do: Map.update(stats.correct_picks, answer.selected_index, 1, &(&1 + 1)),
+            else: stats.correct_picks
+
+        wrong_picks =
+          if answer.selected_index == correct_index,
+            do: stats.wrong_picks,
+            else: Map.update(stats.wrong_picks, answer.selected_index, 1, &(&1 + 1))
+
+        Map.put(acc, question.id, %{
+          picks: Map.update(stats.picks, answer.selected_index, 1, &(&1 + 1)),
+          correct_picks: correct_picks,
+          wrong_picks: wrong_picks,
+          answers: stats.answers + 1,
+          correct: stats.correct + if(answer.selected_index == correct_index, do: 1, else: 0)
+        })
+      end)
+
     for question <- questions,
-        stats = Map.get(stats_by_question, question.id),
-        asked_in = Map.get(rounds_per_topic, question.topic_id, 0),
+        stats =
+          Map.get(stats_by_question, question.id, %{
+            picks: %{},
+            correct_picks: %{},
+            wrong_picks: %{},
+            answers: 0,
+            correct: 0
+          }),
+        asked_in =
+          Map.get(asked_by_question, question.id, Map.get(rounds_per_topic, question.topic_id, 0)),
         asked_in > 0 do
-      correct = Map.get(stats.picks, question.correct_index, 0)
+      correct = stats.correct
 
       pct =
         if stats.answers > 0 do
@@ -779,8 +892,7 @@ defmodule PubQuizzer.Quiz do
         end
 
       trap =
-        stats.picks
-        |> Enum.reject(fn {idx, _count} -> idx == question.correct_index end)
+        stats.wrong_picks
         |> Enum.filter(fn {_idx, count} -> count > 0 end)
         |> case do
           [] -> nil
@@ -796,6 +908,8 @@ defmodule PubQuizzer.Quiz do
         correct: correct,
         pct: pct,
         picks: stats.picks,
+        correct_options: correct_options |> Map.get(question.id, MapSet.new()) |> Enum.sort(),
+        correct_picks: stats.correct_picks,
         trap: trap
       }
     end
@@ -806,7 +920,7 @@ defmodule PubQuizzer.Quiz do
 
     rounds =
       Round
-      |> where(quiz_event_id: ^event_id)
+      |> where(quiz_event_id: ^event_id, abandoned: false)
       |> order_by(asc: :round_number)
       |> preload(:topic)
       |> Repo.all()
@@ -823,10 +937,10 @@ defmodule PubQuizzer.Quiz do
 
     rounds_data =
       Enum.map(rounds, fn round ->
-        %{round: round, questions: Map.get(questions_by_topic, round.topic_id, [])}
+        %{round: round, questions: result_questions(round, questions_by_topic)}
       end)
 
-    question_stats = build_question_stats(answers, team_count)
+    question_stats = build_question_stats(rounds_data, answers, team_count)
     timing = build_timing(event, rounds, answers)
 
     %{
@@ -881,16 +995,22 @@ defmodule PubQuizzer.Quiz do
   # Per-question answer distribution: %{
   #   {round_id, question_id} => %{picks: %{option_index => count}, no_answer: count}
   # }
-  defp build_question_stats(answers, team_count) do
+  defp build_question_stats(rounds_data, answers, team_count) do
+    initial =
+      for %{round: round, questions: questions} <- rounds_data,
+          question <- questions,
+          into: %{},
+          do: {{round.id, question.id}, %{picks: %{}, no_answer: team_count}}
+
     answers
     |> Enum.group_by(&{&1.round_id, &1.question_id})
-    |> Map.new(fn {key, round_answers} ->
+    |> Enum.reduce(initial, fn {key, round_answers}, acc ->
       picks =
         Enum.reduce(round_answers, %{}, fn answer, acc ->
           Map.update(acc, answer.selected_index, 1, &(&1 + 1))
         end)
 
-      {key, %{picks: picks, no_answer: max(team_count - length(round_answers), 0)}}
+      Map.put(acc, key, %{picks: picks, no_answer: max(team_count - length(round_answers), 0)})
     end)
   end
 

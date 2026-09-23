@@ -104,6 +104,12 @@ defmodule PubQuizzer.Quiz.Engine do
     :exit, _ -> {:error, :not_found}
   end
 
+  def submit_answer(event_id, team_id, selected_index, question_id) do
+    GenServer.call(via_tuple(event_id), {:submit_answer, team_id, selected_index, question_id})
+  catch
+    :exit, _ -> {:error, :not_found}
+  end
+
   @doc """
   Advance to the next question.
   """
@@ -226,14 +232,18 @@ defmodule PubQuizzer.Quiz.Engine do
   def handle_call({:submit_answer, team_id, selected_index}, _from, state) do
     {:ok, state} = ensure_loaded(state)
 
-    case EngineState.submit_answer(state.engine_state, team_id, selected_index) do
-      {:ok, new_es} ->
-        persist_answer(new_es, team_id, selected_index)
-        broadcast(new_es)
-        {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
+    submit_answer_for_current_question(state, team_id, selected_index)
+  end
 
-      {:error, reason} ->
-        {:reply, {:error, reason}, state}
+  def handle_call({:submit_answer, team_id, selected_index, question_id}, _from, state) do
+    {:ok, state} = ensure_loaded(state)
+
+    current_question = EngineState.current_question(state.engine_state)
+
+    if current_question && current_question.id == question_id do
+      submit_answer_for_current_question(state, team_id, selected_index)
+    else
+      {:reply, {:error, :stale_question}, state}
     end
   end
 
@@ -274,6 +284,7 @@ defmodule PubQuizzer.Quiz.Engine do
 
     case EngineState.reveal_standings(state.engine_state) do
       {:ok, new_es} ->
+        persist_reveal_flag(new_es.event_id, :standings_revealed)
         broadcast(new_es)
         {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
 
@@ -301,6 +312,12 @@ defmodule PubQuizzer.Quiz.Engine do
 
     case EngineState.finish_quiz(state.engine_state) do
       {:ok, new_es} ->
+        if state.engine_state.status == :question do
+          Repo.get!(Round, state.engine_state.current_round_id)
+          |> Ecto.Changeset.change(abandoned: true)
+          |> Repo.update!()
+        end
+
         persist_event_status(new_es)
         broadcast(new_es)
         {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
@@ -315,6 +332,19 @@ defmodule PubQuizzer.Quiz.Engine do
 
     case EngineState.reveal_final_results(state.engine_state) do
       {:ok, new_es} ->
+        persist_reveal_flag(new_es.event_id, :final_results_revealed)
+        broadcast(new_es)
+        {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
+  defp submit_answer_for_current_question(state, team_id, selected_index) do
+    case EngineState.submit_answer(state.engine_state, team_id, selected_index) do
+      {:ok, new_es} ->
+        persist_answer(new_es, team_id, selected_index)
         broadcast(new_es)
         {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
 
@@ -324,6 +354,14 @@ defmodule PubQuizzer.Quiz.Engine do
   end
 
   # --- Persistence helpers ---
+
+  defp persist_reveal_flag(event_id, flag) do
+    event = Repo.get!(PubQuizzer.Quiz.QuizEvent, event_id)
+
+    event
+    |> Ecto.Changeset.change(%{flag => true})
+    |> Repo.update!()
+  end
 
   defp load_state_from_db(event_id) do
     alias PubQuizzer.Quiz
@@ -392,6 +430,8 @@ defmodule PubQuizzer.Quiz.Engine do
       available_topics: available_topics,
       standings: standings,
       completed_rounds: completed_summaries,
+      standings_revealed: status == :round_reveal and event.standings_revealed,
+      final_results_revealed: status == :finished and event.final_results_revealed,
       max_rounds: 7
     }
 
@@ -407,7 +447,7 @@ defmodule PubQuizzer.Quiz.Engine do
 
       :question ->
         round = current_round
-        questions = Quiz.load_questions_for_engine(round.topic_id)
+        questions = Quiz.round_questions_for_engine(round)
         answers = load_answers_map(round.id, questions)
 
         %{
@@ -421,7 +461,7 @@ defmodule PubQuizzer.Quiz.Engine do
 
       :round_reveal ->
         round = current_round
-        questions = Quiz.load_questions_for_engine(round.topic_id)
+        questions = Quiz.round_questions_for_engine(round)
         answers = load_answers_map(round.id, questions)
 
         %{
@@ -524,7 +564,20 @@ defmodule PubQuizzer.Quiz.Engine do
       round_number: state.round_number,
       topic_id: state.current_topic_id,
       quiz_event_id: state.event_id,
-      chosen_by_team_id: state.current_chooser_team_id
+      chosen_by_team_id: state.current_chooser_team_id,
+      questions_snapshot:
+        Enum.map(state.current_questions, fn q ->
+          Map.take(q, [
+            :id,
+            :prompt,
+            :options,
+            :correct_index,
+            :position,
+            :images,
+            :image_position,
+            :layout
+          ])
+        end)
     })
     |> Repo.insert!()
   end

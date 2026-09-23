@@ -148,6 +148,26 @@ defmodule PubQuizzer.Quiz.EngineTest do
       assert answer.team_id == t1.id
     end
 
+    test "a delayed answer for the previous question cannot overwrite the next one", %{
+      event: event,
+      topic: topic
+    } do
+      {:ok, _} = Engine.start_quiz(event.id)
+      {:ok, state} = Engine.choose_topic(event.id, topic.id)
+      [team | _] = state.teams
+      first_question_id = hd(state.current_questions).id
+
+      assert {:ok, _} = Engine.submit_answer(event.id, team.id, 1, first_question_id)
+      assert {:ok, _} = Engine.next_question(event.id)
+
+      assert {:error, :stale_question} =
+               Engine.submit_answer(event.id, team.id, 0, first_question_id)
+
+      {:ok, current} = Engine.get_state(event.id)
+      assert Map.get(current.answers, 1, %{}) == %{}
+      assert length(Quiz.list_answers_for_round(current.current_round_id)) == 1
+    end
+
     test "persists round winner on reveal", %{event: event, topic: topic} do
       Engine.start_quiz(event.id)
       Engine.choose_topic(event.id, topic.id, nil)
@@ -281,6 +301,35 @@ defmodule PubQuizzer.Quiz.EngineTest do
       assert state.current_topic_id == topic2.id
     end
 
+    test "keeps standings visible after the engine restarts", %{event: event, topic: topic} do
+      {:ok, _} = Engine.start_quiz(event.id)
+      {:ok, _} = Engine.choose_topic(event.id, topic.id)
+      {:ok, _} = Engine.reveal_round(event.id)
+      {:ok, _} = Engine.reveal_standings(event.id)
+
+      stop_engine(event.id)
+      {:ok, _} = Engine.ensure_started(event.id)
+
+      {:ok, recovered} = Engine.get_state(event.id)
+      assert recovered.status == :round_reveal
+      assert recovered.standings_revealed
+    end
+
+    test "keeps final results released after the engine restarts", %{event: event, topic: topic} do
+      {:ok, _} = Engine.start_quiz(event.id)
+      {:ok, _} = Engine.choose_topic(event.id, topic.id)
+      {:ok, _} = Engine.reveal_round(event.id)
+      {:ok, _} = Engine.finish_quiz(event.id)
+      {:ok, _} = Engine.reveal_final_results(event.id)
+
+      stop_engine(event.id)
+      {:ok, _} = Engine.ensure_started(event.id)
+
+      {:ok, recovered} = Engine.get_state(event.id)
+      assert recovered.status == :finished
+      assert recovered.final_results_revealed
+    end
+
     test "recovers :topic_selection state with chooser", %{
       event: event,
       topic: topic
@@ -337,5 +386,100 @@ defmodule PubQuizzer.Quiz.EngineTest do
       assert Map.get(state.standings, t1.id) == 2
       assert Map.get(state.standings, t2.id) == 0
     end
+  end
+
+  test "historic scores and question analytics use the question as played", %{
+    event: event,
+    topic: topic
+  } do
+    {:ok, _} = Engine.start_quiz(event.id)
+    {:ok, state} = Engine.choose_topic(event.id, topic.id)
+    [team | _] = state.teams
+    first = hd(state.current_questions)
+    {:ok, _} = Engine.submit_answer(event.id, team.id, first.correct_index, first.id)
+    {:ok, _} = Engine.reveal_round(event.id)
+    {:ok, _} = Engine.finish_quiz(event.id)
+
+    question = Quiz.get_question!(first.id)
+    {:ok, _} = Quiz.update_question(question, %{prompt: "Edited after quiz", correct_index: 0})
+
+    {:ok, _} =
+      Quiz.create_question(%{
+        topic_id: topic.id,
+        prompt: "New question",
+        options: ["a", "b"],
+        correct_index: 0
+      })
+
+    results = Quiz.get_event_results(event.id)
+
+    assert Enum.map(hd(results.rounds_data).questions, & &1.prompt) ==
+             Enum.map(state.current_questions, & &1.prompt)
+
+    assert hd(hd(results.rounds_data).questions).correct_index == 1
+    assert hd(results.standings) |> elem(2) == 1
+
+    report = Quiz.get_question_report()
+    assert Enum.find(report, &(&1.question.id == first.id)).pct == 100
+    assert Enum.find(report, &(&1.question.id == first.id)).correct_picks == %{1 => 1}
+
+    stop_engine(event.id)
+    {:ok, _} = Engine.ensure_started(event.id)
+    {:ok, recovered} = Engine.get_state(event.id)
+    assert recovered.standings[team.id] == 1
+  end
+
+  test "moderator stats count unanswered questions even when nobody responds", %{
+    event: event,
+    topic: topic
+  } do
+    {:ok, _} = Engine.start_quiz(event.id)
+    {:ok, state} = Engine.choose_topic(event.id, topic.id)
+    {:ok, _} = Engine.reveal_round(event.id)
+
+    results = Quiz.get_event_results(event.id)
+    round = hd(results.rounds_data).round
+
+    for question <- state.current_questions do
+      assert results.question_stats[{round.id, question.id}] == %{
+               picks: %{},
+               no_answer: 3
+             }
+    end
+
+    {:ok, _} = Engine.finish_quiz(event.id)
+    report = Quiz.get_question_report()
+    assert length(report) == 3
+    assert Enum.all?(report, &(&1.answers == 0 and &1.pct == 0 and &1.asked_in == 1))
+  end
+
+  test "finishing during a question excludes the unfinished round from results", %{
+    event: event,
+    topic: topic
+  } do
+    {:ok, second_topic} = Quiz.create_topic(%{name: "Partial round"})
+
+    {:ok, _} =
+      Quiz.create_question(%{
+        topic_id: second_topic.id,
+        prompt: "Not revealed yet",
+        options: ["Yes", "No"],
+        correct_index: 0
+      })
+
+    {:ok, _} = Engine.start_quiz(event.id)
+    {:ok, first} = Engine.choose_topic(event.id, topic.id)
+    [team | _] = first.teams
+    {:ok, _} = Engine.submit_answer(event.id, team.id, 1, hd(first.current_questions).id)
+    {:ok, _} = Engine.reveal_round(event.id)
+    {:ok, _} = Engine.next_round(event.id)
+    {:ok, partial} = Engine.choose_topic(event.id, second_topic.id)
+    {:ok, _} = Engine.submit_answer(event.id, team.id, 0, hd(partial.current_questions).id)
+    {:ok, _} = Engine.finish_quiz(event.id)
+
+    results = Quiz.get_event_results(event.id)
+    assert length(results.rounds_data) == 1
+    assert results.team_accuracy[team.id] == {1, 3}
+    refute Enum.any?(Quiz.get_question_report(), &(&1.question.prompt == "Not revealed yet"))
   end
 end

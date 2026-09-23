@@ -57,18 +57,20 @@
           </div>
         <% end %>
 
-        <h3 class="text-4xl font-bold mb-8 mt-6">Verfügbare Themen</h3>
-        <div class="grid grid-cols-3 gap-6">
+        <h3 class="text-2xl sm:text-3xl font-bold mb-5 mt-6">Verfügbare Themen</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <%= for topic <- @available_topics do %>
             <button
               phx-click="choose_topic"
               phx-value-topic_id={topic.id}
-              class="btn btn-primary h-auto py-12 px-8 flex-col items-center gap-4 min-h-[180px] text-base-100 shadow-lg hover:scale-[1.02] hover:shadow-xl transition-[transform,box-shadow] duration-200"
+              class="btn btn-primary min-w-0 h-auto min-h-24 sm:min-h-36 px-4 py-5 flex-col items-center gap-2 text-primary-content shadow-lg hover:scale-[1.02] hover:shadow-xl transition-[transform,box-shadow] duration-200"
             >
-              <.icon name="hero-bookmark" class="size-10" />
-              <span class="text-4xl font-bold">{topic.name}</span>
+              <.icon name="hero-bookmark" class="size-7 sm:size-8 shrink-0" />
+              <span class="block max-w-full whitespace-normal break-words text-center text-xl sm:text-2xl font-bold leading-tight">{topic.name}</span>
               <%= if topic[:description] do %>
-                <span class="text-xl font-normal opacity-80">{topic[:description]}</span>
+                <span class="max-w-full whitespace-normal break-words text-center text-sm font-normal opacity-80">{topic[
+                  :description
+                ]}</span>
               <% end %>
             </button>
           <% end %>

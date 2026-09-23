@@ -125,13 +125,18 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
   end
 
   @impl true
-  def handle_event("select_answer", %{"index" => index_str}, socket) do
-    with {index, ""} <- Integer.parse(index_str) do
+  def handle_event(
+        "select_answer",
+        %{"index" => index_str, "question_id" => question_id_str},
+        socket
+      ) do
+    with {index, ""} <- Integer.parse(index_str),
+         {question_id, ""} <- Integer.parse(question_id_str) do
       original_index = OptionShuffle.to_original(socket.assigns.shuffle_map, index)
       event_id = socket.assigns.event.id
       team_id = socket.assigns.team.id
 
-      case Engine.submit_answer(event_id, team_id, original_index) do
+      case Engine.submit_answer(event_id, team_id, original_index, question_id) do
         {:ok, _state} ->
           {:noreply, assign(socket, :selected_index, index)}
 

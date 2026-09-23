@@ -50,7 +50,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
   end
 
   defp host_reveal_round(view) do
-    view |> element("button[phx-click='reveal_round']") |> render_click()
+    view |> element("button[phx-click='next_question']", "Runde auflösen") |> render_click()
   end
 
   defp host_show_standings(view) do
@@ -184,8 +184,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       submit_all(event, teams, team, view)
       view |> element("button[phx-click='next_question']") |> render_click()
 
-      refute has_element?(view, "button[phx-click='next_question']")
-      assert has_element?(view, "button[phx-click='reveal_round']")
+      assert has_element?(view, "button[phx-click='next_question']", "Runde auflösen")
     end
 
     test "shows live answer distribution as answers come in", %{

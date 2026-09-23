@@ -11,6 +11,8 @@ defmodule PubQuizzer.Quiz.QuizEvent do
     field :team_count, :integer, default: 5
     field :current_round, :integer, default: 0
     field :current_question_index, :integer, default: 0
+    field :standings_revealed, :boolean, default: false
+    field :final_results_revealed, :boolean, default: false
     field :started_at, :utc_datetime
     field :finished_at, :utc_datetime
 

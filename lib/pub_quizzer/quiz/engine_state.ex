@@ -38,12 +38,9 @@ defmodule PubQuizzer.Quiz.EngineState do
   @doc """
   Returns a copy of the state safe for team clients.
 
-  During the `:question` phase, teams see only A/B/C/D buttons — they never need
-  `correct_index`, the question `prompt`, or option `text`/`image`. Stripping
-  these prevents leaks via dev tools and shrinks the assigns.
-
-  During `:round_reveal` the host shows the answers, so the full question set
-  must be preserved.
+  During the `:question` phase, teams see the current prompt and its options,
+  but never `correct_index` or future questions. During reveal and after the
+  quiz ends, team clients have no need for the question set at all.
 
   `team_id` is the viewing team's id — that team's own `selected_index` is
   preserved so its UI can render the "answered" state and highlight its pick
@@ -54,16 +51,18 @@ defmodule PubQuizzer.Quiz.EngineState do
   def strip_for_team(%__MODULE__{status: :question} = state, team_id) do
     slim_questions =
       Enum.map(state.current_questions, fn q ->
-        # Preserve option count (shuffle relies on list length); drop text/image/correct_index.
-        blank_options = Enum.map(q.options, fn _ -> %{} end)
-        %{id: q.id, position: q.position, options: blank_options}
+        if q.position == state.question_index do
+          Map.drop(q, [:correct_index])
+        else
+          %{id: q.id, position: q.position, options: Enum.map(q.options, fn _ -> %{} end)}
+        end
       end)
 
     %{state | current_questions: slim_questions, answers: redact_answers(state.answers, team_id)}
   end
 
   def strip_for_team(%__MODULE__{} = state, team_id) do
-    %{state | answers: redact_answers(state.answers, team_id)}
+    %{state | current_questions: [], answers: redact_answers(state.answers, team_id)}
   end
 
   defp redact_answers(answers, team_id) when is_map(answers) do
@@ -104,7 +103,7 @@ defmodule PubQuizzer.Quiz.EngineState do
   `chooser_team_id` is nil when the host picks (round 1 or tie).
   """
   def choose_topic(%__MODULE__{status: :topic_selection} = state, topic_id, chooser_team_id) do
-    case Enum.find(state.available_topics, fn t -> t.id == topic_id end) do
+    case Enum.find(available_topics(state), fn t -> t.id == topic_id end) do
       nil ->
         {:error, :topic_not_available}
 

@@ -120,6 +120,17 @@ defmodule PubQuizzer.Quiz.EngineStateTest do
       assert {:error, :topic_not_available} = EngineState.choose_topic(state, 99999, nil)
     end
 
+    test "refuses a topic already played in an earlier round" do
+      state = fresh_state_multi_topic() |> then_engine_start()
+      first_topic = hd(state.available_topics)
+      {:ok, chosen} = EngineState.choose_topic(state, first_topic.id, nil)
+      {:ok, revealed} = EngineState.reveal_round(chosen)
+      {:ok, next} = EngineState.next_round(revealed)
+
+      assert {:error, :topic_not_available} =
+               EngineState.choose_topic(next, first_topic.id, nil)
+    end
+
     test "fails if not in topic_selection" do
       state = fresh_state()
       topic_id = hd(state.available_topics).id
@@ -377,6 +388,28 @@ defmodule PubQuizzer.Quiz.EngineStateTest do
       {_, _, s3_score} = Enum.at(sorted, 2)
       assert s1_score >= s2_score
       assert s2_score >= s3_score
+    end
+  end
+
+  describe "team state privacy" do
+    test "question phase shows the prompt and option text without the correct answer" do
+      state = fresh_state() |> then_engine_start() |> then_choose_topic()
+      team_state = EngineState.strip_for_team(state, hd(state.teams).id)
+
+      assert [%{prompt: "What is 2+2?", options: [%{"text" => "3"} | _]} | _] =
+               team_state.current_questions
+
+      refute Map.has_key?(hd(team_state.current_questions), :correct_index)
+    end
+
+    test "round reveal and finished states contain no question keys for teams" do
+      state = fresh_state() |> then_engine_start() |> then_choose_topic()
+      {:ok, revealed} = EngineState.reveal_round(state)
+      team_id = hd(state.teams).id
+
+      assert EngineState.strip_for_team(revealed, team_id).current_questions == []
+      {:ok, finished} = EngineState.next_round(revealed)
+      assert EngineState.strip_for_team(finished, team_id).current_questions == []
     end
   end
 

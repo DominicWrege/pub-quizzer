@@ -164,6 +164,9 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
               <td class="px-4 py-3">
                 <div class="font-medium">{entry.question.prompt}</div>
                 <div class="text-xs text-base-content/60">{entry.topic_name}</div>
+                <div class="text-xs text-success">
+                  Richtig: {Enum.map_join(entry.correct_options, ", ", &letter_for_index/1)}
+                </div>
               </td>
               <td class="px-4 py-3 text-center font-mono">{entry.asked_in}×</td>
               <td class="px-4 py-3 text-center font-mono">{entry.answers}</td>
@@ -184,11 +187,11 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
                 <div class="flex h-6 w-full overflow-hidden rounded-md border border-base-300 bg-base-200">
                   <%= for {idx, count} <- Enum.sort(entry.picks), count > 0 do %>
                     <div
-                      data-correct={to_string(idx == entry.question.correct_index)}
+                      data-correct={to_string(idx in entry.correct_options)}
                       class={[
                         "flex items-center justify-center overflow-hidden whitespace-nowrap text-xs font-semibold",
-                        idx == entry.question.correct_index && "bg-success text-success-content",
-                        idx != entry.question.correct_index && "bg-base-300 text-base-content/80"
+                        idx in entry.correct_options && "bg-success text-success-content",
+                        idx not in entry.correct_options && "bg-base-300 text-base-content/80"
                       ]}
                       style={"width: #{segment_pct(count, entry.answers)}%"}
                       title={"#{letter_for_index(idx)}: #{count}×"}
