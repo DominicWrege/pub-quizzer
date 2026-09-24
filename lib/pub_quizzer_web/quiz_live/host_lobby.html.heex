@@ -82,7 +82,6 @@
       <% question = @engine_state.current_questions |> Enum.at(@engine_state.question_index) %>
       <% answered = PubQuizzer.Quiz.EngineState.answered_teams(@engine_state) %>
       <% total_teams = length(@engine_state.teams) %>
-      <% total_picks = @answer_distribution |> Map.values() |> Enum.sum() %>
       <% all_answered = MapSet.size(answered) == total_teams %>
       <% has_next =
         (@engine_state.question_index || 0) < length(@engine_state.current_questions) - 1 %>
@@ -160,7 +159,6 @@
         <%!-- Per-question distribution breakdowns — all questions in the round --%>
         <div class="space-y-3" data-test="round-stat-list">
           <%= for {question, distribution} <- @round_distributions do %>
-            <% q_total_picks = distribution |> Map.values() |> Enum.sum() %>
             <div class="card bg-base-200">
               <div class="card-body p-4 sm:p-5">
                 <div class="flex items-baseline gap-2 mb-1">

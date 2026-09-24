@@ -33,7 +33,7 @@
               inotify-tools
               watchman
               nodejs
-              pnpm
+              pnpm_12
               uv
               (writeShellScriptBin "dev" "exec mix phx.server $@")
             ];
