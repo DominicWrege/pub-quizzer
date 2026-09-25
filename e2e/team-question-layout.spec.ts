@@ -1,6 +1,6 @@
 import { test, expect, setupQuiz } from "./fixtures"
 
-test("team reads the question and choices on a phone without answer leakage or overflow", async ({
+test("team sees topic, question progress and choices on a phone without the prompt or overflow", async ({
   browser,
   hostPage,
 }, testInfo) => {
@@ -15,7 +15,11 @@ test("team reads the question and choices on a phone without answer leakage or o
     await team.setViewportSize({ width: 390, height: 844 })
 
     const prompt = (await hostPage.locator('[data-test="question-prompt"]').innerText()).trim()
-    await expect(team.locator("#team-question-prompt")).toHaveText(prompt)
+    const topic = (await hostPage.locator("h3:has-text('Frage 1 /') + span").innerText()).trim()
+    await expect(team.locator("#team-question-topic")).toHaveText(topic)
+    await expect(team.locator("#team-question-progress")).toContainText(/Frage 1 \/ \d+/)
+    await expect(team.locator("#team-question-prompt")).toHaveCount(0)
+    await expect(team.locator("main")).not.toContainText(prompt)
     await expect(team.locator('[phx-click="select_answer"]')).toHaveCount(4)
     await expect(team.locator("main")).not.toContainText("Richtige Antwort:")
 

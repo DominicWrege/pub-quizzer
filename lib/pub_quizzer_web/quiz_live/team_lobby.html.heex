@@ -51,7 +51,7 @@
     </div>
   <% end %>
 
-  <%!-- Question phase: current prompt and choices, without the correct-answer key --%>
+  <%!-- Question phase: topic and choices; the prompt is shown by the moderator --%>
   <%= if @engine_state.status == :question do %>
     <% answered = PubQuizzer.Quiz.EngineState.answered_teams(@engine_state) %>
     <% our_answer =
@@ -59,28 +59,23 @@
     <% question = Enum.at(@engine_state.current_questions, @engine_state.question_index) %>
 
     <div class="mb-4 animate-fade-in">
-      <div class="flex items-center justify-between mb-3">
-        <div>
-          <h3 class="text-sm font-semibold">
+      <div class="flex items-start justify-between gap-3 mb-5">
+        <div class="min-w-0">
+          <%= if @current_topic_name do %>
+            <h2 id="team-question-topic" class="text-xl font-bold leading-tight break-words mb-1">
+              {@current_topic_name}
+            </h2>
+          <% end %>
+          <p id="team-question-progress" class="text-base font-semibold tabular-nums">
             Frage {(@engine_state.question_index || 0) + 1} / {length(
               @engine_state.current_questions
             )}
-          </h3>
-          <%= if @current_topic_name do %>
-            <span class="text-xs text-base-content/60">{@current_topic_name}</span>
-          <% end %>
+          </p>
         </div>
-        <span class="badge badge-ghost badge-sm text-xs">
+        <span class="badge badge-ghost badge-sm text-xs shrink-0">
           {MapSet.size(answered)} / {length(@engine_state.teams)} geantwortet
         </span>
       </div>
-
-      <h2
-        id="team-question-prompt"
-        class="text-lg font-semibold leading-snug whitespace-pre-line break-words mb-4"
-      >
-        {question.prompt}
-      </h2>
 
       <div class="flex flex-col gap-2">
         <%= for {option, shuffled_idx} <- Enum.with_index(@shuffled_options) do %>

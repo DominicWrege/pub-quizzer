@@ -161,7 +161,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
   end
 
   describe "question phase" do
-    test "shows question and options without marking the right answer", %{
+    test "shows topic, question progress and options without the prompt or answer key", %{
       conn: conn,
       event: event,
       topic: topic,
@@ -170,13 +170,16 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       Engine.start_quiz(event.id)
       Engine.choose_topic(event.id, topic.id, nil)
 
-      {:ok, view, html} =
+      {:ok, view, _html} =
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
 
       assert has_element?(view, "button[phx-click='select_answer']")
-      assert html =~ "What is 2+2?"
-      refute html =~ "Capital of France?"
-      refute html =~ "Richtige Antwort"
+      assert has_element?(view, "#team-question-topic", topic.name)
+      assert has_element?(view, "#team-question-progress", "Frage 1 / 2")
+      refute has_element?(view, "#team-question-prompt")
+      refute has_element?(view, "main", "What is 2+2?")
+      refute has_element?(view, "main", "Capital of France?")
+      refute has_element?(view, "main", "Richtige Antwort")
     end
 
     test "clicking an option submits the answer", %{
@@ -238,7 +241,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       assert html =~ "Antwort abgegeben!"
     end
 
-    test "shows the current question prompt on the team device", %{
+    test "does not show an image question prompt on the team device", %{
       conn: conn,
       event: event,
       team: team
@@ -259,10 +262,11 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       Engine.start_quiz(event.id)
       Engine.choose_topic(event.id, topic_with_image.id, nil)
 
-      {:ok, _view, html} =
+      {:ok, view, _html} =
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
 
-      assert html =~ "What is in this picture?"
+      assert has_element?(view, "#team-question-topic", topic_with_image.name)
+      refute has_element?(view, "main", "What is in this picture?")
     end
   end
 
