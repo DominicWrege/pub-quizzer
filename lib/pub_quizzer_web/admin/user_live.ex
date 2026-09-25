@@ -163,23 +163,30 @@ defmodule PubQuizzerWeb.Admin.UserLive do
         for={@form}
         id="add-user-form"
         phx-submit="invite"
+        autocomplete="off"
         class="flex flex-col sm:flex-row gap-2 sm:items-center"
       >
         <input
           type="text"
           name="name"
           placeholder="Name"
-          class="input input-sm w-full sm:flex-1"
+          class="input input-bordered w-full sm:flex-1"
           required
-          autocomplete="name"
+          autocomplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          data-bwignore
         />
         <input
           type="email"
           name="email"
           placeholder="name@beispiel.de"
-          class="input input-sm w-full sm:flex-1"
+          class="input input-bordered w-full sm:flex-1"
           required
-          autocomplete="email"
+          autocomplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          data-bwignore
         />
         <button type="submit" class="btn btn-primary btn-sm shrink-0 w-full sm:w-44 gap-1.5">
           <.icon name="hero-plus" class="size-4" /> Hinzufügen
@@ -217,7 +224,16 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           </div>
           <div class="text-xs text-base-content/60 mt-1">
             <%= if user.last_signed_in_at do %>
-              Zuletzt: {Calendar.strftime(user.last_signed_in_at, "%d.%m.%y %H:%M")}
+              Zuletzt:
+              <time
+                id={"user-login-mobile-#{user.id}"}
+                datetime={DateTime.to_iso8601(user.last_signed_in_at)}
+                data-utc-time={DateTime.to_iso8601(user.last_signed_in_at)}
+                phx-hook=".LocalLoginTime"
+                phx-update="ignore"
+              >
+                —
+              </time>
             <% else %>
               Nie angemeldet
             <% end %>
@@ -290,7 +306,15 @@ defmodule PubQuizzerWeb.Admin.UserLive do
               </td>
               <td class="text-sm text-base-content/60">
                 <%= if user.last_signed_in_at do %>
-                  {Calendar.strftime(user.last_signed_in_at, "%d.%m.%y %H:%M")}
+                  <time
+                    id={"user-login-desktop-#{user.id}"}
+                    datetime={DateTime.to_iso8601(user.last_signed_in_at)}
+                    data-utc-time={DateTime.to_iso8601(user.last_signed_in_at)}
+                    phx-hook=".LocalLoginTime"
+                    phx-update="ignore"
+                  >
+                    —
+                  </time>
                 <% else %>
                   —
                 <% end %>
@@ -367,6 +391,25 @@ defmodule PubQuizzerWeb.Admin.UserLive do
           </.form>
         </dialog>
       <% end %>
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".LocalLoginTime">
+        const dateFormat = new Intl.DateTimeFormat("de-DE", {
+          day: "2-digit", month: "2-digit", year: "2-digit",
+        })
+        const timeFormat = new Intl.DateTimeFormat("de-DE", {
+          hour: "2-digit", minute: "2-digit",
+        })
+
+        export default {
+          mounted() { this.localize() },
+          updated() { this.localize() },
+          localize() {
+            const date = new Date(this.el.dataset.utcTime)
+            if (!Number.isNaN(date.getTime())) {
+              this.el.textContent = `${dateFormat.format(date)} ${timeFormat.format(date)}`
+            }
+          },
+        }
+      </script>
     </Layouts.app>
     """
   end

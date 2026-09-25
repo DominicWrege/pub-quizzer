@@ -68,7 +68,7 @@ config :esbuild,
     args:
       ~w(js/app.ts --bundle --minify --target=es2017 --outdir=../priv/static/assets/js --entry-names=app),
     cd: Path.expand("../assets", __DIR__),
-    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+    env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
   ]
 
 # Configure tailwind (the version is required)

@@ -3,6 +3,7 @@ defmodule PubQuizzerWeb.Admin.UserLiveTest do
 
   import Phoenix.LiveViewTest
   alias PubQuizzer.Accounts
+  alias PubQuizzer.Repo
 
   defp auth_conn(conn) do
     log_in_superadmin(conn)
@@ -31,6 +32,21 @@ defmodule PubQuizzerWeb.Admin.UserLiveTest do
       assert html =~ "Zoe"
       assert html =~ "Anna"
       assert html =~ "Max"
+    end
+
+    test "exposes UTC login instants for local display on desktop and mobile", %{conn: conn} do
+      user = create_user(email: "signed-in@test.com")
+      signed_in_at = ~U[2026-01-15 17:45:00Z]
+      user |> Ecto.Changeset.change(last_signed_in_at: signed_in_at) |> Repo.update!()
+
+      {:ok, view, _html} = conn |> auth_conn() |> live(~p"/admin/users")
+
+      for selector <- ["#user-#{user.id}", "#user-card-#{user.id}"] do
+        assert has_element?(view, "#{selector} time[datetime='2026-01-15T17:45:00Z']")
+        assert has_element?(view, "#{selector} time", "—")
+      end
+
+      refute has_element?(view, "main", "17:45 UTC")
     end
   end
 

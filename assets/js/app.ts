@@ -1,6 +1,7 @@
 import "phoenix_html"
 import { Socket } from "phoenix"
 import { LiveSocket, type ViewHook } from "phoenix_live_view"
+import { hooks as colocatedHooks } from "phoenix-colocated/pub_quizzer"
 import HostScreen from "./wake-lock"
 
 // Phoenix LiveView hooks accept plain object literals — `this` is bound to the
@@ -592,6 +593,7 @@ const liveSocket = new LiveSocket("/live", Socket, {
     }
   },
   hooks: {
+    ...colocatedHooks,
     AutoDismiss,
     ReportUploadedImage,
     OptionImagePreview,
