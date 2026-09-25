@@ -128,9 +128,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
     """
   end
 
-  @doc "Prompt textarea and question-image upload zone."
+  @doc "Prompt textarea and existing question images."
   attr :form, :any, required: true
-  attr :uploads, :map, required: true
   attr :question, :any, default: nil
 
   def prompt_card(assigns) do
@@ -161,71 +160,27 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
         ><%= @form[:prompt].value || "" %></textarea>
 
         <div
-          id="image-upload-zone"
-          phx-drop-target={@uploads.image.ref}
-          class={[
-            "rounded-lg border-2 border-dashed transition-colors",
-            @uploads.image.entries != [] && "border-primary bg-primary/5",
-            @uploads.image.entries == [] && "border-base-300 hover:border-base-content/30",
-            existing_images == [] && "hidden sm:block"
-          ]}
+          :if={existing_images != []}
+          id="question-images"
+          class="flex flex-wrap justify-center gap-2"
         >
-          <div class="p-1">
-            <%= if existing_images != [] or @uploads.image.entries != [] do %>
-              <div class="flex flex-wrap justify-center gap-2">
-                <%= for {img, idx} <- Enum.with_index(existing_images) do %>
-                  <div class="relative inline-block">
-                    <img
-                      src={img}
-                      alt="Aktuelles Bild"
-                      phx-click="view_image"
-                      phx-value-url={img}
-                      class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain cursor-zoom-in"
-                    />
-                    <button
-                      type="button"
-                      phx-click="remove_image"
-                      phx-value-index={idx}
-                      class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
-                    >×</button>
-                  </div>
-                <% end %>
-                <%= for entry <- @uploads.image.entries do %>
-                  <div
-                    id={"upload-entry-#{entry.ref}"}
-                    phx-update="ignore"
-                    phx-hook="ReportUploadedImage"
-                    class="relative inline-block"
-                  >
-                    <img
-                      id={"img-preview-#{entry.ref}"}
-                      phx-hook="Phoenix.LiveImgPreview"
-                      data-phx-entry-ref={entry.ref}
-                      data-phx-upload-ref={@uploads.image.ref}
-                      alt="Vorschau"
-                      class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain"
-                    />
-                    <button
-                      type="button"
-                      phx-click="cancel_upload"
-                      phx-value-ref={entry.ref}
-                      class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
-                    >×</button>
-                  </div>
-                <% end %>
-              </div>
-            <% else %>
-              <div class="flex flex-row sm:flex-col items-center justify-center gap-1.5 sm:gap-1 py-1.5 sm:py-2 text-base-content/40">
-                <.icon name="hero-photo" class="size-5 sm:size-6" />
-                <span class="text-xs">Keine Bilder ausgewählt</span>
-              </div>
-            <% end %>
-          </div>
-          <label class="hidden sm:flex items-center justify-center gap-2 px-3 py-1.5 cursor-pointer text-xs text-base-content/70 hover:text-base-content hover:bg-base-300/50 transition-colors rounded-b-lg border-t border-base-300 select-none">
-            <.icon name="hero-photo" class="size-4" />
-            <span>Bilder hinzufügen</span>
-            <.live_file_input upload={@uploads.image} class="sr-only" />
-          </label>
+          <%= for {img, idx} <- Enum.with_index(existing_images) do %>
+            <div class="relative inline-block">
+              <img
+                src={img}
+                alt="Aktuelles Bild"
+                phx-click="view_image"
+                phx-value-url={img}
+                class="block rounded-lg max-h-36 sm:max-h-56 max-w-full object-contain cursor-zoom-in"
+              />
+              <button
+                type="button"
+                phx-click="remove_image"
+                phx-value-index={idx}
+                class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
+              >×</button>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>
@@ -234,8 +189,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
   @doc "The four answer-option rows with click-to-select and drag-to-sort."
   attr :form, :any, required: true
-  attr :uploads, :map, required: true
-  attr :option_image_previews, :map, default: %{}
 
   def option_rows(assigns) do
     ~H"""
@@ -295,17 +248,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
                 rows="2"
               ><%= opt_text %></textarea>
 
-              <%= if @option_image_previews[i] == nil and opt_img == nil do %>
-                <label
-                  for={live_option_upload(assigns, i).ref}
-                  onclick="event.stopPropagation()"
-                  title="Bild hinzufügen"
-                  class="hidden sm:inline-flex shrink-0 mt-2 items-center justify-center size-10 rounded-md border border-base-300 text-base-content/50 bg-base-200 hover:bg-base-300 hover:text-base-content cursor-pointer transition-colors select-none"
-                >
-                  <.icon name="hero-photo" class="size-6" />
-                </label>
-              <% end %>
-
               <div class={[
                 "hidden sm:block pt-2 shrink-0 transition-opacity",
                 is_correct && "opacity-100",
@@ -323,56 +265,28 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
             </div>
 
             <div
-              id={"option-image-zone-#{i}"}
-              data-option-index={i}
-              phx-hook="OptionImagePreview"
-              phx-drop-target={live_option_upload(assigns, i).ref}
+              :if={opt_img != nil}
+              id={"option-image-#{i}"}
               class="mt-2 ml-8 sm:ml-16"
             >
-              <.live_file_input upload={live_option_upload(assigns, i)} class="sr-only" />
-
-              <%= cond do %>
-                <% preview = @option_image_previews[i] -> %>
-                  <button
-                    type="button"
-                    phx-click="view_image"
-                    phx-value-url={preview}
-                    class="sm:hidden btn btn-xs btn-ghost gap-1 select-none"
-                  >
-                    <.icon name="hero-photo" class="size-4" />
-                    <span class="text-xs">Bild</span>
-                  </button>
-                  <div class="hidden sm:block relative w-fit">
-                    <img src={preview} class="h-40 max-w-full rounded border border-base-300" />
-                    <button
-                      type="button"
-                      phx-click="cancel_option_upload"
-                      phx-value-index={i}
-                      class="btn btn-xs btn-circle absolute -top-2 -right-2 select-none"
-                    >×</button>
-                  </div>
-                <% img = opt_img -> %>
-                  <button
-                    type="button"
-                    phx-click="view_image"
-                    phx-value-url={img}
-                    class="sm:hidden btn btn-xs btn-ghost gap-1 select-none"
-                  >
-                    <.icon name="hero-photo" class="size-4" />
-                    <span class="text-xs">Bild</span>
-                  </button>
-                  <div class="hidden sm:block relative w-fit group">
-                    <img src={img} class="h-40 max-w-full rounded border border-base-300" />
-                    <button
-                      type="button"
-                      phx-click="remove_option_image"
-                      phx-value-index={i}
-                      class="btn btn-xs btn-circle absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 select-none"
-                    >×</button>
-                  </div>
-                <% true -> %>
-                  <% :ok %>
-              <% end %>
+              <button
+                type="button"
+                phx-click="view_image"
+                phx-value-url={opt_img}
+                class="sm:hidden btn btn-xs btn-ghost gap-1 select-none"
+              >
+                <.icon name="hero-photo" class="size-4" />
+                <span class="text-xs">Bild</span>
+              </button>
+              <div class="hidden sm:block relative w-fit group">
+                <img src={opt_img} class="h-40 max-w-full rounded border border-base-300" />
+                <button
+                  type="button"
+                  phx-click="remove_option_image"
+                  phx-value-index={i}
+                  class="btn btn-xs btn-circle absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 select-none"
+                >×</button>
+              </div>
             </div>
           </div>
         <% end %>
@@ -496,8 +410,6 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
   @doc "Editor pane: toolbar plus the question form content."
   attr :form, :any, required: true
   attr :question, :any, required: true
-  attr :uploads, :map, required: true
-  attr :option_image_previews, :map, required: true
   attr :form_submitted, :boolean, required: true
 
   def editor_pane(assigns) do
@@ -520,12 +432,8 @@ defmodule PubQuizzerWeb.Admin.QuestionLive do
 
       <.status_card form={@form} />
       <.form_errors form={@form} submitted={@form_submitted} />
-      <.prompt_card form={@form} uploads={@uploads} question={@question} />
-      <.option_rows
-        form={@form}
-        uploads={@uploads}
-        option_image_previews={@option_image_previews}
-      />
+      <.prompt_card form={@form} question={@question} />
+      <.option_rows form={@form} />
     </div>
     """
   end

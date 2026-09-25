@@ -93,23 +93,21 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
       current_path={@current_path}
       max_width="max-w-7xl"
     >
-      <.header>
-        <div class="flex items-baseline gap-2 sm:gap-3 flex-wrap">
-          <span>Fragen-Bericht</span>
-          <span class="text-sm text-base-content/70 whitespace-nowrap">
-            {length(@entries)} Fragen aus allen abgeschlossenen Quiz
-          </span>
-        </div>
+      <.header inline_actions>
+        Fragen-Bericht
+        <:subtitle>{length(@entries)} Fragen aus allen abgeschlossenen Quiz</:subtitle>
         <:back>
-          <.link navigate={~p"/admin/events"} class="btn btn-sm btn-soft">
-            <.icon name="hero-chevron-left" class="size-4" /> Zurück
-          </.link>
+          <.back_link navigate={~p"/admin/events"} />
         </:back>
       </.header>
 
-      <div id="question-report-filters" class="mb-4">
-        <form phx-change="filter" id="question-report-filter-form" class="flex flex-wrap gap-2">
-          <select name="topic_id" class="select select-sm select-bordered">
+      <div id="question-report-filters" class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <form phx-change="filter" id="question-report-filter-form" class="w-full sm:w-auto">
+          <select
+            name="topic_id"
+            aria-label="Thema filtern"
+            class="select select-sm select-bordered w-full sm:w-auto"
+          >
             <option value="" selected={@topic_filter == ""}>Alle Themen</option>
             <option
               :for={{id, name} <- @topics}
@@ -120,11 +118,37 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
             </option>
           </select>
         </form>
+        <div class="flex items-center gap-2 lg:hidden">
+          <form id="question-report-mobile-sort" phx-change="sort" class="min-w-0 flex-1">
+            <select
+              name="key"
+              aria-label="Sortieren nach"
+              class="select select-sm select-bordered w-full"
+            >
+              <option value="name" selected={@sort_key == "name"}>Frage</option>
+              <option value="asked" selected={@sort_key == "asked"}>Gefragt</option>
+              <option value="answers" selected={@sort_key == "answers"}>Antworten</option>
+              <option value="wrong" selected={@sort_key == "wrong"}>Falsch</option>
+              <option value="right" selected={@sort_key == "right"}>Richtig</option>
+            </select>
+          </form>
+          <button
+            type="button"
+            id="question-report-sort-direction"
+            class="btn btn-sm"
+            phx-click="sort"
+            phx-value-key={@sort_key}
+            aria-label="Sortierreihenfolge umkehren"
+          >
+            <span aria-hidden="true">{if @sort_dir == :asc, do: "↑", else: "↓"}</span>
+            {if @sort_dir == :asc, do: "Aufsteigend", else: "Absteigend"}
+          </button>
+        </div>
       </div>
 
-      <div class="overflow-x-auto rounded-lg border-2 border-base-300">
-        <table class="table table-sm">
-          <thead>
+      <div class="lg:overflow-x-auto lg:rounded-lg lg:border-2 lg:border-base-300">
+        <table class="table table-sm block! w-full lg:table!">
+          <thead class="hidden lg:table-header-group">
             <tr class="border-b-2 border-base-300 bg-base-300">
               <th class="px-4 py-3">
                 <.sort_button label="Frage" key="name" sort_key={@sort_key} sort_dir={@sort_dir} />
@@ -150,30 +174,40 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
               <th class="px-4 py-3">Falle</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-base-300">
-            <tr :if={@rows == []} id="question-report-empty" class="bg-base-200">
-              <td colspan="7" class="px-4 py-6 text-center text-base-content/70">
+          <tbody class="block space-y-3 lg:table-row-group lg:space-y-0 lg:divide-y lg:divide-base-300">
+            <tr
+              :if={@rows == []}
+              id="question-report-empty"
+              class="block rounded-lg border border-base-300 bg-base-200 lg:table-row lg:rounded-none lg:border-0"
+            >
+              <td colspan="7" class="block px-4 py-6 text-center text-base-content/70 lg:table-cell">
                 Keine Fragen aus abgeschlossenen Quiz gefunden.
               </td>
             </tr>
             <tr
               :for={entry <- @rows}
               id={"question-report-#{entry.question.id}"}
-              class="bg-base-200 hover:bg-base-300/60"
+              class="grid grid-cols-2 overflow-hidden rounded-lg border border-base-300 bg-base-200 hover:bg-base-300/60 lg:table-row lg:rounded-none lg:border-0"
             >
-              <td class="px-4 py-3">
-                <div class="font-medium">{entry.question.prompt}</div>
+              <td class="col-span-2 block min-w-0 border-b border-base-300 px-4 py-3 lg:table-cell lg:border-0">
+                <div class="font-medium break-words">{entry.question.prompt}</div>
                 <div class="text-xs text-base-content/60">{entry.topic_name}</div>
                 <div class="text-xs text-success">
                   Richtig: {Enum.map_join(entry.correct_options, ", ", &letter_for_index/1)}
                 </div>
               </td>
-              <td class="px-4 py-3 text-center font-mono">{entry.asked_in}×</td>
-              <td class="px-4 py-3 text-center font-mono">{entry.answers}</td>
-              <td class="px-4 py-3 text-center font-mono text-base-content/70">
+              <td class="block px-4 py-2 font-mono lg:table-cell lg:py-3 lg:text-center">
+                <span class="block font-sans text-xs text-base-content/60 lg:hidden">Gefragt</span>{entry.asked_in}×
+              </td>
+              <td class="block px-4 py-2 font-mono lg:table-cell lg:py-3 lg:text-center">
+                <span class="block font-sans text-xs text-base-content/60 lg:hidden">Antworten</span>{entry.answers}
+              </td>
+              <td class="block px-4 py-2 font-mono text-base-content/70 lg:table-cell lg:py-3 lg:text-center">
+                <span class="block font-sans text-xs text-base-content/60 lg:hidden">Falsch</span>
                 {entry.answers - entry.correct}
               </td>
-              <td class="px-4 py-3 text-center">
+              <td class="block px-4 py-2 lg:table-cell lg:py-3 lg:text-center">
+                <span class="block text-xs text-base-content/60 lg:hidden">Richtig</span>
                 <span class={[
                   "font-mono font-bold",
                   entry.pct < 40 && "text-error",
@@ -183,7 +217,8 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
                   {entry.pct} %
                 </span>
               </td>
-              <td class="px-4 py-3">
+              <td class="col-span-2 block min-w-0 px-4 py-3 lg:table-cell">
+                <span class="mb-1 block text-xs text-base-content/60 lg:hidden">Verteilung</span>
                 <div class="flex h-6 w-full overflow-hidden rounded-md border border-base-300 bg-base-200">
                   <%= for {idx, count} <- Enum.sort(entry.picks), count > 0 do %>
                     <div
@@ -201,7 +236,8 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
                   <% end %>
                 </div>
               </td>
-              <td class="px-4 py-3 text-sm">
+              <td class="col-span-2 block border-t border-base-300 px-4 py-2 text-sm lg:table-cell lg:border-0 lg:py-3">
+                <span class="mr-2 text-xs text-base-content/60 lg:hidden">Falle</span>
                 <%= if entry.trap do %>
                   <% {idx, count} = entry.trap %>
                   <span class="font-mono font-bold">{letter_for_index(idx)}</span>

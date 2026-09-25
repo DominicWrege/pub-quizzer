@@ -60,7 +60,7 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
     test "shows new page with 4 option inputs", %{conn: conn} do
       topic = create_topic()
 
-      {:ok, _view, html} =
+      {:ok, view, html} =
         conn
         |> auth_conn()
         |> live(~p"/admin/topics/#{topic}/questions/new")
@@ -69,6 +69,10 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
       assert html =~ "question_options_1"
       assert html =~ "question_options_2"
       assert html =~ "question_options_3"
+
+      refute has_element?(view, "input[type='file']")
+      refute has_element?(view, "#image-upload-zone")
+      refute has_element?(view, "label[title='Bild hinzufügen']")
     end
   end
 
@@ -187,6 +191,11 @@ defmodule PubQuizzerWeb.Admin.QuestionLiveTest do
         conn
         |> auth_conn()
         |> live(~p"/admin/topics/#{topic}/questions/#{question}/edit")
+
+      refute has_element?(view, "input[type='file']")
+      refute has_element?(view, "#image-upload-zone")
+      refute has_element?(view, "label[title='Bild hinzufügen']")
+      assert has_element?(view, "#question-mobile-meta[class*='lg:hidden'] .card")
 
       view
       |> form("#question-form", %{

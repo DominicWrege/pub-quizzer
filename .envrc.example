@@ -1,4 +1,5 @@
 use flake
 
 export RESEND_API_KEY="re_..."
-export MAIL_FROM="noreply@kneipenquiz.dwrege.de"
+# Use a complete sender address on a domain verified with Resend.
+export MAIL_FROM="Quiz for a better life <noreply@quizforabetterlife.eu>"

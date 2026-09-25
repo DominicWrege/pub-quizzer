@@ -61,12 +61,7 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
           </span>
         </div>
         <:back>
-          <.link
-            navigate={~p"/admin/events"}
-            class="btn btn-sm btn-soft"
-          >
-            <.icon name="hero-chevron-left" class="size-4" /> Zurück
-          </.link>
+          <.back_link navigate={~p"/admin/events"} />
         </:back>
       </.header>
 

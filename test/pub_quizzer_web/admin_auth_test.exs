@@ -12,6 +12,8 @@ defmodule PubQuizzerWeb.AdminAuthTest do
       conn = get(conn, ~p"/admin/login")
       assert html_response(conn, 200) =~ "Login"
       assert html_response(conn, 200) =~ "admin-login-form"
+      assert html_response(conn, 200) =~ ~s(aria-label="Zurück zur Startseite")
+      assert html_response(conn, 200) =~ "btn-square"
     end
 
     test "GET /admin/login redirects to /setup when no users exist", %{conn: conn} do

@@ -404,6 +404,7 @@ defmodule PubQuizzerWeb.CoreComponents do
   """
   attr :navigate, :string, required: true
   attr :label, :string, default: "Zurück"
+  attr :class, :any, default: nil
 
   def back_link(assigns) do
     ~H"""
@@ -411,7 +412,7 @@ defmodule PubQuizzerWeb.CoreComponents do
       navigate={@navigate}
       aria-label={@label}
       title={@label}
-      class="btn btn-soft btn-sm btn-square shrink-0"
+      class={["btn btn-soft btn-sm btn-square shrink-0", @class]}
     >
       <.icon name="hero-arrow-left" class="size-4" />
     </.link>

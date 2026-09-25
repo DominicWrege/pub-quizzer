@@ -98,10 +98,12 @@
         <% question_count = length(topic.questions) %>
         <% draft_count = Enum.count(topic.questions, &(&1.status == "draft")) %>
         <% published_count = question_count - draft_count %>
-        <div
+        <.link
+          navigate={~p"/admin/topics/#{topic}/questions"}
           id={"topics-#{topic.id}"}
+          aria-label={"Fragen für #{topic.name} bearbeiten"}
           class={[
-            "card bg-base-200 shadow-sm",
+            "card bg-base-200 shadow-sm transition-colors hover:bg-base-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
             !topic.enabled && "opacity-80 border-2 border-dashed border-base-300"
           ]}
         >
@@ -133,15 +135,7 @@
               <% end %>
             </div>
           </div>
-          <div class="flex justify-end gap-2 px-6 py-3 border-t border-base-300">
-            <.link
-              navigate={~p"/admin/topics/#{topic}/questions"}
-              class="btn btn-primary btn-sm"
-            >
-              <.icon name="hero-pencil" class="size-4" /> Bearbeiten
-            </.link>
-          </div>
-        </div>
+        </.link>
       <% end %>
     </div>
   <% end %>

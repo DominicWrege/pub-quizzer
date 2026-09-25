@@ -33,12 +33,8 @@
 
     <.status_card form={@form} />
     <.form_errors form={@form} submitted={@form_submitted} />
-    <.prompt_card form={@form} uploads={@uploads} question={@question} />
-    <.option_rows
-      form={@form}
-      uploads={@uploads}
-      option_image_previews={@option_image_previews}
-    />
+    <.prompt_card form={@form} question={@question} />
+    <.option_rows form={@form} />
   </.form>
 
   <.image_lightbox url={@viewing_image} />

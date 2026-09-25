@@ -10,9 +10,9 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
 
   describe "index" do
     test "lists topics", %{conn: conn} do
-      {:ok, _topic} = Quiz.create_topic(%{name: "Geography", description: "World facts"})
+      {:ok, topic} = Quiz.create_topic(%{name: "Geography", description: "World facts"})
 
-      {:ok, _view, html} =
+      {:ok, view, html} =
         conn
         |> auth_conn()
         |> live(~p"/admin/topics")
@@ -20,6 +20,13 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
       assert html =~ "Themen"
       assert html =~ "Geography"
       assert html =~ "World facts"
+
+      assert has_element?(
+               view,
+               "a#topics-#{topic.id}[href='/admin/topics/#{topic.id}/questions']"
+             )
+
+      refute has_element?(view, "#topics-#{topic.id} a", "Bearbeiten")
     end
 
     test "highlights draft questions in the topic summary", %{conn: conn} do
@@ -119,7 +126,7 @@ defmodule PubQuizzerWeb.Admin.TopicLiveTest do
         |> auth_conn()
         |> live(~p"/admin/topics")
 
-      assert has_element?(view, "div#topics-#{topic.id} .badge-success", "Aktiv")
+      assert has_element?(view, "a#topics-#{topic.id} .badge-success", "Aktiv")
     end
   end
 end

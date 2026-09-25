@@ -76,6 +76,7 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
         |> live(~p"/admin/events/#{event.id}/results")
 
       assert has_element?(view, "#result-timing")
+      assert has_element?(view, "header a.btn-square[href='/admin/events'][aria-label='Zurück']")
       assert has_element?(view, "#result-timing", "47 Min.")
       assert has_element?(view, "#result-timing", "2 Min.")
     end

@@ -356,6 +356,11 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       html = render(view)
       assert html =~ "Punkten!"
       assert has_element?(view, ~s|#host-winner-line|)
+
+      assert has_element?(
+               view,
+               "a.btn-square[href='/admin/events'][aria-label='Zurück zur Übersicht']"
+             )
     end
   end
 

@@ -197,14 +197,15 @@
             <.editor_pane
               form={@form}
               question={@question}
-              uploads={@uploads}
-              option_image_previews={@option_image_previews}
               form_submitted={@form_submitted}
             />
           </div>
 
           <%!-- Right column: status + edit history --%>
-          <div class="min-w-0 lg:h-full lg:overflow-y-auto lg:border-l lg:border-base-300 lg:px-4 lg:pb-6">
+          <div
+            id="question-meta-desktop"
+            class="hidden min-w-0 lg:block lg:h-full lg:overflow-y-auto lg:border-l lg:border-base-300 lg:px-4 lg:pb-6"
+          >
             <%= if @meta_collapsed do %>
               <div class="flex flex-col items-center gap-2 pt-3">
                 <button
@@ -235,6 +236,10 @@
               </div>
               <.meta_pane versions={@versions} />
             <% end %>
+          </div>
+
+          <div id="question-mobile-meta" class="pt-3 lg:hidden">
+            <.meta_pane versions={@versions} />
           </div>
         </.form>
       <% else %>

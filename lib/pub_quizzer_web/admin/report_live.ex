@@ -37,14 +37,13 @@ defmodule PubQuizzerWeb.Admin.ReportLive do
             )}
           </span>
         </div>
-        <:actions>
-          <.link
+        <:back>
+          <.back_link
             navigate={~p"/admin/events/#{@report.event.id}/results"}
-            class="btn btn-sm btn-soft print:hidden"
-          >
-            <.icon name="hero-chevron-left" class="size-4" /> Ergebnisse
-          </.link>
-        </:actions>
+            label="Ergebnisse"
+            class="print:hidden"
+          />
+        </:back>
       </.header>
 
       <div id="report-timing" class="mb-8 text-sm text-base-content/70">

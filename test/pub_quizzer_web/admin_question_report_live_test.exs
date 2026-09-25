@@ -146,6 +146,23 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
       assert render(view) =~ ~r/Easy question.*Hard question/s
     end
 
+    test "mobile sort control reorders the questions", %{conn: conn} do
+      %{q1: q1, q2: q2} = seed()
+
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+
+      assert has_element?(view, "#question-report-mobile-sort select")
+      assert has_element?(view, "header a.btn-square[href='/admin/events'][aria-label='Zurück']")
+
+      view
+      |> element("#question-report-mobile-sort")
+      |> render_change(%{"key" => "name"})
+
+      assert has_element?(view, "#question-report-#{q1.id}")
+      assert has_element?(view, "#question-report-#{q2.id}")
+      assert render(view) =~ ~r/Easy question.*Hard question/s
+    end
+
     test "filters by topic", %{conn: conn} do
       %{q1: q1, qc: qc, topic_c: topic_c} = seed()
 
@@ -155,7 +172,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
         |> live(~p"/admin/question-report")
 
       view
-      |> element("#question-report-filters form")
+      |> element("#question-report-filter-form")
       |> render_change(%{"topic_id" => topic_c.id})
 
       refute has_element?(view, "#question-report-#{q1.id}")

@@ -81,6 +81,12 @@ defmodule PubQuizzerWeb.Admin.ReportLiveTest do
 
       card1 = "#question-card-#{round.id}-#{q1.id}"
       card2 = "#question-card-#{round.id}-#{q2.id}"
+
+      assert has_element?(
+               view,
+               "header a.btn-square[href='/admin/events/#{event.id}/results'][aria-label='Ergebnisse']"
+             )
+
       assert has_element?(view, card1)
       assert has_element?(view, "#{card1} [data-correct='true']", "B")
       assert has_element?(view, "#{card1} [data-correct='false']", "A")

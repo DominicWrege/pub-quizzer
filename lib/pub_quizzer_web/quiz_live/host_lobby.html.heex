@@ -304,12 +304,7 @@
       <% end %>
 
       <div class="mt-5 flex justify-center gap-3">
-        <.link
-          navigate={~p"/admin/events"}
-          class="btn btn-soft text-base px-6 py-2.5"
-        >
-          <.icon name="hero-chevron-left" class="size-5" /> Zurück zur Übersicht
-        </.link>
+        <.back_link navigate={~p"/admin/events"} label="Zurück zur Übersicht" />
         <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
           <.link
             navigate={~p"/admin/events/#{@event.id}/results"}
