@@ -303,6 +303,13 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       assert html =~ "Quiz beendet!"
       assert has_element?(view, "button[phx-click='reveal_final_results']")
 
+      assert view
+             |> render()
+             |> LazyHTML.from_fragment()
+             |> LazyHTML.query("a[href='/admin/events']")
+             |> LazyHTML.to_tree()
+             |> length() == 1
+
       view |> element("button[phx-click='reveal_final_results']") |> render_click()
       assert has_element?(view, ~s|#host-winner-line|)
     end
@@ -359,8 +366,21 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
 
       assert has_element?(
                view,
-               "a.btn-square[href='/admin/events'][aria-label='Zurück zur Übersicht']"
+               "header a.btn-square[href='/admin/events'][aria-label='Zurück']"
              )
+
+      assert has_element?(
+               view,
+               "a[href='/admin/events/#{event.id}/results']",
+               "Antworten ansehen"
+             )
+
+      assert view
+             |> render()
+             |> LazyHTML.from_fragment()
+             |> LazyHTML.query("a[href='/admin/events']")
+             |> LazyHTML.to_tree()
+             |> length() == 1
     end
   end
 

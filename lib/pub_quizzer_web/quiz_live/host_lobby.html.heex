@@ -303,17 +303,16 @@
         </div>
       <% end %>
 
-      <div class="mt-5 flex justify-center gap-3">
-        <.back_link navigate={~p"/admin/events"} label="Zurück zur Übersicht" />
-        <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
+      <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
+        <div class="mt-5 flex justify-center">
           <.link
             navigate={~p"/admin/events/#{@event.id}/results"}
             class="btn btn-soft text-base px-6 py-2.5"
           >
             <.icon name="hero-clipboard" class="size-5" /> Antworten ansehen
           </.link>
-        <% end %>
-      </div>
+        </div>
+      <% end %>
     <% end %>
   </div>
 
