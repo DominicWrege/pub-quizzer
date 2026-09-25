@@ -45,12 +45,19 @@ defmodule PubQuizzerWeb.Admin.EventLive do
       Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
     end
 
+    claimed_ids = claimed_team_ids(event.teams)
+
+    connected_ids =
+      claimed_ids
+      |> Enum.filter(&(Registry.lookup(PubQuizzer.TeamPresence, &1) != []))
+      |> MapSet.new()
+
     socket
     |> assign(:page_title, page_title_for(event))
     |> assign(:event, event)
     |> assign(:join_url, join_url)
-    |> assign(:connected_team_ids, MapSet.new())
-    |> assign(:all_teams_connected, false)
+    |> assign(:connected_team_ids, connected_ids)
+    |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))
     |> assign(:edit_name_dialog, false)
     |> assign(:name_form, to_form(%{"name" => event.name || ""}))
   end

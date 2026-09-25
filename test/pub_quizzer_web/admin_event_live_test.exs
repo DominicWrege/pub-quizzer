@@ -122,6 +122,19 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
       assert has_element?(view, "a[href='/admin/events/#{event.id}/team-cards']")
     end
 
+    test "shows teams already online when returning from team cards", %{conn: conn} do
+      {:ok, event} = Quiz.create_event(%{team_count: 1})
+      {:ok, _cards, _html} = conn |> auth_conn() |> live(~p"/admin/events/#{event.id}/team-cards")
+
+      {:ok, team} = Quiz.claim_team_slot(event, 0)
+      {:ok, _} = Registry.register(PubQuizzer.TeamPresence, team.id, nil)
+
+      {:ok, view, _html} = conn |> auth_conn() |> live(~p"/admin/events/#{event.id}")
+
+      assert has_element?(view, "#team-#{team.id}", "Beigetreten")
+      assert has_element?(view, "button[phx-click='do_start']:not([disabled])")
+    end
+
     test "renames event via dialog", %{conn: conn} do
       {:ok, event} = Quiz.create_event(%{team_count: 3})
 
