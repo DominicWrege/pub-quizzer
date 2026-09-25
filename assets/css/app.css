@@ -23,6 +23,8 @@
   --color-base-200: oklch(0.91 0.025 88);
   --color-base-300: oklch(0.84 0.03 85);
   --color-base-content: oklch(0.25 0.03 60);
+  --color-field: oklch(1 0 0);
+  --color-field-border: color-mix(in oklch, var(--color-base-content) 24%, var(--color-field));
 
   --color-info: oklch(0.55 0.08 210);
   --color-info-content: oklch(0.98 0 0);
@@ -64,6 +66,38 @@ textarea:focus,
 select:focus {
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* Editable fields sit on a crisp white surface so they read clearly against
+   the warm cream page. Keep the same treatment for both daisyUI controls and
+   custom editor fields, with a stronger neutral edge and visible brand focus. */
+input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+textarea,
+select {
+  background-color: var(--color-field);
+  color: var(--color-base-content);
+  border-color: var(--color-field-border);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-primary) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in oklch, var(--color-base-content) 58%, var(--color-field));
+  opacity: 1;
+}
+
+.input-error,
+.textarea-error,
+.select-error,
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+select[aria-invalid="true"] {
+  border-color: var(--color-error);
 }
 
 /* Override daisyUI's btn-soft to use a filled bg (no harsh outline) that
@@ -361,4 +395,3 @@ dialog::backdrop {
   z-index: 10;
   border-color: var(--color-primary);
 }
-
