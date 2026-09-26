@@ -68,7 +68,7 @@ beamPackages.mixRelease {
 
     # JS: resolve Phoenix dependencies and compiled colocated hooks.
     NODE_PATH="$PWD/deps:$PWD/_build/prod" esbuild assets/js/app.ts \
-      --bundle --minify --target=es2017 \
+      --bundle --minify --target=es2020 \
       --outdir=priv/static/assets/js --entry-names=app
 
     # Digest for cache-busting
