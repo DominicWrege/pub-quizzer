@@ -28,7 +28,7 @@ let
         let name = lib.baseNameOf path;
         in name != ".git" && name != "node_modules";
     };
-    hash = "sha256-9jCIPhBYyTq6sAn/DAlpJbWMZTMYocEIyxaYdUWc2hE=";
+    hash = "sha256-9SRYlHmSsAOZ6/DizovF0d3GlaaWPgb+coV+s5b8CZs=";
     fetcherVersion = 4;
   };
 in
