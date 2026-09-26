@@ -89,6 +89,45 @@ defmodule PubQuizzerWeb.Admin.ImportLive do
     end
   end
 
+  def handle_event("toggle_question_status", %{"topic" => topic, "question" => question}, socket) do
+    with %{importable: importable} = result <- socket.assigns.result,
+         {topic_index, ""} <- Integer.parse(topic),
+         {question_index, ""} <- Integer.parse(question),
+         %{questions: questions} when topic_index >= 0 and question_index >= 0 <-
+           Enum.at(importable, topic_index),
+         question when not is_nil(question) <- Enum.at(questions, question_index) do
+      status = if question["status"] == "published", do: "draft", else: "published"
+
+      importable =
+        List.update_at(importable, topic_index, fn topic ->
+          Map.update!(topic, :questions, fn questions ->
+            List.update_at(questions, question_index, &Map.put(&1, "status", status))
+          end)
+        end)
+
+      {:noreply, assign(socket, :result, %{result | importable: importable})}
+    else
+      _ -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("publish_all", _params, socket) do
+    case socket.assigns.result do
+      %{importable: importable} = result ->
+        importable =
+          Enum.map(importable, fn topic ->
+            Map.update!(topic, :questions, fn questions ->
+              Enum.map(questions, &Map.put(&1, "status", "published"))
+            end)
+          end)
+
+        {:noreply, assign(socket, :result, %{result | importable: importable})}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
   def handle_event("confirm_import", _params, socket) do
     case socket.assigns.result do
       %{importable: [_ | _] = importable} ->
@@ -155,8 +194,11 @@ defmodule PubQuizzerWeb.Admin.ImportLive do
 
       <%= if @result.importable != [] do %>
         <div class="space-y-3">
-          <div :for={topic <- @result.importable} class="rounded-xl border-2 border-base-300">
-            <details>
+          <div
+            :for={{topic, topic_index} <- Enum.with_index(@result.importable)}
+            class="rounded-xl border-2 border-base-300"
+          >
+            <details open>
               <summary class="flex cursor-pointer items-center justify-between gap-2 bg-base-200 px-4 py-3">
                 <span class="font-semibold">{topic.name}</span>
                 <span class="badge badge-sm">{length(topic.questions)} Frage(n)</span>
@@ -164,7 +206,7 @@ defmodule PubQuizzerWeb.Admin.ImportLive do
               <ol class="divide-y divide-base-300">
                 <li
                   :for={{question, index} <- Enum.with_index(topic.questions, 1)}
-                  class="px-4 py-3 text-sm"
+                  class="flex items-center justify-between gap-3 px-4 py-3 text-sm"
                 >
                   <div class="flex gap-2">
                     <span class="shrink-0 font-mono text-base-content/50">{index}.</span>
@@ -178,13 +220,55 @@ defmodule PubQuizzerWeb.Admin.ImportLive do
                       </p>
                     </div>
                   </div>
+                  <div class={[
+                    "rounded-xl border px-3 py-2 transition-colors shrink-0",
+                    if(question["status"] == "published",
+                      do: "border-success/40 bg-success/10",
+                      else: "border-warning/40 bg-warning/10"
+                    )
+                  ]}>
+                    <div class="flex items-center gap-2">
+                      <div class={[
+                        "size-8 rounded-lg grid place-items-center shrink-0 transition-colors",
+                        if(question["status"] == "published",
+                          do: "bg-success/20 text-success",
+                          else: "bg-warning/20 text-warning"
+                        )
+                      ]}>
+                        <.icon
+                          name={
+                            if question["status"] == "published",
+                              do: "hero-check-circle",
+                              else: "hero-pencil"
+                          }
+                          class="size-4"
+                        />
+                      </div>
+                      <span class="text-xs font-semibold">
+                        {if question["status"] == "published", do: "Veröffentlicht", else: "Entwurf"}
+                      </span>
+                      <input
+                        id={"import-question-publish-#{topic_index}-#{index - 1}"}
+                        type="checkbox"
+                        phx-click="toggle_question_status"
+                        phx-value-topic={topic_index}
+                        phx-value-question={index - 1}
+                        aria-label={"Status für Frage #{index}"}
+                        checked={question["status"] == "published"}
+                        class="toggle toggle-success toggle-sm"
+                      />
+                    </div>
+                  </div>
                 </li>
               </ol>
             </details>
           </div>
         </div>
 
-        <div class="flex justify-end">
+        <div class="flex flex-wrap justify-between gap-2">
+          <button type="button" phx-click="publish_all" class="btn">
+            <.icon name="hero-eye" class="size-4" /> Alle Fragen veröffentlichen
+          </button>
           <button phx-click="confirm_import" class="btn btn-primary">
             <.icon name="hero-arrow-down-tray" class="size-4" />
             {length(@result.importable)} Thema(en) importieren

@@ -95,6 +95,43 @@ defmodule PubQuizzerWeb.Admin.ImportLiveTest do
   end
 
   describe "confirm_import" do
+    test "publishes selected questions and imports the rest as drafts", %{conn: conn} do
+      conn = log_in_superadmin(conn)
+      {:ok, view, _html} = live(conn, ~p"/admin/import")
+
+      upload_catalog(view, catalog_json())
+      view |> form("#import-form") |> render_submit()
+
+      assert has_element?(
+               view,
+               "#import-question-publish-0-0[type='checkbox'].toggle.toggle-success"
+             )
+
+      view |> element("#import-question-publish-0-0") |> render_click()
+      view |> element("button[phx-click='confirm_import']") |> render_click()
+
+      topic = Enum.find(Quiz.list_topics(), &(&1.name == "Energie"))
+      questions = Quiz.list_questions_for_topic(topic.id)
+
+      assert Enum.map(questions, & &1.status) == ["published", "draft"]
+    end
+
+    test "publishes every question when publish all is selected", %{conn: conn} do
+      conn = log_in_superadmin(conn)
+      {:ok, view, _html} = live(conn, ~p"/admin/import")
+
+      upload_catalog(view, catalog_json())
+      view |> form("#import-form") |> render_submit()
+
+      view |> element("button[phx-click='publish_all']") |> render_click()
+      view |> element("button[phx-click='confirm_import']") |> render_click()
+
+      topic = Enum.find(Quiz.list_topics(), &(&1.name == "Energie"))
+      questions = Quiz.list_questions_for_topic(topic.id)
+
+      assert Enum.map(questions, & &1.status) == ["published", "published"]
+    end
+
     test "creates topics and draft questions", %{conn: conn} do
       conn = log_in_superadmin(conn)
       {:ok, view, _html} = live(conn, ~p"/admin/import")

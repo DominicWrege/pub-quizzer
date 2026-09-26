@@ -7,7 +7,7 @@
   <.header>
     Fragenkatalog importieren
     <:subtitle>
-      JSON-Datei mit Themen und Fragen prüfen und als Entwürfe importieren.
+      JSON-Datei mit Themen und Fragen prüfen und beim Import einzelne oder alle Fragen veröffentlichen.
     </:subtitle>
   </.header>
 
@@ -18,7 +18,7 @@
         <p class="font-semibold">Import abgeschlossen.</p>
         <ul class="mt-1 list-disc list-inside text-sm">
           <li :for={entry <- @imported}>
-            {entry.name}: {entry.count} Frage(n) als Entwurf importiert
+            {entry.name}: {entry.count} Frage(n) importiert
           </li>
         </ul>
       </div>
@@ -63,7 +63,7 @@
       </div>
 
       <div class="flex justify-end">
-        <button type="submit" class="btn btn-primary btn-sm">
+        <button type="submit" class="btn btn-primary btn-sm px-8">
           <.icon name="hero-magnifying-glass" class="size-4" /> Prüfen
         </button>
       </div>
