@@ -15,7 +15,7 @@ let
   mixFodDeps = beamPackages.fetchMixDeps {
     pname = "mix-deps-${pname}";
     inherit src version;
-    hash = "sha256-9SRYlHmSsAOZ6/DizovF0d3GlaaWPgb+coV+s5b8CZs=";
+    hash = "sha256-iJjyAEqnvd6sZW4L5edgAIWjpOo8aNyKdQZ/jbaTv7o=";
     mixEnv = "prod";
   };
 
