@@ -178,6 +178,12 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
   end
 
   describe "question phase" do
+    test "the question card has extra top spacing", %{conn: conn, event: event, topic: topic} do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+      assert has_element?(view, "#host-question-card.mt-4")
+    end
+
     test "question context and controls share one header without branding", %{
       conn: conn,
       event: event,

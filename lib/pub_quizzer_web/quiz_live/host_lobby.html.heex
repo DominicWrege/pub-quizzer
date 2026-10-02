@@ -162,7 +162,7 @@
       <% has_next =
         (@engine_state.question_index || 0) < length(@engine_state.current_questions) - 1 %>
 
-      <div class="space-y-3 animate-fade-in">
+      <div class="flex flex-col gap-3 animate-fade-in">
         <div
           id="host-pending-teams"
           hidden={!@pending_teams_visible?}
@@ -178,7 +178,7 @@
           <% end %>
         </div>
 
-        <div id="host-question-card" class="card bg-base-200 border-2 border-base-content/40">
+        <div id="host-question-card" class="card bg-base-200 border-2 border-base-content/40 mt-4">
           <div class="card-body p-4 sm:p-5">
             <h4
               class="card-title text-[1.1rem] leading-snug break-words"
