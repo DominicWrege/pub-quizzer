@@ -14,7 +14,7 @@ defmodule PubQuizzerWeb.Admin.TeamCardLive do
   def mount(_params, _session, socket) do
     # page_title intentionally nil: @page margin:0 suppresses the browser's
     # print header/footer anyway, and we don't want "Team-Karten" showing up
-    # on the printed A5 sheet or in the tab title.
+    # on the printed A4 sheet or in the tab title.
     {:ok, assign(socket, page_title: nil)}
   end
 

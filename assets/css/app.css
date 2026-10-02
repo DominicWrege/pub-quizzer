@@ -326,22 +326,58 @@ dialog::backdrop {
 }
 
 /* --- Team QR card print layout -------------------------------------------
-   One card per DIN A5 sheet (148 x 210 mm portrait). The admin shell's nav,
+   One card per DIN A4 sheet (210 x 297 mm portrait). The admin shell's nav,
    header, and flashes are hidden via the `print:` Tailwind variant driven by
-   `<Layouts.app print_chrome={false}>`. `@page { margin: 0 }` zero-edges the
-   sheet so browsers omit their default header (page title) and footer (URL);
-   inner card padding replaces the former page margin. The SVG sizing rules
-   keep the QR inside its white wrapper on screen (.team-card svg max-width:
-   100%) and fill ~60% of the A5 width in print, for reliable scanning. */
+   `<Layouts.app print_chrome={false}>`. The `@page` rule is kept top-level so
+   every browser honors it: `margin: 0` zero-edges the sheet, which makes
+   browsers omit their default header (title/date) and footer (page number /
+   URL); inner card padding replaces the former page margin. Print is forced to
+   pure black on white — daisyUI's warm theme colors are neutralized so the
+   saved PDF lays down no background ink. The SVG sizing rules keep the QR
+   inside its white wrapper on screen (.team-card svg max-width: 100%) and
+   scale it up in print, for reliable scanning. */
 .team-card .team-card-qr svg {
   max-width: 180px;
   height: auto;
 }
 
+/* Named page so only the team cards get the edge-to-edge A4 sheet; other
+   printable pages (e.g. the report) keep the browser's normal page setup. */
+@page team-card {
+  size: A4 portrait;
+  margin: 0;
+}
+
 @media print {
-  @page {
-    size: 148mm 210mm;
-    margin: 0;
+  .team-card {
+    page: team-card;
+  }
+
+  /* Flatten the admin shell so each card owns its full A4 sheet, and drop the
+     content padding that would otherwise inset the card from the page edges. */
+  body:has(.team-card) {
+    background: #ffffff !important;
+  }
+
+  body:has(.team-card) [data-app-shell] {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  body:has(.team-card) main {
+    padding: 0 !important;
+  }
+
+  /* The content wrapper carries screen-only top padding, centering, and flex
+     constraints; flatten it so the first card starts flush with the page edge
+     (any offset makes the page-height cards spill onto a blank sheet). */
+  body:has(.team-card) main > div {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
   }
 
   .team-card {
@@ -354,9 +390,18 @@ dialog::backdrop {
     page-break-after: auto;
   }
 
+  /* Pure black on white: no theme background, gray text, borders, or shadows. */
+  .team-card,
+  .team-card * {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+    box-shadow: none !important;
+  }
+
   .team-card .team-card-qr svg {
     width: 100%;
-    max-width: 60mm;
+    max-width: 90mm;
   }
 }
 

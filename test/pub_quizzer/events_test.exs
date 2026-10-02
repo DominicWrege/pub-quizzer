@@ -75,11 +75,11 @@ defmodule PubQuizzer.EventsTest do
       assert team.slot_index == 3
     end
 
-    test "add_team_slot refuses an eleventh team without inserting a slot" do
-      {:ok, event} = Quiz.create_event(%{team_count: 10})
+    test "add_team_slot refuses a thirteenth team without inserting a slot" do
+      {:ok, event} = Quiz.create_event(%{team_count: 12})
 
       assert {:error, :max_teams} = Quiz.add_team_slot(event)
-      assert length(Quiz.list_teams_for_event(event.id)) == 10
+      assert length(Quiz.list_teams_for_event(event.id)) == 12
     end
 
     test "remove_team_slot removes the last unclaimed slot" do

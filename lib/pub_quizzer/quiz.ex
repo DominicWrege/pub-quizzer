@@ -470,7 +470,7 @@ defmodule PubQuizzer.Quiz do
     |> Repo.update()
   end
 
-  def add_team_slot(%QuizEvent{team_count: count}) when count >= 10, do: {:error, :max_teams}
+  def add_team_slot(%QuizEvent{team_count: count}) when count >= 12, do: {:error, :max_teams}
 
   def add_team_slot(event) do
     new_slot =
