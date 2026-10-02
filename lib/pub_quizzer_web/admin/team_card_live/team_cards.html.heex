@@ -23,18 +23,11 @@
         </button>
       </:actions>
     </.header>
-
-    <div class="alert alert-info text-sm mt-4">
-      <.icon name="hero-information-circle" class="size-5" />
-      <span>
-        Jede Karte ist eine eigene Seite. Code-URLs sind bereits eingetragen — einfach auf Karteindruck drucken und die Karten austeilen.
-      </span>
-    </div>
   </div>
 
   <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 print:block print:gap-0 print:mt-0 print:max-w-none print:mx-0">
     <div
-      :for={%{team: team, slot: slot, display_url: display_url, svg: svg} <- @cards}
+      :for={%{team: team, slot: slot, url: url, display_url: display_url, svg: svg} <- @cards}
       id={"team-card-#{team.id}"}
       data-test="team-card"
       data-slot={slot}
@@ -42,10 +35,11 @@
         [
           # screen: daisyUI card chrome
           "team-card card bg-base-100 border-2 border-base-300",
-          # print: blank A4 sheet, no chrome, content centered
+          # print: blank sheet, no chrome, content centered (card kept under
+          # page height so default print margins can't push an empty page out)
           "print:bg-white print:border-0 print:shadow-none print:rounded-none",
-          "print:max-w-none print:mx-0 print:w-full print:min-h-[296mm]",
-          "print:flex print:flex-col print:justify-center"
+          "print:max-w-none print:mx-0 print:w-full print:min-h-[250mm]",
+          "print:flex print:flex-col"
         ]
       }
     >
@@ -59,6 +53,15 @@
         <div class="team-card-qr mt-2 bg-white px-4 py-2 rounded-box print:mt-0 print:p-0 print:rounded-none">
           {raw(svg)}
         </div>
+        <button
+          id={"copy-team-link-#{team.id}"}
+          phx-hook="CopyLink"
+          phx-update="ignore"
+          data-url={url}
+          class="btn btn-sm btn-soft mt-3 print:hidden"
+        >
+          <.icon name="hero-clipboard" class="size-4" /> Link kopieren
+        </button>
         <div class="mt-3 hidden text-base text-base-content/70 print:block print:mt-0">
           <span class="font-mono font-semibold tracking-tight text-sm text-base-content break-words print:text-lg">
             {display_url}

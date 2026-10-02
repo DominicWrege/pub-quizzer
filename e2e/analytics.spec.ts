@@ -16,7 +16,8 @@ test("finished quiz retains moderator question and team statistics", async ({
 
     await completeRound(hostPage, teamA, teamB)
     await hostPage.locator('[phx-click="next_round"]').click()
-    await hostPage.locator('[phx-click="ask_finish_quiz"]').click()
+    await hostPage.locator("#host-quiz-menu > summary").click()
+    await hostPage.locator("#host-finish-quiz").click()
     await hostPage.locator('[phx-click="confirm_finish_quiz"]').click()
 
     await hostPage.goto("/admin/question-report")

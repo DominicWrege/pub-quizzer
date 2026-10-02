@@ -3,13 +3,12 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
 
   alias PubQuizzer.Quiz
   alias PubQuizzer.Quiz.{Engine, EngineState}
-  alias PubQuizzer.OptionShuffle
 
   @impl true
-  def mount(%{"code" => code}, session, socket) do
+  def mount(%{"code" => code} = params, session, socket) do
     team_id = Map.get(session, "team_id")
 
-    case load_event_and_team(code, team_id) do
+    case load_event_and_team(code, team_id, params["team_code"]) do
       {:ok, event, team} ->
         {:ok, _engine_pid} = Engine.ensure_started(event.id)
 
@@ -30,7 +29,6 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
         case Engine.get_state(event.id) do
           {:ok, state} ->
             team_state = EngineState.strip_for_team(state, team.id)
-            {shuffled_options, shuffle_map} = compute_shuffle(team_state, team)
 
             socket =
               socket
@@ -43,8 +41,6 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
               |> assign_standings(state)
               |> assign_available_topics(state)
               |> assign(:current_topic_name, EngineState.current_topic_name(state))
-              |> assign(:shuffle_map, shuffle_map)
-              |> assign(:shuffled_options, shuffled_options)
               |> assign(:selected_index, nil)
 
             {:ok, socket}
@@ -59,6 +55,9 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
              |> push_navigate(to: ~p"/")}
         end
 
+      {:error, :missing_session} ->
+        {:ok, redirect(socket, to: ~p"/quiz/#{code}/rejoin")}
+
       {:error, reason} ->
         {:ok,
          socket
@@ -72,8 +71,6 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
     team_state = EngineState.strip_for_team(state, socket.assigns.team.id)
     current_q = EngineState.current_question(team_state)
     prev_q = EngineState.current_question(socket.assigns.engine_state)
-
-    {shuffled_options, shuffle_map} = compute_shuffle(team_state, socket.assigns.team)
 
     selected_index =
       cond do
@@ -96,8 +93,6 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
      |> assign_standings(state)
      |> assign_available_topics(state)
      |> assign(:current_topic_name, EngineState.current_topic_name(state))
-     |> assign(:shuffle_map, shuffle_map)
-     |> assign(:shuffled_options, shuffled_options)
      |> assign(:selected_index, selected_index)}
   end
 
@@ -132,11 +127,10 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
       ) do
     with {index, ""} <- Integer.parse(index_str),
          {question_id, ""} <- Integer.parse(question_id_str) do
-      original_index = OptionShuffle.to_original(socket.assigns.shuffle_map, index)
       event_id = socket.assigns.event.id
       team_id = socket.assigns.team.id
 
-      case Engine.submit_answer(event_id, team_id, original_index, question_id) do
+      case Engine.submit_answer(event_id, team_id, index, question_id) do
         {:ok, _state} ->
           {:noreply, assign(socket, :selected_index, index)}
 
@@ -191,33 +185,30 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
     :ok
   end
 
-  defp load_event_and_team(code, team_id) do
+  defp load_event_and_team(code, team_id, team_code) do
     case Quiz.get_event_by_code(code) do
       nil ->
         {:error, "Quiz nicht gefunden."}
 
       event ->
-        if team_id && Quiz.team_belongs_to_event?(team_id, event.id) do
-          team = Quiz.get_team!(team_id)
-          {:ok, event, team}
-        else
-          {:error, "Du bist nicht Teil dieses Quiz."}
+        team =
+          Enum.find(event.teams, fn team ->
+            identity_matches? =
+              if team_code, do: team.link_code == team_code, else: team.id == team_id
+
+            identity_matches? && team.claimed_at
+          end)
+
+        cond do
+          team ->
+            {:ok, event, team}
+
+          is_nil(team_code) and is_nil(team_id) ->
+            {:error, :missing_session}
+
+          true ->
+            {:error, "Du bist nicht Teil dieses Quiz."}
         end
-    end
-  end
-
-  defp compute_shuffle(state, team) do
-    question = EngineState.current_question(state)
-
-    if question do
-      OptionShuffle.shuffle(
-        question.options,
-        team.id,
-        question.id,
-        state.round_number
-      )
-    else
-      {[], %{}}
     end
   end
 

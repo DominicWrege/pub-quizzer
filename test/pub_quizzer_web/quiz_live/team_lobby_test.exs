@@ -161,6 +161,31 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
   end
 
   describe "question phase" do
+    test "shows a per-question timer instead of the other teams' answer count", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      team: team
+    } do
+      {:ok, _} = Engine.start_quiz(event.id)
+      {:ok, state} = Engine.choose_topic(event.id, topic.id)
+      [first, second] = state.current_questions
+      {:ok, view, _} = conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
+
+      assert has_element?(view, "#team-question-timer[role='timer']", "00:00")
+      assert has_element?(view, "#team-question-timer[data-question-key='0-#{first.id}']")
+      refute has_element?(view, "main", "geantwortet")
+
+      view |> element("button[phx-click='select_answer'][phx-value-index='0']") |> render_click()
+      assert has_element?(view, "#team-question-timer[data-question-key='0-#{first.id}']")
+
+      {:ok, _} = Engine.next_question(event.id)
+      assert has_element?(view, "#team-question-timer[data-question-key='0-#{second.id}']")
+
+      {:ok, _} = Engine.reveal_round(event.id)
+      refute has_element?(view, "#team-question-timer")
+    end
+
     test "shows topic, question progress and options without the prompt or answer key", %{
       conn: conn,
       event: event,
@@ -223,7 +248,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       assert Map.get(state.answers, 1, %{}) == %{}
     end
 
-    test "shows answered message after submitting", %{
+    test "highlights the submitted answer without a confirmation banner", %{
       conn: conn,
       event: event,
       topic: topic,
@@ -237,8 +262,8 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
 
       view |> element("button[phx-click='select_answer'][phx-value-index='0']") |> render_click()
 
-      html = render(view)
-      assert html =~ "Antwort abgegeben!"
+      assert has_element?(view, "button[phx-value-index='0'].btn-primary")
+      refute has_element?(view, "main", "Antwort abgegeben")
     end
 
     test "does not show an image question prompt on the team device", %{
@@ -330,11 +355,53 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
   end
 
   describe "without session" do
-    test "redirects to /join when no team_id in session", %{conn: conn, event: event} do
-      assert {:error, {:live_redirect, %{to: to}}} =
+    test "a saved team URL restores its answer without a cookie", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      team: team
+    } do
+      assert Regex.match?(~r/^[a-z]{3}$/, Map.get(team, :link_code, ""))
+      {:ok, _} = Engine.start_quiz(event.id)
+      {:ok, _} = Engine.choose_topic(event.id, topic.id)
+      {:ok, _} = Engine.submit_answer(event.id, team.id, 1)
+
+      {:ok, view, _html} = live(conn, ~p"/quiz/#{event.code}/lobby/#{team.link_code}")
+      assert has_element?(view, "h1", team.name)
+      assert has_element?(view, "button[phx-value-index='1'].btn-primary")
+      assert has_element?(view, "#team-question-timer")
+    end
+
+    test "an unclaimed team session cannot access the lobby", %{conn: conn, event: event} do
+      unused = List.last(event.teams)
+
+      assert {:error, {:live_redirect, %{to: "/"}}} =
+               conn |> team_conn(unused) |> live(~p"/quiz/#{event.code}/lobby")
+    end
+
+    test "a legacy lobby link without a cookie offers existing teams", %{
+      conn: conn,
+      event: event,
+      team: team
+    } do
+      assert {:error, {:redirect, %{to: to}}} =
                live(conn, ~p"/quiz/#{event.code}/lobby")
 
-      assert to == "/"
+      assert to == "/quiz/#{event.code}/rejoin"
+
+      {:ok, view, _html} = live(conn, to)
+
+      assert has_element?(
+               view,
+               "#rejoin-teams a[href='/quiz/join/#{event.code}/#{team.link_code}']"
+             )
+
+      unused = List.last(event.teams)
+
+      refute has_element?(
+               view,
+               "#rejoin-teams a[href='/quiz/join/#{event.code}/#{unused.link_code}']"
+             )
     end
   end
 end

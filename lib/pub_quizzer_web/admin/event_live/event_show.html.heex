@@ -25,13 +25,14 @@
       <:actions>
         <button
           phx-click="open_edit_name"
-          class="btn btn-soft btn-sm gap-1 rounded-lg shrink-0 px-2"
+          class="btn btn-sm btn-soft"
           aria-label="Event-Name bearbeiten"
         >
-          <span class="max-sm:hidden"><.icon name="hero-pencil" class="size-3.5" /></span> Bearbeiten
+          <span class="max-sm:hidden"><.icon name="hero-pencil" class="size-4" /></span>
+          Bearbeiten
         </button>
         <%= if @event.status != "lobby" do %>
-          <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-soft">
+          <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-soft">
             <%= if @event.status == "finished" do %>
               <.icon name="hero-clipboard" class="size-4" /> Ergebnisse
             <% else %>
@@ -40,18 +41,21 @@
           </.link>
         <% end %>
         <%= if @event.status != "lobby" do %>
-          <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-primary">Moderator-Konsole</.link>
+          <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-sm btn-primary">Moderator-Konsole</.link>
         <% end %>
         <.link navigate={~p"/admin/events/#{@event}/team-cards"} class="btn btn-sm btn-soft">
-          <span class="max-sm:hidden"><.icon name="hero-qr-code" class="size-4" /></span> QR-Karten
+          <span class="max-sm:hidden"><.icon name="hero-qr-code" class="size-4" /></span>
+          QR-Karten
         </.link>
         <button
           id="copy-join-link"
           phx-hook="CopyLink"
+          phx-update="ignore"
           data-url={@join_url}
           class="btn btn-sm btn-soft"
         >
-          <span class="max-sm:hidden"><.icon name="hero-clipboard" class="size-4" /></span> Link kopieren
+          <span class="max-sm:hidden"><.icon name="hero-clipboard" class="size-4" /></span>
+          Link kopieren
         </button>
       </:actions>
     </.header>
@@ -99,126 +103,126 @@
 
     <%= if @event.status == "lobby" do %>
       <section class="mt-2">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <h3 class="card-title text-base sm:text-lg">{@event.team_count} Teams</h3>
-            <div class="flex items-center gap-2">
-              <button
-                phx-click="add_slot"
-                class="btn btn-soft btn-sm"
-                disabled={@event.team_count >= 12}
-              >
-                <.icon name="hero-plus" class="size-4" /> Hinzufügen
-              </button>
-              <button
-                phx-click="do_start"
-                class="btn btn-primary btn-sm"
-                disabled={!@all_teams_connected}
-              >
-                ▶ Quiz starten
-              </button>
-            </div>
-          </div>
-
-          <%!-- Mobile: cards --%>
-          <div id="event-team-cards" class="space-y-1.5 lg:hidden">
-            <div
-              :for={team <- @event.teams}
-              id={"team-card-#{team.id}"}
-              class="flex items-center gap-2 bg-base-200 border border-base-content/10 rounded-lg px-2 py-1.5"
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 class="card-title text-base sm:text-lg">{@event.team_count} Teams</h3>
+          <div class="flex items-center gap-2">
+            <button
+              phx-click="add_slot"
+              class="btn btn-soft btn-sm"
+              disabled={@event.team_count >= 12}
             >
+              <.icon name="hero-plus" class="size-4" /> Hinzufügen
+            </button>
+            <button
+              phx-click="do_start"
+              class="btn btn-primary btn-sm"
+              disabled={!@all_teams_connected}
+            >
+              ▶ Quiz starten
+            </button>
+          </div>
+        </div>
+
+        <%!-- Mobile: cards --%>
+        <div id="event-team-cards" class="space-y-1.5 lg:hidden">
+          <div
+            :for={team <- @event.teams}
+            id={"team-card-#{team.id}"}
+            class="flex items-center gap-2 bg-base-200 border border-base-content/10 rounded-lg px-2 py-1.5"
+          >
+            <input
+              type="text"
+              value={team.name}
+              aria-label={"Name für Team #{team.slot_index + 1}"}
+              class="input input-bordered input-sm flex-1 min-w-0"
+              phx-blur="rename_team"
+              phx-value-team_id={team.id}
+              data-team-id={team.id}
+            />
+            <%= if team.claimed_at do %>
+              <%= if team.id in @connected_team_ids do %>
+                <span class="badge badge-sm badge-success badge-soft shrink-0">OK</span>
+              <% else %>
+                <span class="badge badge-sm badge-warning badge-soft shrink-0">Getrennt</span>
+              <% end %>
+            <% else %>
+              <span class="badge badge-sm badge-neutral badge-soft shrink-0">Wartend</span>
+            <% end %>
+            <%= if team.claimed_at do %>
+              <button
+                phx-click="kick_team"
+                phx-value-team_id={team.id}
+                class="btn btn-soft btn-xs btn-square shrink-0"
+                title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
+                aria-label={"Team #{team.slot_index + 1} rauswerfen"}
+              >
+                <.icon name="hero-arrow-right-on-rectangle" class="size-3.5" />
+              </button>
+            <% end %>
+            <button
+              phx-click="remove_team"
+              phx-value-team_id={team.id}
+              class="btn btn-outline btn-error btn-xs btn-square border-2 shrink-0"
+              disabled={@event.team_count <= 1}
+              aria-label={"Team #{team.slot_index + 1} entfernen"}
+            >
+              <.icon name="hero-x-mark" class="size-3.5" />
+            </button>
+          </div>
+        </div>
+
+        <%!-- Desktop: table --%>
+        <div class="text-lg hidden lg:block">
+          <.table id="event-teams" rows={@event.teams} row_id={fn team -> "team-#{team.id}" end}>
+            <:col :let={team} label="#" class="w-1">
+              <span class="opacity-60">{team.slot_index + 1}</span>
+            </:col>
+            <:col :let={team} label="Team-Name">
               <input
                 type="text"
                 value={team.name}
-                aria-label={"Name für Team #{team.slot_index + 1}"}
-                class="input input-bordered input-sm flex-1 min-w-0"
+                class="input input-bordered w-full"
                 phx-blur="rename_team"
                 phx-value-team_id={team.id}
                 data-team-id={team.id}
               />
+            </:col>
+            <:col :let={team} label="Status">
               <%= if team.claimed_at do %>
                 <%= if team.id in @connected_team_ids do %>
-                  <span class="badge badge-sm badge-success badge-soft shrink-0">OK</span>
+                  <span class="badge badge-lg badge-success badge-soft transition-colors duration-200">Beigetreten</span>
                 <% else %>
-                  <span class="badge badge-sm badge-warning badge-soft shrink-0">Getrennt</span>
+                  <span class="badge badge-lg badge-warning badge-soft transition-colors duration-200">Getrennt</span>
                 <% end %>
               <% else %>
-                <span class="badge badge-sm badge-neutral badge-soft shrink-0">Wartend</span>
+                <span class="badge badge-lg badge-neutral badge-soft transition-colors duration-200">Wartend</span>
               <% end %>
-              <%= if team.claimed_at do %>
-                <button
-                  phx-click="kick_team"
-                  phx-value-team_id={team.id}
-                  class="btn btn-soft btn-xs btn-square shrink-0"
-                  title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
-                  aria-label={"Team #{team.slot_index + 1} rauswerfen"}
-                >
-                  <.icon name="hero-arrow-right-on-rectangle" class="size-3.5" />
-                </button>
-              <% end %>
-              <button
-                phx-click="remove_team"
-                phx-value-team_id={team.id}
-                class="btn btn-outline btn-error btn-xs btn-square border-2 shrink-0"
-                disabled={@event.team_count <= 1}
-                aria-label={"Team #{team.slot_index + 1} entfernen"}
-              >
-                <.icon name="hero-x-mark" class="size-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <%!-- Desktop: table --%>
-          <div class="text-lg hidden lg:block">
-            <.table id="event-teams" rows={@event.teams} row_id={fn team -> "team-#{team.id}" end}>
-              <:col :let={team} label="#" class="w-1">
-                <span class="opacity-60">{team.slot_index + 1}</span>
-              </:col>
-              <:col :let={team} label="Team-Name">
-                <input
-                  type="text"
-                  value={team.name}
-                  class="input input-bordered w-full"
-                  phx-blur="rename_team"
-                  phx-value-team_id={team.id}
-                  data-team-id={team.id}
-                />
-              </:col>
-              <:col :let={team} label="Status">
+            </:col>
+            <:action :let={team}>
+              <div class="flex gap-1">
                 <%= if team.claimed_at do %>
-                  <%= if team.id in @connected_team_ids do %>
-                    <span class="badge badge-lg badge-success badge-soft transition-colors duration-200">Beigetreten</span>
-                  <% else %>
-                    <span class="badge badge-lg badge-warning badge-soft transition-colors duration-200">Getrennt</span>
-                  <% end %>
-                <% else %>
-                  <span class="badge badge-lg badge-neutral badge-soft transition-colors duration-200">Wartend</span>
-                <% end %>
-              </:col>
-              <:action :let={team}>
-                <div class="flex gap-1">
-                  <%= if team.claimed_at do %>
-                    <button
-                      phx-click="kick_team"
-                      phx-value-team_id={team.id}
-                      class="btn btn-sm btn-soft"
-                      title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
-                    >
-                      <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
-                    </button>
-                  <% end %>
                   <button
-                    phx-click="remove_team"
+                    phx-click="kick_team"
                     phx-value-team_id={team.id}
-                    class="btn btn-sm btn-outline btn-error border-2"
-                    title="Team entfernen"
-                    disabled={@event.team_count <= 1}
+                    class="btn btn-sm btn-soft"
+                    title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
                   >
-                    <.icon name="hero-x-mark" class="size-4" />
+                    <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
                   </button>
-                </div>
-              </:action>
-            </.table>
-          </div>
+                <% end %>
+                <button
+                  phx-click="remove_team"
+                  phx-value-team_id={team.id}
+                  class="btn btn-sm btn-outline btn-error border-2"
+                  title="Team entfernen"
+                  disabled={@event.team_count <= 1}
+                >
+                  <.icon name="hero-x-mark" class="size-4" />
+                </button>
+              </div>
+            </:action>
+          </.table>
+        </div>
       </section>
     <% else %>
       <div class="alert alert-info text-base py-4">

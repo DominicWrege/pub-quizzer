@@ -401,7 +401,7 @@ dialog::backdrop {
 
   .team-card .team-card-qr svg {
     width: 100%;
-    max-width: 90mm;
+    max-width: 60mm;
   }
 }
 

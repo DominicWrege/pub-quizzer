@@ -33,11 +33,12 @@ test.describe("edge cases", () => {
 
     // Team A picks option 0
     await answerBtns.nth(0).click()
-    await expect(pageA.locator("text=Antwort abgegeben")).toBeVisible()
+    await expect(answerBtns.nth(0)).toHaveClass(/btn-primary/)
 
     // Team A changes to option 2
     await answerBtns.nth(2).click()
-    await expect(pageA.locator("text=Antwort abgegeben")).toBeVisible()
+    await expect(answerBtns.nth(2)).toHaveClass(/btn-primary/)
+    await expect(answerBtns.nth(0)).not.toHaveClass(/btn-primary/)
 
     // Team B picks option 1
     await pageB.locator('[phx-click="select_answer"]').nth(1).click()

@@ -32,6 +32,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
 
             socket =
               socket
+              |> assign(:connected_team_ids, connected_team_ids(state))
               |> apply_engine_state(state)
               |> assign(:event, event)
               |> assign(:page_title, "Moderator — #{code}")
@@ -58,13 +59,21 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
     {:noreply, assign(socket, :event, event)}
   end
 
-  def handle_info({:team_connected, _team_id}, socket) do
-    {:noreply, socket}
+  def handle_info({:team_connected, team_id}, socket) do
+    {:noreply,
+     socket
+     |> update(:connected_team_ids, &MapSet.put(&1, team_id))
+     |> stream(:teams, socket.assigns.engine_state.teams, reset: true)}
   end
 
-  def handle_info({:team_disconnected, _team_id}, socket) do
-    {:noreply, socket}
+  def handle_info({:team_disconnected, team_id}, socket) do
+    {:noreply,
+     socket
+     |> update(:connected_team_ids, &MapSet.delete(&1, team_id))
+     |> stream(:teams, socket.assigns.engine_state.teams, reset: true)}
   end
+
+  def handle_info({:kick_team, _team_id}, socket), do: {:noreply, socket}
 
   @impl true
   def handle_event("ask_finish_quiz", _params, socket) do
@@ -79,6 +88,39 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
 
   def handle_event("cancel_confirm", _params, socket) do
     {:noreply, assign(socket, :confirm_action, nil)}
+  end
+
+  def handle_event("ask_remove_team", %{"team_id" => team_id}, socket) do
+    with {id, ""} <- Integer.parse(team_id),
+         team when not is_nil(team) <-
+           Enum.find(socket.assigns.engine_state.teams, &(&1.id == id)),
+         true <- socket.assigns.engine_state.status != :finished do
+      {:noreply, assign(socket, :confirm_action, {:remove_team, team})}
+    else
+      _ -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("confirm_remove_team", _params, socket) do
+    case socket.assigns.confirm_action do
+      {:remove_team, team} ->
+        socket = assign(socket, :confirm_action, nil)
+
+        case Engine.remove_team(socket.assigns.event.id, team.id) do
+          {:ok, state} ->
+            {:noreply, apply_engine_state(socket, state)}
+
+          {:error, :last_team} ->
+            {:noreply,
+             put_flash(socket, :error, "Mindestens ein teilnehmendes Team muss bleiben.")}
+
+          {:error, _} ->
+            {:noreply, put_flash(socket, :error, "Team konnte nicht entfernt werden.")}
+        end
+
+      _ ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("choose_topic", %{"topic_id" => topic_id}, socket) do
@@ -96,18 +138,34 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
   end
 
   def handle_event("next_question", _params, socket) do
-    event_id = socket.assigns.event.id
+    case Engine.get_state(socket.assigns.event.id) do
+      {:ok, %{status: :question} = state} ->
+        socket = apply_engine_state(socket, state)
 
-    case Engine.next_question(event_id) do
-      {:ok, _state} ->
+        if MapSet.size(EngineState.answered_teams(state)) == length(state.teams) do
+          {:noreply, advance_question(socket)}
+        else
+          {:noreply, assign(socket, :confirm_action, {:next_question, question_key(state)})}
+        end
+
+      _ ->
         {:noreply, socket}
-
-      {:error, :end_of_round} ->
-        {:noreply, engine_call(socket, &Engine.reveal_round/1)}
-
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, "Fehler: #{reason}")}
     end
+  end
+
+  def handle_event("confirm_next_question", _params, socket) do
+    with {:next_question, key} <- socket.assigns.confirm_action,
+         {:ok, %{status: :question} = state} <- Engine.get_state(socket.assigns.event.id),
+         true <- question_key(state) == key do
+      socket = socket |> assign(:confirm_action, nil) |> apply_engine_state(state)
+      {:noreply, advance_question(socket)}
+    else
+      _ -> {:noreply, assign(socket, :confirm_action, nil)}
+    end
+  end
+
+  def handle_event("toggle_pending_teams", _params, socket) do
+    {:noreply, update(socket, :pending_teams_visible?, &(!&1))}
   end
 
   def handle_event("show_standings", _params, socket) do
@@ -136,13 +194,63 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
 
   defp apply_engine_state(socket, state) do
     socket
+    |> sync_question_controls(state)
     |> assign(:engine_state, state)
+    |> assign(:answered_team_ids, EngineState.answered_teams(state))
+    |> stream(:teams, state.teams, reset: true)
     |> assign_available_topics(state)
     |> assign(:standings, EngineState.standings_sorted(state))
     |> assign(:current_topic_name, EngineState.current_topic_name(state))
     |> assign(:answer_distribution, EngineState.answer_distribution(state))
     |> assign(:round_distributions, round_distributions(state))
     |> assign(:standings_with_deltas, EngineState.standings_with_deltas(state))
+  end
+
+  defp advance_question(socket) do
+    event_id = socket.assigns.event.id
+
+    case Engine.next_question(event_id) do
+      {:ok, state} ->
+        apply_engine_state(socket, state)
+
+      {:error, :end_of_round} ->
+        case Engine.reveal_round(event_id) do
+          {:ok, state} -> apply_engine_state(socket, state)
+          {:error, reason} -> put_flash(socket, :error, "Fehler: #{reason}")
+        end
+
+      {:error, reason} ->
+        put_flash(socket, :error, "Fehler: #{reason}")
+    end
+  end
+
+  defp question_key(%{status: :question} = state),
+    do: {state.current_round_id, state.question_index}
+
+  defp question_key(_), do: nil
+
+  defp sync_question_controls(socket, state) do
+    key = question_key(state)
+    same_question? = key != nil and key == question_key(socket.assigns[:engine_state])
+
+    socket =
+      assign(
+        socket,
+        :pending_teams_visible?,
+        same_question? and socket.assigns[:pending_teams_visible?] == true
+      )
+
+    case socket.assigns[:confirm_action] do
+      {:next_question, ^key} -> socket
+      {:next_question, _old_key} -> assign(socket, :confirm_action, nil)
+      _ -> socket
+    end
+  end
+
+  defp connected_team_ids(state) do
+    state.teams
+    |> Enum.filter(&(Registry.lookup(PubQuizzer.TeamPresence, &1.id) != []))
+    |> MapSet.new(& &1.id)
   end
 
   # Per-question answer distributions for the round that was just played. Only

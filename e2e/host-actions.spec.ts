@@ -38,8 +38,8 @@ test.describe("host actions", () => {
     // Complete round WITHOUT showing standings
     await completeRound(hostPage, pageA, pageB, 0, 1, false)
 
-    // Winner or tie banner is visible (team-facing options are shuffled, so a
-    // clear winner is not guaranteed) but standings are NOT shown
+    // Winner or tie banner is visible (team option order matches the host, so
+    // which option is correct decides the winner) but standings are NOT shown
     await expect(
       hostPage
         .locator("text=gewinnt die Runde")
@@ -62,7 +62,8 @@ test.describe("host actions", () => {
     const { contexts } = await setupQuiz(hostPage, browser, 2)
 
     // Open finish modal
-    await hostPage.locator('[phx-click="ask_finish_quiz"]').click()
+    await hostPage.locator("#host-quiz-menu > summary").click()
+    await hostPage.locator("#host-finish-quiz").click()
     await expect(hostPage.locator("#finish-quiz-modal")).toBeVisible({ timeout: 5_000 })
 
     // Cancel it

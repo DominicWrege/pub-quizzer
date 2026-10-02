@@ -6,8 +6,7 @@ defmodule PubQuizzerWeb.QuizJoinControllerSlotTest do
 
   setup do
     {:ok, event} = Quiz.create_event(%{team_count: 3})
-    {:ok, _pid} = Engine.ensure_started(event.id)
-    on_exit(fn -> GenServer.stop(Engine.via_tuple(event.id), :normal) end)
+    start_supervised!({Engine, event.id})
     {:ok, event: event}
   end
 
@@ -15,7 +14,7 @@ defmodule PubQuizzerWeb.QuizJoinControllerSlotTest do
     test "claims the specific slot, sets session, redirects to lobby", %{conn: conn, event: event} do
       conn = get(conn, ~p"/quiz/join/#{event.code}/1")
 
-      assert redirected_to(conn) == "/quiz/#{event.code}/lobby"
+      assert redirected_to(conn) == "/quiz/#{event.code}/lobby/#{hd(event.teams).link_code}"
       assert get_session(conn, :event_code) == event.code
       team_id = get_session(conn, :team_id)
       assert team_id != nil
@@ -42,6 +41,35 @@ defmodule PubQuizzerWeb.QuizJoinControllerSlotTest do
       conn = get(conn, ~p"/quiz/join/#{event.code}/99")
       assert redirected_to(conn) == "/"
       assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "ngültig"
+    end
+
+    test "a fresh browser can rejoin a claimed QR slot during the quiz", %{
+      conn: conn,
+      event: event
+    } do
+      first_conn = get(conn, ~p"/quiz/join/#{event.code}/2")
+      team_id = get_session(first_conn, :team_id)
+      {:ok, _} = Engine.start_quiz(event.id)
+
+      conn = get(build_conn(), ~p"/quiz/join/#{event.code}/2")
+
+      assert redirected_to(conn) ==
+               "/quiz/#{event.code}/lobby/#{Enum.at(event.teams, 1).link_code}"
+
+      assert get_session(conn, :team_id) == team_id
+      {:ok, state} = Engine.get_state(event.id)
+      assert Enum.map(state.teams, & &1.id) == [team_id]
+    end
+
+    test "an unused QR slot cannot join after the quiz starts", %{conn: conn, event: event} do
+      {:ok, _} = Engine.start_quiz(event.id)
+
+      conn = get(conn, ~p"/quiz/join/#{event.code}/2")
+
+      document = conn |> html_response(200) |> LazyHTML.from_document()
+      assert document |> LazyHTML.query("#quiz-join-blocked") |> LazyHTML.to_tree() != []
+      assert is_nil(get_session(conn, :team_id))
+      assert is_nil(Quiz.get_team!(Enum.at(event.teams, 1).id).claimed_at)
     end
 
     test "rejects zero / non-numeric slot", %{conn: conn, event: event} do

@@ -6,9 +6,9 @@ Realtime pub-quiz ("Kneipenquiz") for teams. Phoenix LiveView + SQLite. German-l
 
 **Domain** (`lib/pub_quizzer/`):
 - `Quiz` context + schemas: `Topic`, `Question`/`QuestionVersion`, `QuizEvent`, `Round`, `Team`, `Answer`.
-- `Quiz.Engine` — one GenServer per running quiz event (via `DynamicSupervisor` + `Registry`), persists rounds/answers and broadcasts state over PubSub (`quiz:event:<id>`). Client API: `start_quiz`, `choose_topic`, `submit_answer`, `next_question`, `reveal_round`, `reveal_standings`, `next_round`, `finish_quiz`, `reveal_final_results`.
+- `Quiz.Engine` — one GenServer per running quiz event (via `DynamicSupervisor` + `Registry`), persists rounds/answers and broadcasts state over PubSub (`quiz:event:<id>`). Client API: `start_quiz`, `choose_topic`, `submit_answer`, `next_question`, `reveal_round`, `reveal_standings`, `next_round`, `finish_quiz`, `reveal_final_results`, `remove_team`.
 - `Quiz.EngineState` — pure state struct + transition functions (no side effects). Key helpers: `strip_for_team/2` (redacts opponents' answers for team clients), `answer_distribution/1`, `standings_with_deltas/1`, `answered_teams/1`.
-- `Accounts` (users, magic-link auth email), `OptionShuffle`, `Uploads`, `Names`.
+- `Accounts` (users, magic-link auth email), `Uploads`, `Names`.
 
 **Web** (`lib/pub_quizzer_web/`):
 - Quiz LiveViews: `QuizLive.HostLobby` (moderator "shadow console" — sees the question prompt, live answer-distribution bars, standings, drives reveal), `QuizLive.TeamLobby` (public, per-team answer UI).
@@ -20,6 +20,10 @@ Realtime pub-quiz ("Kneipenquiz") for teams. Phoenix LiveView + SQLite. German-l
 
 ## Project rules
 
+- **Rejoining is always allowed for existing teams** — a claimed team can return through its browser session or printed QR link, including during and after the quiz. Only unclaimed slots/new teams are blocked after the lobby. During a running quiz, remove teams through `Quiz.Engine.remove_team/2` (not a raw database deletion), so the engine roster, answers, standings, topic-choice priority, and connected devices stay in sync. The last participating team cannot be removed.
+- **Answer order is fixed and identical for everyone** — team devices and the moderator console must show answer options in exactly the same order (A, B, C, D). Never shuffle or reorder options per team. The per-team `OptionShuffle` feature was removed in Oct 2026; `QuizLive.TeamLobby` renders `question.options` directly and submits the option index unmodified. Do not reintroduce shuffling.
+- **QR cards print exactly one card per A4 page** — `/admin/events/:id/team-cards` is printed via the browser (`window.print()` → Save as PDF); there is no server-side PDF generator. Layout lives in `assets/css/app.css` (named `@page team-card { size: A4 portrait; margin: 0 }` — `margin: 0` also suppresses the browser's page-number/URL header and footer) and `team_cards.html.heex`. A card must stay well under the sheet height (`print:min-h-[250mm]` with the content vertically centered, `break-after: page`); a page-height card makes real print dialogs emit a blank page after every card. QR max `60mm`. Regression test: `e2e/team-cards-print.spec.ts`.
+- **Max teams per event is 12** — keep the three enforcement points in sync: the `validate_number(:team_count, less_than_or_equal_to:)` changeset in `lib/pub_quizzer/quiz/quiz_event.ex`, the `add_team_slot/1` guard in `lib/pub_quizzer/quiz.ex`, and the disabled condition in `lib/pub_quizzer_web/admin/event_live/event_show.html.heex`.
 - **NEVER commit or push without asking the user first** — always wait for explicit confirmation. This is a hard rule.
 - **Keep commits/pushes lightweight** — when told to "commit and push", just `git add`, commit, push, and glance at `git status`. No multi-step verification gauntlets for routine commits; default to a single bundle commit unless the user asks for separate ones. Don't re-ask or over-narrate the step.
 - **NEVER kill the dev server on port 4000** — if `http://localhost:4000` responds, that's the user's `mix phx.server`; use it as-is for browser verification and don't free the port or start a second server on 4000. If a stale compiled beam needs a restart, **ask the user to restart their server** instead of killing it. Only start your own server if port 4000 is genuinely free and you need one, and stop it when done.
@@ -59,7 +63,7 @@ Shared vocabulary so we name the same things (German UI ↔ English/code):
 
 **Fixtures** (`e2e/fixtures.ts`): `loginAsHost`, `createEvent`, `joinTeam`, `completeRound` (optional `showStandings` param, default true).
 
-**Spec files**: `smoke.spec.ts` (3), `quiz-flow.spec.ts` (full round), `multi-round.spec.ts` (2), `edge-cases.spec.ts` (2), plus `four-teams`, `host-actions`, `question-crud`.
+**Spec files**: `smoke.spec.ts` (3), `quiz-flow.spec.ts` (full round), `multi-round.spec.ts` (2), `edge-cases.spec.ts` (2), `team-cards-print.spec.ts` (QR cards: one page per card, QR ≤ 65mm — fails if a card approaches page height), plus `four-teams`, `host-actions`, `question-crud`.
 
 **Key details**:
 - `completeRound` uses `for(;;)` with `revealBtn.count()` / `revealNext.count()` — never non-blocking `locator.count()` in while-conditions.

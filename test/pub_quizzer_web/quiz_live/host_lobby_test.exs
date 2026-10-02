@@ -58,7 +58,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
   end
 
   defp host_finish_quiz(view) do
-    view |> element("button[phx-click='ask_finish_quiz']") |> render_click()
+    view |> element("#host-finish-quiz") |> render_click()
     view |> element("button[phx-click='confirm_finish_quiz']") |> render_click()
   end
 
@@ -82,13 +82,34 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
   end
 
   describe "lobby" do
+    test "puts the finish action in the top navigation without a separate moderator heading", %{
+      conn: conn,
+      event: event
+    } do
+      view = host_start_quiz(conn, event)
+      assert has_element?(view, "header #host-quiz-menu #host-finish-quiz")
+
+      assert has_element?(
+               view,
+               "header #host-quiz-menu #host-quiz-overview[href='/admin/events']"
+             )
+
+      assert has_element?(
+               view,
+               "header #host-quiz-menu #host-live-values[href='/admin/events/#{event.id}/results']"
+             )
+
+      refute has_element?(view, "main #host-finish-quiz")
+      refute has_element?(view, "h1", "Moderator")
+    end
+
     test "auto-starts to topic selection on mount", %{conn: conn, event: event, topic: _topic} do
       {:ok, view, html} = live(log_in_user(conn), ~p"/quiz/#{event.code}/host")
 
       assert html =~ event.code
       {:ok, state} = Engine.get_state(event.id)
       assert state.status == :topic_selection
-      assert has_element?(view, "button[phx-click='choose_topic']")
+      assert has_element?(view, "button[phx-click='choose_topic'].px-3.py-2")
     end
   end
 
@@ -157,6 +178,240 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
   end
 
   describe "question phase" do
+    test "question context and controls share one header without branding", %{
+      conn: conn,
+      event: event,
+      topic: topic
+    } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+      assert has_element?(view, "header #host-question-topic", topic.name)
+      assert has_element?(view, "header #host-answer-count")
+      assert has_element?(view, "header #host-quiz-menu")
+      refute has_element?(view, "header a[href='/']")
+      refute has_element?(view, "main #host-answer-count")
+      refute has_element?(view, "main #host-question-topic")
+    end
+
+    test "the topic name has normal text contrast", %{conn: conn, event: event, topic: topic} do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+      assert has_element?(view, "#host-question-topic.text-base-content", topic.name)
+      assert has_element?(view, "#host-question-card.border-2")
+    end
+
+    test "advancing with missing answers requires confirmation naming only missing teams", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      teams: [first, second, third]
+    } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+      {:ok, _} = Engine.submit_answer(event.id, first.id, 1)
+      refute has_element?(view, "[data-test='advance-button'][disabled]")
+      view |> element("[data-test='advance-button']") |> render_click()
+      assert has_element?(view, "#next-question-modal", second.name)
+      assert has_element?(view, "#next-question-modal", third.name)
+      refute has_element?(view, "#next-question-modal", first.name)
+      assert has_element?(view, "#next-question-modal", "0 Punkte")
+      {:ok, state} = Engine.get_state(event.id)
+      assert state.question_index == 0
+
+      view |> element("#next-question-modal-cancel") |> render_click()
+      refute has_element?(view, "#next-question-modal")
+      {:ok, state} = Engine.get_state(event.id)
+      assert state.question_index == 0
+
+      view |> element("[data-test='advance-button']") |> render_click()
+      view |> element("#next-question-modal-confirm") |> render_click()
+      {:ok, state} = Engine.get_state(event.id)
+      assert state.question_index == 1
+      assert state.answers[0] == %{first.id => 1}
+      assert {:ok, _} = Engine.submit_answer(event.id, first.id, 1)
+      host_reveal_round(view)
+      assert has_element?(view, "#next-question-modal", second.name)
+      view |> element("#next-question-modal-confirm") |> render_click()
+      {:ok, state} = Engine.get_state(event.id)
+      assert state.status == :round_reveal
+      assert state.standings == %{first.id => 2, second.id => 0, third.id => 0}
+    end
+
+    test "all teams answering allows immediate advancement without confirmation", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      team: team,
+      teams: teams
+    } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+      submit_all(event, teams, team, view)
+      view |> element("[data-test='advance-button']") |> render_click()
+      refute has_element?(view, "#next-question-modal")
+      {:ok, state} = Engine.get_state(event.id)
+      assert state.question_index == 1
+    end
+
+    test "a stale confirmation cannot skip another question", %{
+      conn: conn,
+      event: event,
+      topic: topic
+    } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+      view |> element("[data-test='advance-button']") |> render_click()
+      assert has_element?(view, "#next-question-modal")
+      {:ok, _} = Engine.next_question(event.id)
+      refute has_element?(view, "#next-question-modal")
+      render_click(view, "confirm_next_question")
+      {:ok, state} = Engine.get_state(event.id)
+      assert state.status == :question
+      assert state.question_index == 1
+    end
+
+    test "shows the teams still missing an answer for the current question", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      teams: [first, second, third]
+    } do
+      view = host_start_quiz(conn, event)
+      refute has_element?(view, "#host-pending-teams")
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+
+      assert has_element?(view, "#host-pending-teams[hidden]")
+      view |> element("#host-answer-count") |> render_click()
+      refute has_element?(view, "#host-pending-teams[hidden]")
+
+      for team <- [first, second, third] do
+        assert has_element?(view, "#host-pending-teams", team.name)
+        refute has_element?(view, "#host-team-answer-#{team.id}")
+      end
+
+      {:ok, _} = Engine.submit_answer(event.id, first.id, 0)
+      refute has_element?(view, "#host-pending-teams", first.name)
+      assert has_element?(view, "#host-pending-teams", second.name)
+      refute has_element?(view, "#host-team-answer-#{first.id}")
+
+      {:ok, _} = Engine.submit_answer(event.id, second.id, 1)
+      view |> element("#host-remove-team-#{third.id}") |> render_click()
+      view |> element("#remove-team-modal-confirm") |> render_click()
+      assert has_element?(view, "#host-pending-teams", "Alle Teams haben geantwortet")
+
+      view |> element("button[data-test='advance-button']") |> render_click()
+
+      assert has_element?(view, "#host-pending-teams[hidden]")
+
+      for team <- [first, second] do
+        assert has_element?(view, "#host-pending-teams", team.name)
+        refute has_element?(view, "#host-team-answer-#{team.id}")
+      end
+    end
+
+    test "the team management list updates connection status live", %{
+      conn: conn,
+      event: event,
+      team: team
+    } do
+      view = host_start_quiz(conn, event)
+      assert has_element?(view, "#teams-#{team.id} .badge", "Offline")
+      assert has_element?(view, "#host-remove-team-#{team.id}", "Team entfernen")
+      refute has_element?(view, "#host-teams p")
+
+      send(view.pid, {:team_connected, team.id})
+      assert has_element?(view, "#teams-#{team.id} .badge", "Online")
+
+      send(view.pid, {:team_disconnected, team.id})
+      assert has_element?(view, "#teams-#{team.id} .badge", "Offline")
+    end
+
+    test "the last team has a clear explanation instead of a disabled trash button", %{
+      conn: conn,
+      event: event,
+      teams: [remaining, second, third]
+    } do
+      view = host_start_quiz(conn, event)
+      {:ok, _} = Engine.remove_team(event.id, second.id)
+      {:ok, _} = Engine.remove_team(event.id, third.id)
+      refute has_element?(view, "[phx-click='ask_remove_team']")
+      assert has_element?(view, "#host-last-team-#{remaining.id}", "Ein Team muss bleiben")
+    end
+
+    test "removal disconnects the team's devices and invalidates its session and QR", %{
+      conn: conn,
+      event: event,
+      team: team
+    } do
+      host = host_start_quiz(conn, event)
+      team_conn = Plug.Test.init_test_session(build_conn(), team_id: team.id)
+      {:ok, team_view, _} = live(team_conn, ~p"/quiz/#{event.code}/lobby")
+      {:ok, admin_view, _} = live(log_in_user(conn), ~p"/admin/events/#{event.id}")
+
+      host |> element("#host-remove-team-#{team.id}") |> render_click()
+      host |> element("#remove-team-modal-confirm") |> render_click()
+
+      assert_redirect(team_view, "/")
+      assert has_element?(admin_view, "a[href='/quiz/#{event.code}/host']")
+
+      assert {:error, {:live_redirect, %{to: "/"}}} =
+               live(team_conn, ~p"/quiz/#{event.code}/lobby")
+
+      rejoin = post(recycle(team_conn), "/quiz/join", %{"code" => event.code})
+      document = rejoin |> html_response(200) |> LazyHTML.from_document()
+      assert document |> LazyHTML.query("#quiz-join-blocked") |> LazyHTML.to_tree() != []
+      qr = get(build_conn(), ~p"/quiz/join/#{event.code}/#{team.slot_index + 1}")
+      assert redirected_to(qr) == "/"
+      assert is_nil(get_session(qr, :team_id))
+    end
+
+    test "confirmed removal updates answer counts for the remaining teams", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      teams: [first, second, disconnected]
+    } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+      {:ok, _} = Engine.submit_answer(event.id, first.id, 1)
+      {:ok, _} = Engine.submit_answer(event.id, second.id, 0)
+      refute has_element?(view, "button[data-test='advance-button'][disabled]")
+
+      view |> element("#host-remove-team-#{disconnected.id}") |> render_click()
+      assert has_element?(view, "#remove-team-modal")
+      assert Quiz.team_belongs_to_event?(disconnected.id, event.id)
+      view |> element("#remove-team-modal-confirm") |> render_click()
+
+      refute has_element?(view, "#host-team-#{disconnected.id}")
+      assert has_element?(view, "[data-test='answered-badge']", "2 / 2")
+      refute has_element?(view, "button[data-test='advance-button'][disabled]")
+      view |> element("button[data-test='advance-button']") |> render_click()
+      {:ok, state} = Engine.get_state(event.id)
+      assert state.question_index == 1
+    end
+
+    test "cancelling team removal keeps the team", %{conn: conn, event: event, team: team} do
+      view = host_start_quiz(conn, event)
+      view |> element("#host-remove-team-#{team.id}") |> render_click()
+      view |> element("#remove-team-modal-cancel") |> render_click()
+
+      refute has_element?(view, "#remove-team-modal")
+      assert has_element?(view, "#host-team-#{team.id}")
+      assert Quiz.team_belongs_to_event?(team.id, event.id)
+    end
+
+    test "forged removal requests cannot target another event", %{conn: conn, event: event} do
+      {:ok, other} = Quiz.create_event(%{team_count: 2})
+      {:ok, foreign} = Quiz.claim_next_team_slot(other)
+      view = host_start_quiz(conn, event)
+
+      render_click(view, "ask_remove_team", %{"team_id" => Integer.to_string(foreign.id)})
+      render_click(view, "confirm_remove_team")
+
+      refute has_element?(view, "#remove-team-modal")
+      assert Quiz.team_belongs_to_event?(foreign.id, other.id)
+    end
+
     test "shows question prompt and next button on first question", %{
       conn: conn,
       event: event,
@@ -187,7 +442,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       assert has_element?(view, "button[phx-click='next_question']", "Runde auflösen")
     end
 
-    test "shows live answer distribution as answers come in", %{
+    test "keeps answer options visible without per-option counts after answers come in", %{
       conn: conn,
       event: event,
       topic: topic,
@@ -196,7 +451,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
 
-      # No answers yet — distribution list exists but counts are all 0
+      # The host sees the question and its fixed-order answer options.
       html = render(view)
       assert html =~ "data-test=\"answer-distribution\""
       assert has_element?(view, "[data-test='distribution-row']")
@@ -207,9 +462,10 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       for t <- others, do: Engine.submit_answer(event.id, t.id, 0)
       render(view)
 
+      refute has_element?(view, "[data-test='distribution-row'] > :nth-child(3)")
+
       html = render(view)
-      # The "1" count appears twice (two teams picked index 0) and "1" once,
-      # alongside the option text. Confirm the question prompt renders.
+      # Answer submissions must not replace the question or add option counts.
       assert html =~ "What is 2+2?"
     end
 
@@ -258,6 +514,54 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
   end
 
   describe "round reveal" do
+    test "names only the teams tied for the round lead and keeps the tie visible with standings",
+         %{
+           conn: conn,
+           event: event,
+           topic: topic,
+           teams: [first, second, third]
+         } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+
+      for {team, answer} <- [{first, 1}, {second, 0}, {third, 0}] do
+        {:ok, _} = Engine.submit_answer(event.id, team.id, answer)
+      end
+
+      view |> element("button[data-test='advance-button']") |> render_click()
+
+      for {team, answer} <- [{first, 0}, {second, 1}, {third, 0}] do
+        {:ok, _} = Engine.submit_answer(event.id, team.id, answer)
+      end
+
+      host_reveal_round(view)
+
+      assert has_element?(view, "#host-round-tie", first.name)
+      assert has_element?(view, "#host-round-tie", second.name)
+      assert has_element?(view, "#host-round-tie", "je 1 Punkt")
+      refute has_element?(view, "#host-round-tie", third.name)
+      host_show_standings(view)
+      assert has_element?(view, "#host-round-tie", first.name)
+      assert has_element?(view, "#host-round-tie", second.name)
+    end
+
+    test "names every team when the round is tied at zero points", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      teams: teams
+    } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+      {:ok, _} = Engine.reveal_round(event.id)
+
+      for team <- teams do
+        assert has_element?(view, "#host-round-tie", team.name)
+      end
+
+      assert has_element?(view, "#host-round-tie", "je 0 Punkten")
+    end
+
     test "shows winner and standings", %{
       conn: conn,
       event: event,

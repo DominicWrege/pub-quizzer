@@ -68,6 +68,15 @@ defmodule PubQuizzer.EventsTest do
   end
 
   describe "team management" do
+    test "claiming a new slot checks the persisted event status" do
+      {:ok, event} = Quiz.create_event(%{team_count: 3})
+      {:ok, _} = Quiz.start_event(event)
+
+      assert {:error, :quiz_started} = Quiz.claim_next_team_slot(event)
+      assert {:error, :quiz_started} = Quiz.claim_team_slot(event, 0)
+      assert Enum.all?(Quiz.list_teams_for_event(event.id), &is_nil(&1.claimed_at))
+    end
+
     test "add_team_slot adds one slot and increments team_count" do
       {:ok, event} = Quiz.create_event(%{team_count: 3})
       {:ok, updated, team} = Quiz.add_team_slot(event)

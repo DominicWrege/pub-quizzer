@@ -53,7 +53,6 @@
 
   <%!-- Question phase: topic and choices; the prompt is shown by the moderator --%>
   <%= if @engine_state.status == :question do %>
-    <% answered = PubQuizzer.Quiz.EngineState.answered_teams(@engine_state) %>
     <% our_answer =
       Map.get(Map.get(@engine_state.answers, @engine_state.question_index, %{}), @team.id) %>
     <% question = Enum.at(@engine_state.current_questions, @engine_state.question_index) %>
@@ -72,20 +71,27 @@
             )}
           </p>
         </div>
-        <span class="badge badge-ghost badge-sm text-xs shrink-0">
-          {MapSet.size(answered)} / {length(@engine_state.teams)} geantwortet
+        <span
+          id="team-question-timer"
+          phx-hook=".QuestionTimer"
+          phx-update="ignore"
+          data-question-key={"#{@engine_state.round_number}-#{question.id}"}
+          role="timer"
+          aria-label="Zeit für diese Frage"
+          aria-live="off"
+          class="inline-flex items-center gap-1.5 text-sm shrink-0 tabular-nums"
+        >
+          <.icon name="hero-clock" class="size-4" />
+          <span data-timer-value>00:00</span>
         </span>
       </div>
 
       <div class="flex flex-col gap-2">
-        <%= for {option, shuffled_idx} <- Enum.with_index(@shuffled_options) do %>
-          <% is_selected =
-            @selected_index == shuffled_idx or
-              (our_answer != nil and
-                 OptionShuffle.to_shuffled(@shuffle_map, our_answer) == shuffled_idx) %>
+        <%= for {option, idx} <- Enum.with_index(question.options) do %>
+          <% is_selected = @selected_index == idx or our_answer == idx %>
           <button
             phx-click="select_answer"
-            phx-value-index={shuffled_idx}
+            phx-value-index={idx}
             phx-value-question_id={question.id}
             class={[
               "btn h-auto min-h-16 w-full px-3 py-3 justify-start gap-3 text-left whitespace-normal break-words shadow-sm border transition-[color,background-color,border-color,transform] duration-200 ease-out active:scale-[0.98]",
@@ -95,20 +101,13 @@
             ]}
           >
             <span class="font-mono font-bold text-xl shrink-0 w-7 text-center">
-              {letter_for_index(shuffled_idx)}
+              {letter_for_index(idx)}
             </span>
             <span class="min-w-0 flex-1 text-sm font-medium leading-snug">{option["text"]}</span>
           </button>
         <% end %>
       </div>
     </div>
-
-    <%= if our_answer != nil do %>
-      <div class="alert alert-success shadow-sm text-sm mt-3 px-3 py-2">
-        <.icon name="hero-check-circle" class="size-5" />
-        <span class="font-semibold">Antwort abgegeben!</span>
-      </div>
-    <% end %>
   <% end %>
 
   <%!-- Round reveal: winner shown immediately; standings gated behind moderator trigger --%>
@@ -215,4 +214,32 @@
       </div>
     <% end %>
   <% end %>
+
+  <script :type={Phoenix.LiveView.ColocatedHook} name=".QuestionTimer">
+    export default {
+      mounted() {
+        this.reset()
+      },
+      updated() {
+        if (this.questionKey !== this.el.dataset.questionKey) this.reset()
+      },
+      destroyed() {
+        clearInterval(this.interval)
+      },
+      reset() {
+        clearInterval(this.interval)
+        this.questionKey = this.el.dataset.questionKey
+        this.startedAt = performance.now()
+        this.value = this.el.querySelector("[data-timer-value]")
+        this.tick()
+        this.interval = setInterval(() => this.tick(), 1000)
+      },
+      tick() {
+        const seconds = Math.floor((performance.now() - this.startedAt) / 1000)
+        const minutes = String(Math.floor(seconds / 60)).padStart(2, "0")
+        const remainder = String(seconds % 60).padStart(2, "0")
+        this.value.textContent = `${minutes}:${remainder}`
+      }
+    }
+  </script>
 </Layouts.app>

@@ -419,10 +419,11 @@ defmodule PubQuizzer.Quiz do
         |> Repo.insert!()
 
       names = Names.generate_many(team_count)
+      link_codes = generate_team_link_codes(team_count)
 
       Enum.with_index(names)
       |> Enum.each(fn {name, idx} ->
-        %Team{}
+        %Team{link_code: Enum.at(link_codes, idx)}
         |> Team.changeset(%{name: name, slot_index: idx, quiz_event_id: event.id})
         |> Repo.insert!()
       end)
@@ -473,8 +474,10 @@ defmodule PubQuizzer.Quiz do
   def add_team_slot(%QuizEvent{team_count: count}) when count >= 12, do: {:error, :max_teams}
 
   def add_team_slot(event) do
+    teams = list_teams_for_event(event.id)
+
     new_slot =
-      list_teams_for_event(event.id)
+      teams
       |> List.last()
       |> case do
         nil -> 0
@@ -482,9 +485,10 @@ defmodule PubQuizzer.Quiz do
       end
 
     name = Names.generate(existing_team_names(event.id))
+    [link_code] = generate_team_link_codes(1, Enum.map(teams, & &1.link_code))
 
     {:ok, team} =
-      %Team{}
+      %Team{link_code: link_code}
       |> Team.changeset(%{name: name, slot_index: new_slot, quiz_event_id: event.id})
       |> Repo.insert()
 
@@ -538,7 +542,7 @@ defmodule PubQuizzer.Quiz do
 
   @doc """
   Claims the next free (unclaimed) team slot for an event.
-  Returns {:ok, team} or {:error, :full}.
+  Returns {:ok, team}, {:error, :full}, or {:error, :quiz_started}.
   """
   def claim_next_team_slot(event) do
     teams = list_teams_for_event(event.id)
@@ -548,13 +552,7 @@ defmodule PubQuizzer.Quiz do
         {:error, :full}
 
       team ->
-        result =
-          team
-          |> Team.changeset(%{claimed_at: DateTime.utc_now()})
-          |> Repo.update()
-
-        broadcast_team_update(event.id)
-        result
+        claim_unclaimed_team(event.id, team)
     end
   end
 
@@ -562,7 +560,8 @@ defmodule PubQuizzer.Quiz do
   Claims a specific team slot by 0-based slot_index. Idempotent: returns
   {:ok, team} whether the slot was just claimed or already claimed — the
   printed QR card is the source of truth for "whoever holds it IS this team".
-  Returns {:error, :not_found} if no team has the given slot_index.
+  Unclaimed slots cannot join after the quiz starts.
+  Returns {:error, :not_found} or {:error, :quiz_started}.
   """
   def claim_team_slot(event, slot_index) do
     teams = list_teams_for_event(event.id)
@@ -572,18 +571,26 @@ defmodule PubQuizzer.Quiz do
         {:error, :not_found}
 
       team ->
-        result =
-          if team.claimed_at do
-            {:ok, team}
-          else
-            team
-            |> Team.changeset(%{claimed_at: DateTime.utc_now()})
-            |> Repo.update()
-          end
-
-        broadcast_team_update(event.id)
-        result
+        if team.claimed_at do
+          {:ok, team}
+        else
+          claim_unclaimed_team(event.id, team)
+        end
     end
+  end
+
+  defp claim_unclaimed_team(event_id, team) do
+    result =
+      Repo.transaction(fn ->
+        if Repo.get!(QuizEvent, event_id).status != "lobby", do: Repo.rollback(:quiz_started)
+
+        team
+        |> Team.changeset(%{claimed_at: DateTime.utc_now()})
+        |> Repo.update!()
+      end)
+
+    if match?({:ok, _}, result), do: broadcast_team_update(event_id)
+    result
   end
 
   @doc """
@@ -635,6 +642,17 @@ defmodule PubQuizzer.Quiz do
     list_teams_for_event(event_id)
     |> Enum.map(& &1.name)
     |> MapSet.new()
+  end
+
+  defp generate_team_link_codes(count, existing_codes \\ []) do
+    existing = MapSet.new(existing_codes)
+
+    Stream.repeatedly(fn ->
+      for <<byte <- :crypto.strong_rand_bytes(3)>>, into: "", do: <<?a + rem(byte, 26)>>
+    end)
+    |> Stream.reject(&MapSet.member?(existing, &1))
+    |> Stream.uniq()
+    |> Enum.take(count)
   end
 
   defp broadcast_team_update(event_id) do

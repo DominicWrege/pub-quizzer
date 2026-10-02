@@ -54,6 +54,8 @@ defmodule PubQuizzerWeb.Layouts do
     doc: "when false, the admin header/drawer/flashes get print:hidden (for printable pages)"
 
   slot :inner_block, required: true
+  slot :nav_actions, doc: "page-specific actions in the top navigation"
+  slot :nav_title, doc: "page-specific title replacing the public navigation branding"
 
   def app(assigns) do
     assigns =
@@ -95,6 +97,7 @@ defmodule PubQuizzerWeb.Layouts do
               </a>
             </div>
             <div class="flex-none flex items-center gap-4">
+              {render_slot(@nav_actions)}
               <details
                 class="dropdown dropdown-end"
                 phx-click-away={Phoenix.LiveView.JS.remove_attribute("open")}
@@ -234,10 +237,17 @@ defmodule PubQuizzerWeb.Layouts do
           scrolls (matching the logged-in header behavior). --%>
       <div class="flex min-h-[var(--app-height)] flex-col">
         <header class="navbar min-h-0 shrink-0 bg-base-100 max-sm:sticky max-sm:top-0 max-sm:z-20 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] lg:pl-[calc(env(safe-area-inset-left)+2rem)] lg:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300">
-          <div class="flex-1">
-            <a href="/" class="flex-1 flex w-fit items-center gap-2">
-              <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
-            </a>
+          <div class="flex-1 min-w-0 mr-3">
+            <%= if @nav_title != [] do %>
+              {render_slot(@nav_title)}
+            <% else %>
+              <a href="/" class="flex-1 flex w-fit items-center gap-2">
+                <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
+              </a>
+            <% end %>
+          </div>
+          <div :if={@nav_actions != []} class="flex-none flex items-center gap-2">
+            {render_slot(@nav_actions)}
           </div>
           <%= unless @hide_nav_actions do %>
             <div class="flex-none hidden sm:flex">

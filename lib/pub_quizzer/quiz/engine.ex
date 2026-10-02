@@ -77,6 +77,13 @@ defmodule PubQuizzer.Quiz.Engine do
     :exit, _ -> {:error, :not_found}
   end
 
+  @doc "Removes a team from a running quiz, persists the deletion, and disconnects its devices."
+  def remove_team(event_id, team_id) do
+    GenServer.call(via_tuple(event_id), {:remove_team, team_id})
+  catch
+    :exit, _ -> {:error, :not_found}
+  end
+
   @doc """
   Start the quiz (lobby → topic_selection).
   """
@@ -191,10 +198,28 @@ defmodule PubQuizzer.Quiz.Engine do
   def handle_call({:register_team, team_id, name, slot_index}, _from, state) do
     {:ok, state} = ensure_loaded(state)
 
-    {:ok, new_es} = EngineState.register_team(state.engine_state, team_id, name, slot_index)
-    broadcast(new_es)
+    case EngineState.register_team(state.engine_state, team_id, name, slot_index) do
+      {:ok, new_es} ->
+        broadcast(new_es)
+        {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
 
-    {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call({:remove_team, team_id}, _from, state) do
+    {:ok, state} = ensure_loaded(state)
+
+    with {:ok, new_es} <- EngineState.remove_team(state.engine_state, team_id),
+         {:ok, _event} <- PubQuizzer.Quiz.delete_team(PubQuizzer.Quiz.get_team!(team_id)) do
+      Phoenix.PubSub.broadcast(@pubsub, topic(new_es.event_id), {:kick_team, team_id})
+      broadcast(new_es)
+      {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
+    else
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
   end
 
   def handle_call(:start_quiz, _from, state) do

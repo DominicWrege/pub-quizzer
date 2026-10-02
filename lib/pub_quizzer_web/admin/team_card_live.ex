@@ -28,7 +28,7 @@ defmodule PubQuizzerWeb.Admin.TeamCardLive do
       |> Enum.sort_by(& &1.slot_index)
       |> Enum.map(fn team ->
         slot = team.slot_index + 1
-        card_url = "#{base}#{~p"/quiz/join/#{event.code}/#{slot}"}"
+        card_url = "#{base}#{~p"/quiz/join/#{event.code}/#{team.link_code}"}"
 
         svg =
           card_url
@@ -42,7 +42,7 @@ defmodule PubQuizzerWeb.Admin.TeamCardLive do
   end
 
   # Human-readable join link for the printed card fallback: no scheme, no port
-  # (e.g. "quizforabetterlife.eu/quiz/join/ABC/3").
+  # (e.g. "quizforabetterlife.eu/quiz/join/1234/abc").
   defp display_url(card_url) do
     uri = URI.parse(card_url)
     "#{uri.host}#{uri.path}"

@@ -2,33 +2,109 @@
   flash={@flash}
   max_width="max-w-2xl"
   hide_nav_actions
-  main_class="px-4 py-4 sm:pt-2 sm:pb-10 sm:px-6 lg:px-8"
+  main_class="px-4 py-4 sm:pt-2 sm:pb-10 sm:px-6 lg:px-8 text-sm"
 >
-  <div class="border-b border-base-300 host-header">
-    <.header inline_actions>
-      <:back>
-        <%= if @engine_state.status == :finished do %>
-          <.back_link navigate={~p"/admin/events"} />
+  <:nav_title>
+    <%= if @engine_state.status == :question do %>
+      <div class="flex items-baseline gap-2 min-w-0">
+        <h3 class="text-base font-semibold shrink-0">
+          Frage {(@engine_state.question_index || 0) + 1} / {length(
+            @engine_state.current_questions
+          )}
+        </h3>
+        <span
+          :if={@current_topic_name}
+          id="host-question-topic"
+          class="text-sm text-base-content truncate"
+        >
+          {@current_topic_name}
+        </span>
+      </div>
+    <% else %>
+      <span class="text-base font-semibold">
+        <%= case @engine_state.status do %>
+          <% :topic_selection -> %>
+            Themenwahl
+          <% :round_reveal -> %>
+            Runde {@engine_state.round_number} · Auswertung
+          <% :finished -> %>
+            Quiz beendet
+          <% _ -> %>
+            Quiz
         <% end %>
-      </:back>
-      Moderator
-      <:subtitle></:subtitle>
-      <:actions>
-        <%= if @engine_state.status != :finished do %>
-          <button
-            phx-click="ask_finish_quiz"
-            class="btn btn-sm btn-soft"
-          >
-            <.icon name="hero-flag" class="size-4" /> Quiz beenden
-          </button>
-        <% end %>
-      </:actions>
-    </.header>
-  </div>
+      </span>
+    <% end %>
+  </:nav_title>
+  <:nav_actions>
+    <button
+      :if={@engine_state.status == :question}
+      id="host-answer-count"
+      phx-click="toggle_pending_teams"
+      aria-expanded={to_string(@pending_teams_visible?)}
+      aria-controls="host-pending-teams"
+      title="Teams ohne Antwort anzeigen"
+      class="btn btn-sm btn-soft px-3 text-sm shrink-0 tabular-nums"
+      data-test="answered-badge"
+    >
+      {MapSet.size(@answered_team_ids)} / {length(@engine_state.teams)}
+      <.icon
+        name="hero-chevron-right"
+        class={[
+          "size-4 transition-transform",
+          if(@pending_teams_visible?, do: "-rotate-90", else: "rotate-90")
+        ]}
+      />
+    </button>
+    <%= if @engine_state.status != :finished do %>
+      <details
+        id="host-quiz-menu"
+        class="dropdown dropdown-end"
+        phx-mounted={JS.ignore_attributes(["open"])}
+        phx-click-away={JS.remove_attribute("open", to: "#host-quiz-menu")}
+      >
+        <summary class="btn btn-sm btn-soft btn-square" aria-label="Quiz-Menü">
+          <.icon name="hero-bars-3" class="size-5" />
+        </summary>
+        <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg w-52 p-2 mt-2 z-50 border border-base-300">
+          <li>
+            <button
+              id="host-finish-quiz"
+              phx-click={
+                JS.remove_attribute("open", to: "#host-quiz-menu") |> JS.push("ask_finish_quiz")
+              }
+              class="btn btn-sm btn-soft justify-start"
+            >
+              <.icon name="hero-flag" class="size-4" /> Quiz beenden
+            </button>
+          </li>
+          <li class="mt-1">
+            <.link
+              id="host-live-values"
+              navigate={~p"/admin/events/#{@event.id}/results"}
+              class="btn btn-sm btn-soft justify-start"
+            >
+              <.icon name="hero-clipboard" class="size-4" /> Live-Werte
+            </.link>
+          </li>
+          <li class="mt-1">
+            <.link
+              id="host-quiz-overview"
+              navigate={~p"/admin/events"}
+              class="btn btn-sm btn-soft justify-start"
+            >
+              Quiz-Übersicht
+            </.link>
+          </li>
+        </ul>
+      </details>
+    <% else %>
+      <.back_link navigate={~p"/admin/events"} />
+    <% end %>
+  </:nav_actions>
 
   <div id="host-screen-control" phx-hook="HostScreen" phx-update="ignore" class="hidden"></div>
 
-  <div id="host-lobby-main" phx-hook="ScrollToBottom" class="mx-auto space-y-6">
+  <div id="host-lobby-main" phx-hook="ScrollToBottom" class="mx-auto space-y-4">
     <%!-- Topic selection phase --%>
     <%= if @engine_state.status == :topic_selection do %>
       <div class="mb-4 animate-fade-in-up">
@@ -37,14 +113,14 @@
             Enum.find(@engine_state.teams, fn t ->
               t.id == @engine_state.current_chooser_team_id
             end) %>
-          <div class="alert alert-info max-w-2xl mx-auto text-2xl font-semibold">
-            <.icon name="hero-hand-raised" class="size-8" />
+          <div class="alert alert-info max-w-2xl mx-auto text-base font-semibold">
+            <.icon name="hero-hand-raised" class="size-5" />
             <span><strong>{chooser.name}</strong>
             hat Runde {@engine_state.round_number} gewonnen — Vortritt</span>
           </div>
         <% else %>
-          <div class="alert alert-info text-xl">
-            <.icon name="hero-hand-raised" class="size-6" />
+          <div class="alert alert-info text-base">
+            <.icon name="hero-hand-raised" class="size-5" />
             <span>
               <strong>Moderator wählt das Thema</strong>
               <%= if @engine_state.round_number == 0 do %>
@@ -56,16 +132,16 @@
           </div>
         <% end %>
 
-        <h3 class="text-2xl sm:text-3xl font-bold mb-5 mt-6">Verfügbare Themen</h3>
+        <h3 class="text-xl font-bold mb-4 mt-5">Verfügbare Themen</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <%= for topic <- @available_topics do %>
             <button
               phx-click="choose_topic"
               phx-value-topic_id={topic.id}
-              class="btn btn-primary min-w-0 h-auto min-h-24 sm:min-h-36 px-4 py-5 flex-col items-center gap-2 text-primary-content shadow-lg hover:scale-[1.02] hover:shadow-xl transition-[transform,box-shadow] duration-200"
+              class="btn btn-primary min-w-0 h-auto min-h-16 sm:min-h-20 px-3 py-2 flex-col items-center gap-1 text-primary-content shadow-lg hover:scale-[1.02] hover:shadow-xl transition-[transform,box-shadow] duration-200"
             >
-              <.icon name="hero-bookmark" class="size-7 sm:size-8 shrink-0" />
-              <span class="block max-w-full whitespace-normal break-words text-center text-xl sm:text-2xl font-bold leading-tight">{topic.name}</span>
+              <.icon name="hero-bookmark" class="size-5 sm:size-6 shrink-0" />
+              <span class="block max-w-full whitespace-normal break-words text-center text-base font-bold leading-tight">{topic.name}</span>
               <%= if topic[:description] do %>
                 <span class="max-w-full whitespace-normal break-words text-center text-sm font-normal opacity-80">{topic[
                   :description
@@ -86,30 +162,26 @@
       <% has_next =
         (@engine_state.question_index || 0) < length(@engine_state.current_questions) - 1 %>
 
-      <div class="space-y-4 animate-fade-in">
-        <div class="flex items-center justify-between gap-3">
-          <div class="flex items-baseline gap-2 flex-wrap min-w-0">
-            <h3 class="text-xl font-semibold shrink-0">
-              Frage {(@engine_state.question_index || 0) + 1} / {length(
-                @engine_state.current_questions
-              )}
-            </h3>
-            <%= if @current_topic_name do %>
-              <span class="text-sm text-base-content/60 truncate">{@current_topic_name}</span>
-            <% end %>
-          </div>
-          <span
-            class="badge badge-lg badge-ghost px-4 py-3 text-base shrink-0 tabular-nums"
-            data-test="answered-badge"
-          >
-            {MapSet.size(answered)} / {total_teams}
-          </span>
+      <div class="space-y-3 animate-fade-in">
+        <div
+          id="host-pending-teams"
+          hidden={!@pending_teams_visible?}
+          class="rounded-lg border border-base-300 bg-base-200 px-4 py-3 text-sm break-words"
+        >
+          <%= if all_answered do %>
+            Alle Teams haben geantwortet.
+          <% else %>
+            <span class="font-semibold">Antwort fehlt:</span>
+            {@engine_state.teams
+            |> Enum.reject(&MapSet.member?(answered, &1.id))
+            |> Enum.map_join(", ", & &1.name)}
+          <% end %>
         </div>
 
-        <div class="card bg-base-200">
-          <div class="card-body p-5 sm:p-6">
+        <div id="host-question-card" class="card bg-base-200 border-2 border-base-content/40">
+          <div class="card-body p-4 sm:p-5">
             <h4
-              class="card-title text-lg sm:text-xl leading-snug break-words"
+              class="card-title text-[1.1rem] leading-snug break-words"
               data-test="question-prompt"
             >
               <.multiline_text text={question.prompt} />
@@ -117,15 +189,13 @@
 
             <ul class="mt-2 divide-y divide-base-300" data-test="answer-distribution">
               <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                <% count = Map.get(@answer_distribution, idx, 0) %>
-                <li class="flex items-center gap-3 py-3" data-test="distribution-row">
-                  <span class="font-mono w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded bg-base-300 text-base-content/70 text-sm sm:text-base shrink-0">
+                <li class="flex items-center gap-3 py-2" data-test="distribution-row">
+                  <span class="font-mono w-8 h-8 flex items-center justify-center rounded bg-base-300 text-base-content/70 text-sm shrink-0">
                     {letter_for_index(idx)}
                   </span>
-                  <span class="flex-1 min-w-0 text-base sm:text-lg break-words">
+                  <span class="flex-1 min-w-0 text-[0.9625rem] break-words">
                     <.multiline_text text={option["text"]} />
                   </span>
-                  <span class="tabular-nums text-sm sm:text-base w-6 text-right shrink-0">{count}</span>
                 </li>
               <% end %>
             </ul>
@@ -135,8 +205,7 @@
         <div class="sticky bottom-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 pt-2 bg-base-100/95 backdrop-blur border-t border-base-300">
           <button
             phx-click="next_question"
-            disabled={!all_answered}
-            class="btn btn-primary btn-lg w-full text-lg"
+            class="btn btn-primary btn-lg w-full text-base"
             data-test="advance-button"
           >
             <%= if has_next do %>
@@ -152,9 +221,35 @@
     <%!-- Round reveal phase — stats-first, no paginated slide --%>
     <%= if @engine_state.status == :round_reveal do %>
       <div class="space-y-4 animate-fade-in">
-        <h3 class="text-xl font-semibold">
+        <h3 class="text-base font-semibold">
           Runde {(@engine_state.round_number || 0) + 1} · Auswertung
         </h3>
+
+        <% winner =
+          Enum.find(@engine_state.teams, &(&1.id == @engine_state.current_winner_team_id)) %>
+        <% round_score =
+          @standings_with_deltas |> Enum.map(&elem(&1, 3)) |> Enum.max(fn -> 0 end) %>
+        <% round_leaders = Enum.filter(@standings_with_deltas, &(elem(&1, 3) == round_score)) %>
+        <%= cond do %>
+          <% winner -> %>
+            <div id="host-round-winner" class="alert alert-success text-sm font-semibold">
+              <.icon name="hero-trophy" class="size-5" />
+              <span><strong>{winner.name}</strong> gewinnt die Runde!</span>
+            </div>
+          <% length(round_leaders) > 1 -> %>
+            <div id="host-round-tie" class="alert alert-info text-sm">
+              <.icon name="hero-hand-raised" class="size-5" />
+              <span>
+                <strong>Remis: {Enum.map_join(round_leaders, ", ", &elem(&1, 1))}</strong>
+                mit je {round_score} {if round_score == 1, do: "Punkt", else: "Punkten"} in dieser Runde.
+              </span>
+            </div>
+          <% true -> %>
+            <div id="host-round-no-winner" class="alert alert-info text-sm">
+              <.icon name="hero-hand-raised" class="size-5" />
+              <span>Kein Rundensieger.</span>
+            </div>
+        <% end %>
 
         <%!-- Per-question distribution breakdowns — all questions in the round --%>
         <div class="space-y-3" data-test="round-stat-list">
@@ -166,7 +261,7 @@
                     Frage {(question.position || 0) + 1}
                   </span>
                 </div>
-                <h4 class="card-title text-base sm:text-lg leading-snug break-words">
+                <h4 class="card-title text-[1.1rem] leading-snug break-words">
                   <.multiline_text text={question.prompt} />
                 </h4>
 
@@ -185,7 +280,7 @@
                       ]}>
                         {letter_for_index(idx)}
                       </span>
-                      <span class="flex-1 min-w-0 text-sm sm:text-base break-words">
+                      <span class="flex-1 min-w-0 text-[0.9625rem] break-words">
                         <.multiline_text text={option["text"]} />
                       </span>
                       <%= if is_correct do %>
@@ -203,7 +298,7 @@
         <%!-- Winner banner + standings-or-skip section --%>
         <%= if @engine_state.standings_revealed do %>
           <div class="space-y-3 animate-fade-in-up">
-            <h3 class="text-xl font-semibold">🏆 Platzierung</h3>
+            <h3 class="text-base font-semibold">🏆 Platzierung</h3>
             <ol class="space-y-2" data-test="standings-list">
               <%= for {{id, name, total, delta}, rank} <- Enum.with_index(@standings_with_deltas) do %>
                 <li
@@ -227,36 +322,19 @@
                         {rank + 1}
                     <% end %>
                   </span>
-                  <span class="flex-1 font-semibold text-base sm:text-lg truncate">{name}</span>
+                  <span class="flex-1 font-semibold text-sm truncate">{name}</span>
                   <%= if delta > 0 do %>
                     <span class="badge badge-success badge-sm shrink-0">+{delta}</span>
                   <% end %>
-                  <span class="tabular-nums text-xl font-bold shrink-0">{total}</span>
+                  <span class="tabular-nums text-base font-bold shrink-0">{total}</span>
                 </li>
               <% end %>
             </ol>
-            <button phx-click="next_round" class="btn btn-primary btn-lg w-full text-lg">
+            <button phx-click="next_round" class="btn btn-primary btn-lg w-full text-base">
               <.icon name="hero-chevron-right" class="size-5" /> Nächste Runde
             </button>
           </div>
         <% else %>
-          <% winner =
-            Enum.find(@engine_state.teams, fn t ->
-              t.id == @engine_state.current_winner_team_id
-            end) %>
-
-          <%= if winner do %>
-            <div class="alert alert-success text-lg font-semibold">
-              <.icon name="hero-trophy" class="size-6 text-warning" />
-              <span><strong>{winner.name}</strong> gewinnt die Runde!</span>
-            </div>
-          <% else %>
-            <div class="alert alert-info text-base">
-              <.icon name="hero-hand-raised" class="size-5" />
-              <span>Remis! Kein eindeutiger Gewinner.</span>
-            </div>
-          <% end %>
-
           <div class="flex flex-col gap-2">
             <button phx-click="show_standings" class="btn btn-primary btn-lg text-base">
               <.icon name="hero-clipboard" class="size-5" /> Team-Ergebnisse anzeigen
@@ -273,7 +351,7 @@
     <%= if @engine_state.status == :finished do %>
       <div class="text-center mt-20 mb-6 animate-fade-in">
         <.icon name="hero-trophy" class="size-20 mx-auto text-warning" />
-        <h2 class="text-3xl font-bold mt-2">Quiz beendet!</h2>
+        <h2 class="text-xl font-bold mt-2">Quiz beendet!</h2>
       </div>
 
       <%= if Map.get(@engine_state, :final_results_revealed, false) do %>
@@ -282,12 +360,12 @@
           <% [first | _rest] = @standings %>
           <% {_, winner_name, winner_score} = first %>
           <div id="host-winner-line" class="text-center mb-6">
-            <span class="text-xl font-semibold">
+            <span class="text-base font-semibold">
               <strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!
             </span>
           </div>
         <% else %>
-          <div class="alert alert-warning text-lg">
+          <div class="alert alert-warning text-base">
             <.icon name="hero-exclamation-triangle" class="size-6" />
             <span>Keine Teams vorhanden.</span>
           </div>
@@ -296,7 +374,7 @@
         <div class="text-center mt-6">
           <button
             phx-click="reveal_final_results"
-            class="btn btn-primary text-lg px-8 py-3"
+            class="btn btn-primary text-base px-8 py-3"
           >
             Ergebnisse für Teams freigeben
           </button>
@@ -316,6 +394,55 @@
     <% end %>
   </div>
 
+  <%= if @engine_state.status != :finished do %>
+    <details
+      id="host-teams"
+      phx-mounted={JS.ignore_attributes(["open"])}
+      class="collapse collapse-arrow border border-base-300 bg-base-200 mt-6"
+    >
+      <summary class="collapse-title font-semibold">
+        Teams verwalten · {length(@engine_state.teams)}
+      </summary>
+      <div class="collapse-content">
+        <ul id="host-team-list" phx-update="stream" class="divide-y divide-base-300">
+          <li
+            :for={{dom_id, team} <- @streams.teams}
+            id={dom_id}
+            class="flex flex-wrap items-center gap-2 py-3"
+          >
+            <span id={"host-team-#{team.id}"} class="flex-1 min-w-0 font-medium break-words">{team.name}</span>
+            <span
+              class={[
+                "badge badge-sm badge-soft",
+                if(team.id in @connected_team_ids, do: "badge-success", else: "badge-warning")
+              ]}
+              data-test="team-connection"
+            >
+              {if team.id in @connected_team_ids, do: "Online", else: "Offline"}
+            </span>
+            <span
+              :if={length(@engine_state.teams) == 1}
+              id={"host-last-team-#{team.id}"}
+              class="text-xs text-base-content"
+            >
+              Ein Team muss bleiben
+            </span>
+            <button
+              :if={length(@engine_state.teams) > 1}
+              id={"host-remove-team-#{team.id}"}
+              phx-click="ask_remove_team"
+              phx-value-team_id={team.id}
+              class="btn btn-sm btn-soft btn-error shrink-0"
+              aria-label={"#{team.name} entfernen"}
+            >
+              <.icon name="hero-trash" class="size-4" /> Team entfernen
+            </button>
+          </li>
+        </ul>
+      </div>
+    </details>
+  <% end %>
+
   <p class="text-center text-sm text-base-content/60 mt-6">
     Quiz-Code: <span class="font-mono font-bold">{@event.code}</span>
   </p>
@@ -329,4 +456,36 @@
     confirm_event="confirm_finish_quiz"
     cancel_event="cancel_confirm"
   />
+
+  <%= case @confirm_action do %>
+    <% {:next_question, _question_key} -> %>
+      <% missing_names =
+        @engine_state.teams
+        |> Enum.reject(&MapSet.member?(@answered_team_ids, &1.id))
+        |> Enum.map_join(", ", & &1.name) %>
+      <.confirm_modal
+        id="next-question-modal"
+        show
+        title="Ohne alle Antworten fortfahren?"
+        message={"Antwort fehlt: #{missing_names}. Nicht beantwortete Fragen zählen als 0 Punkte."}
+        confirm_label={
+          if @engine_state.question_index < length(@engine_state.current_questions) - 1,
+            do: "Nächste Frage",
+            else: "Runde auflösen"
+        }
+        confirm_event="confirm_next_question"
+        cancel_event="cancel_confirm"
+      />
+    <% {:remove_team, team} -> %>
+      <.confirm_modal
+        id="remove-team-modal"
+        show
+        title={"#{team.name} entfernen?"}
+        message="Das Team und seine Antworten werden aus dem Quiz entfernt. Der QR-Code ist danach ungültig."
+        confirm_label="Team entfernen"
+        confirm_event="confirm_remove_team"
+        cancel_event="cancel_confirm"
+      />
+    <% _ -> %>
+  <% end %>
 </Layouts.app>

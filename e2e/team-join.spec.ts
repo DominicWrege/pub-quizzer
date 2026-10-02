@@ -17,8 +17,8 @@ test.describe("team join", () => {
     await pageB.locator("#home-quiz-code").fill(code)
     await pageB.locator("#home-join-btn").click()
 
-    await expect(pageB.locator(".alert-error")).toBeVisible({ timeout: 10_000 })
-    await expect(pageB).toHaveURL("/")
+    await expect(pageB.locator("#quiz-join-blocked")).toBeVisible({ timeout: 10_000 })
+    await expect(pageB.locator("#join-existing-team")).toBeVisible()
 
     await ctxA.close()
     await ctxB.close()

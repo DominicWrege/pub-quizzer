@@ -244,6 +244,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   end
 
   def handle_info({:engine_state, _state}, socket), do: {:noreply, socket}
+  def handle_info({:kick_team, _team_id}, socket), do: {:noreply, socket}
 
   def handle_info({:team_connected, team_id}, socket) do
     connected_ids = MapSet.put(socket.assigns.connected_team_ids, team_id)

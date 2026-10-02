@@ -103,6 +103,16 @@ defmodule PubQuizzer.Quiz.EngineState do
   `chooser_team_id` is nil when the host picks (round 1 or tie).
   """
   def choose_topic(%__MODULE__{status: :topic_selection} = state, topic_id, chooser_team_id) do
+    if is_nil(chooser_team_id) or valid_team?(state, chooser_team_id) do
+      choose_available_topic(state, topic_id, chooser_team_id)
+    else
+      {:error, :invalid_chooser}
+    end
+  end
+
+  def choose_topic(%__MODULE__{}, _topic_id, _chooser), do: {:error, :not_in_topic_selection}
+
+  defp choose_available_topic(state, topic_id, chooser_team_id) do
     case Enum.find(available_topics(state), fn t -> t.id == topic_id end) do
       nil ->
         {:error, :topic_not_available}
@@ -127,8 +137,6 @@ defmodule PubQuizzer.Quiz.EngineState do
         end
     end
   end
-
-  def choose_topic(%__MODULE__{}, _topic_id, _chooser), do: {:error, :not_in_topic_selection}
 
   @doc """
   Submit or update an answer for the current question.
@@ -381,21 +389,61 @@ defmodule PubQuizzer.Quiz.EngineState do
   Register a newly joined team in the engine state.
   """
   def register_team(%__MODULE__{} = state, team_id, name, slot_index) do
-    if Enum.any?(state.teams, &(&1.id == team_id)) do
-      {:ok, state}
-    else
-      team = %{id: team_id, name: name, slot_index: slot_index}
+    cond do
+      valid_team?(state, team_id) ->
+        {:ok, state}
 
-      {:ok,
-       %{
-         state
-         | teams: state.teams ++ [team],
-           standings: Map.put(state.standings, team_id, 0)
-       }}
+      state.status != :lobby ->
+        {:error, :quiz_started}
+
+      true ->
+        team = %{id: team_id, name: name, slot_index: slot_index}
+
+        {:ok,
+         %{
+           state
+           | teams: state.teams ++ [team],
+             standings: Map.put(state.standings, team_id, 0)
+         }}
     end
   end
 
+  @doc "Removes a participating team and its answers, scores, and topic-choice priority."
+  def remove_team(%__MODULE__{status: status} = state, team_id)
+      when status in [:topic_selection, :question, :round_reveal] do
+    cond do
+      not valid_team?(state, team_id) ->
+        {:error, :not_found}
+
+      length(state.teams) <= 1 ->
+        {:error, :last_team}
+
+      true ->
+        {:ok,
+         %{
+           state
+           | teams: Enum.reject(state.teams, &(&1.id == team_id)),
+             answers:
+               Map.new(state.answers, fn {index, answers} ->
+                 {index, Map.delete(answers, team_id)}
+               end),
+             standings: Map.delete(state.standings, team_id),
+             current_chooser_team_id: clear_removed_team(state.current_chooser_team_id, team_id),
+             current_winner_team_id: clear_removed_team(state.current_winner_team_id, team_id),
+             completed_rounds:
+               Enum.map(state.completed_rounds, fn round ->
+                 %{round | winner_team_id: clear_removed_team(round.winner_team_id, team_id)}
+               end)
+         }}
+    end
+  end
+
+  def remove_team(%__MODULE__{}, _team_id), do: {:error, :not_in_active_quiz}
+
   # --- Private helpers ---
+
+  defp clear_removed_team(team_id, team_id), do: nil
+  defp clear_removed_team(team_id, _removed_id), do: team_id
 
   defp valid_team?(state, team_id) do
     Enum.any?(state.teams, fn t -> t.id == team_id end)

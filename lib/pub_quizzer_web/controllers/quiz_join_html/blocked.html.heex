@@ -1,0 +1,18 @@
+<Layouts.app flash={@flash} max_width="max-w-md" hide_nav_actions>
+  <div id="quiz-join-blocked" class="alert alert-warning" role="alert">
+    <.icon name="hero-information-circle" class="size-6" />
+    <span>
+      <strong>Dieses Quiz hat bereits begonnen.</strong>
+      Neue Teams können nicht mehr beitreten. Bestehende Teams können jederzeit zurückkehren.
+    </span>
+  </div>
+  <p class="text-sm mt-4 mb-4">
+    Öffne deinen gespeicherten Team-Link, scanne deine Team-Karte erneut oder wähle dein bestehendes Team.
+  </p>
+  <div class="flex flex-col gap-3">
+    <.link id="join-existing-team" href={~p"/quiz/#{@event.code}/rejoin"} class="btn btn-soft">
+      Bestehendem Team wieder beitreten
+    </.link>
+    <.link navigate={~p"/"} class="btn btn-sm btn-soft">Zur Startseite</.link>
+  </div>
+</Layouts.app>
