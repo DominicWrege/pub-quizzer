@@ -65,18 +65,6 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
         </:back>
       </.header>
 
-      <%!-- Stats: timing + question difficulty --%>
-      <%= if @results.rounds_data != [] do %>
-        <div id="result-stats" class="mb-6 text-sm text-base-content/70">
-          <span id="result-timing">
-            <%= if @results.timing.total_seconds do %>
-              Dauer gesamt {format_duration(@results.timing.total_seconds)} ·
-            <% end %>
-            Reine Antwortzeit {format_duration(@results.timing.answering_seconds)}
-          </span>
-        </div>
-      <% end %>
-
       <%!-- Final standings summary --%>
       <div class="mb-8">
         <h3 class="text-lg font-semibold mb-3">
@@ -105,17 +93,23 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
 
       <%!-- Round-by-round spec comparison --%>
       <%= for {round_data, r_idx} <- Enum.with_index(@results.rounds_data) do %>
-        <div class="mb-8">
+        <div id={"result-round-#{round_data.round.id}"} class="mb-8">
           <h3 class="text-lg font-semibold mb-3">
             Runde {r_idx + 1}: {round_data.round.topic.name}
           </h3>
 
-          <div class="overflow-x-auto rounded-lg border-2 border-base-300">
-            <table class="table table-sm">
+          <div class="overflow-x-auto rounded-lg border-2 border-base-content/30">
+            <table class="table text-base text-base-content">
               <thead>
                 <tr class="border-b-2 border-base-300 bg-base-300">
-                  <th class="min-w-[200px]">Frage</th>
-                  <th :for={team <- @results.teams} class="text-center min-w-[80px]">
+                  <th scope="col" class="min-w-[140px] px-4 py-3 text-base text-base-content">
+                    Frage
+                  </th>
+                  <th
+                    :for={team <- @results.teams}
+                    scope="col"
+                    class="text-center min-w-[80px] px-4 py-3 text-base text-base-content"
+                  >
                     {team.name}
                   </th>
                 </tr>
@@ -125,45 +119,59 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
                   :for={{question, q_idx} <- Enum.with_index(round_data.questions)}
                   class="bg-base-200"
                 >
-                  <td>
-                    <div class="font-medium">
-                      <span class="text-base-content/60 font-mono text-xs mr-1">Q{q_idx + 1}</span>
-                      {question.prompt}
-                    </div>
-                    <div class="text-xs text-success mt-0.5">
+                  <td class="px-4 py-3">
+                    <span
+                      id={"result-question-#{round_data.round.id}-#{question.id}"}
+                      data-test="result-question-label"
+                      class="block text-lg font-semibold text-base-content whitespace-nowrap"
+                    >
+                      Frage {q_idx + 1}
+                    </span>
+                    <div class="text-sm font-medium text-base-content mt-1">
                       Richtig: {String.upcase(letter(question.correct_index))}
                     </div>
                   </td>
-                  <td :for={team <- @results.teams} class="text-center">
+                  <td :for={team <- @results.teams} class="text-center px-4 py-3">
                     <% selected =
                       Map.get(@results.answer_lookup, {round_data.round.id, question.id, team.id}) %>
                     <%= if selected == nil do %>
-                      <span class="text-base-content/50">—</span>
+                      <span class="text-base-content font-mono text-lg">—</span>
                     <% else %>
                       <% correct = selected == question.correct_index %>
                       <span class={[
-                        "inline-flex items-center gap-1 px-2 py-1 rounded font-mono text-sm",
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded font-mono text-base font-bold",
                         correct && "bg-success text-success-content",
                         !correct && "bg-error text-error-content"
                       ]}>
                         {String.upcase(letter(selected))}
                         <.icon
                           name={if correct, do: "hero-check-circle", else: "hero-x-circle"}
-                          class="size-4"
+                          class="size-5"
                         />
                       </span>
                     <% end %>
                   </td>
                 </tr>
                 <tr class="border-t-2 border-base-300 bg-base-200 font-bold">
-                  <td>Punkte</td>
-                  <td :for={team <- @results.teams} class="text-center">
+                  <td class="px-4 py-3">Punkte</td>
+                  <td :for={team <- @results.teams} class="text-center px-4 py-3">
                     {round_score(@results.answer_lookup, round_data, team)}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+        </div>
+      <% end %>
+
+      <%= if @results.rounds_data != [] do %>
+        <div id="result-stats" class="mt-8 border-t border-base-300 pt-4 text-sm text-base-content">
+          <span id="result-timing">
+            <%= if @results.timing.total_seconds do %>
+              Dauer gesamt {format_duration(@results.timing.total_seconds)} ·
+            <% end %>
+            Reine Antwortzeit {format_duration(@results.timing.answering_seconds)}
+          </span>
         </div>
       <% end %>
     </Layouts.app>

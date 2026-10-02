@@ -67,6 +67,42 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
   end
 
   describe "stats" do
+    test "round rows identify questions by number without showing their prompts", %{conn: conn} do
+      %{event: event, round: round, questions: [first, second]} = setup_finished_event()
+
+      {:ok, view, _html} =
+        conn |> log_in_user() |> live(~p"/admin/events/#{event.id}/results")
+
+      assert has_element?(view, "#result-question-#{round.id}-#{first.id}", "Frage 1")
+      assert has_element?(view, "#result-question-#{round.id}-#{second.id}", "Frage 2")
+      refute has_element?(view, "main", first.prompt)
+      refute has_element?(view, "main", second.prompt)
+
+      assert has_element?(
+               view,
+               "#result-round-#{round.id} tbody tr:first-child td:nth-child(2) .bg-success",
+               "B"
+             )
+
+      assert has_element?(
+               view,
+               "#result-round-#{round.id} tbody tr:first-child td:nth-child(3) .bg-error",
+               "A"
+             )
+    end
+
+    test "answer timing appears below the round results", %{conn: conn} do
+      %{event: event, round: round} = setup_finished_event()
+
+      {:ok, view, _html} =
+        conn |> log_in_user() |> live(~p"/admin/events/#{event.id}/results")
+
+      assert has_element?(
+               view,
+               "#result-round-#{round.id} ~ #result-stats:last-child #result-timing"
+             )
+    end
+
     test "shows total duration and pure answering time", %{conn: conn} do
       %{event: event} = setup_finished_event()
 
