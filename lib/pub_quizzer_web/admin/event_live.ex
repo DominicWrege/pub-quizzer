@@ -57,7 +57,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     |> assign(:event, event)
     |> assign(:join_url, join_url)
     |> assign(:connected_team_ids, connected_ids)
-    |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))
+    |> assign(:registered_team_count, MapSet.size(claimed_ids))
     |> assign(:edit_name_dialog, false)
     |> assign(:name_form, to_form(%{"name" => event.name || ""}))
   end
@@ -199,16 +199,24 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   end
 
   def handle_event("do_start", _params, socket) do
-    event = socket.assigns.event
+    event = Quiz.get_event_with_teams!(socket.assigns.event.id)
+    socket = reconcile_connections(socket, event)
 
-    case Quiz.start_event(event) do
-      {:ok, _event} ->
-        {:ok, _pid} = Engine.ensure_started(event.id)
-        code = event.code
-        {:noreply, redirect(socket, to: ~p"/quiz/#{code}/host")}
+    cond do
+      event.status != "lobby" ->
+        {:noreply, redirect(socket, to: ~p"/quiz/#{event.code}/host")}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Event konnte nicht gestartet werden.")}
+      socket.assigns.registered_team_count == 0 ->
+        {:noreply, put_flash(socket, :error, "Mindestens ein Team muss sich anmelden.")}
+
+      true ->
+        with {:ok, _pid} <- Engine.ensure_started(event.id),
+             {:ok, _state} <- Engine.start_quiz(event.id) do
+          {:noreply, redirect(socket, to: ~p"/quiz/#{event.code}/host")}
+        else
+          {:error, _} ->
+            {:noreply, put_flash(socket, :error, "Event konnte nicht gestartet werden.")}
+        end
     end
   end
 
@@ -248,22 +256,12 @@ defmodule PubQuizzerWeb.Admin.EventLive do
 
   def handle_info({:team_connected, team_id}, socket) do
     connected_ids = MapSet.put(socket.assigns.connected_team_ids, team_id)
-    claimed_ids = claimed_team_ids(socket.assigns.event.teams)
-
-    {:noreply,
-     socket
-     |> assign(:connected_team_ids, connected_ids)
-     |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))}
+    {:noreply, assign(socket, :connected_team_ids, connected_ids)}
   end
 
   def handle_info({:team_disconnected, team_id}, socket) do
     connected_ids = MapSet.delete(socket.assigns.connected_team_ids, team_id)
-    claimed_ids = claimed_team_ids(socket.assigns.event.teams)
-
-    {:noreply,
-     socket
-     |> assign(:connected_team_ids, connected_ids)
-     |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))}
+    {:noreply, assign(socket, :connected_team_ids, connected_ids)}
   end
 
   defp claimed_team_ids(teams) do
@@ -295,11 +293,7 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     socket
     |> assign(:event, event)
     |> assign(:connected_team_ids, connected_ids)
-    |> assign(:all_teams_connected, all_claimed_connected?(claimed_ids, connected_ids))
-  end
-
-  defp all_claimed_connected?(claimed_ids, connected_ids) do
-    MapSet.size(claimed_ids) > 0 and MapSet.subset?(claimed_ids, connected_ids)
+    |> assign(:registered_team_count, MapSet.size(claimed_ids))
   end
 
   defp assign_active_finished(socket, events) do

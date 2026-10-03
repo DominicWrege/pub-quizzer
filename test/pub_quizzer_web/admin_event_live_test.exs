@@ -131,7 +131,7 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
 
       {:ok, view, _html} = conn |> auth_conn() |> live(~p"/admin/events/#{event.id}")
 
-      assert has_element?(view, "#team-#{team.id}", "Beigetreten")
+      assert has_element?(view, "#team-#{team.id}", "Angemeldet")
       assert has_element?(view, "button[phx-click='do_start']:not([disabled])")
     end
 

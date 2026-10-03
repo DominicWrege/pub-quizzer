@@ -161,6 +161,32 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
   end
 
   describe "question phase" do
+    test "two phones in one team show only the latest shared answer", %{
+      conn: conn,
+      event: event,
+      topic: topic,
+      team: team
+    } do
+      {:ok, _} = Engine.start_quiz(event.id)
+      {:ok, _} = Engine.choose_topic(event.id, topic.id)
+      {:ok, first, _} = conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
+      {:ok, second, _} = build_conn() |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
+
+      first |> element("#team-answer-0") |> render_click()
+      assert has_element?(second, "#team-answer-0.btn-primary")
+
+      second
+      |> element("#team-answer-1")
+      |> render_click()
+
+      assert has_element?(first, "#team-answer-1.btn-primary")
+      refute has_element?(first, "#team-answer-0.btn-primary")
+      refute has_element?(second, "#team-answer-0.btn-primary")
+
+      {:ok, state} = Engine.get_state(event.id)
+      assert state.answers == %{0 => %{team.id => 1}}
+    end
+
     test "shows a per-question timer instead of the other teams' answer count", %{
       conn: conn,
       event: event,

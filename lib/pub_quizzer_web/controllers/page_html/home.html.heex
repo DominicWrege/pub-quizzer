@@ -2,9 +2,9 @@
   flash={@flash}
   current_scope={@current_scope}
   max_width="max-w-full"
-  main_class="px-4 sm:px-6 lg:px-8"
+  main_class="px-4 @min-[640px]/public:px-6 @min-[1024px]/public:px-8"
 >
-  <div class="flex items-start sm:items-center justify-center min-h-[calc(100vh-4rem)] pt-24 sm:pt-0">
+  <div class="flex items-start @min-[640px]/public:items-center justify-center min-h-[calc(var(--app-height)-4rem)] pt-24 @min-[640px]/public:pt-0">
     <div class="card bg-base-200 shadow-sm max-w-sm mx-auto">
       <div class="card-body items-center text-center gap-2">
         <p class="text-base-content/70">

@@ -47,12 +47,20 @@
 
 html {
   font-size: 19px;
+  zoom: var(--phone-viewport-zoom, 1);
+}
+
+@media print {
+  html {
+    zoom: 1;
+  }
 }
 
 /* Fallback until assets/js/viewport-height.ts sets the real visible-viewport
    height (iOS Safari's bottom URL bar makes the *vh units unreliable). */
 :root {
   --app-height: 100dvh;
+  --header-h: 0px;
 }
 
 *:focus-visible {

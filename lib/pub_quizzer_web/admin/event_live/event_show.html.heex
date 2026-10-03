@@ -6,7 +6,7 @@
 >
   <div
     data-sticky-bar
-    class="sticky top-[var(--header-h,0px)] lg:top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-base-100 border-b border-transparent transition-[box-shadow,border-color] duration-200 pt-3 pb-3 lg:pt-2 mb-4"
+    class="sticky top-(--header-h) lg:top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-base-100 border-b border-transparent transition-[box-shadow,border-color] duration-200 pt-3 pb-3 lg:pt-2 mb-4"
   >
     <.header class="lg:items-center">
       <:back>
@@ -114,60 +114,76 @@
               <.icon name="hero-plus" class="size-4" /> Hinzufügen
             </button>
             <button
+              id="start-quiz"
               phx-click="do_start"
               class="btn btn-primary btn-sm"
-              disabled={!@all_teams_connected}
+              disabled={@registered_team_count == 0}
             >
               ▶ Quiz starten
             </button>
           </div>
         </div>
 
+        <p id="event-registration-summary" class="text-base font-semibold mb-1">
+          {@registered_team_count} von {@event.team_count} Teams angemeldet
+        </p>
+        <p id="event-registration-help" class="text-sm text-base-content mb-3">
+          Einmal scannen genügt. Gesperrte Handys bleiben angemeldet.
+          Nur angemeldete Teams spielen mit. Mehrere Handys pro Team sind möglich.
+        </p>
+
         <%!-- Mobile: cards --%>
         <div id="event-team-cards" class="space-y-1.5 lg:hidden">
           <div
             :for={team <- @event.teams}
             id={"team-card-#{team.id}"}
-            class="flex items-center gap-2 bg-base-200 border border-base-content/10 rounded-lg px-2 py-1.5"
+            class="flex flex-col gap-2 bg-base-200 border border-base-content/10 rounded-lg p-3"
           >
             <input
               type="text"
               value={team.name}
               aria-label={"Name für Team #{team.slot_index + 1}"}
-              class="input input-bordered input-sm flex-1 min-w-0"
+              class="input input-bordered input-sm w-full min-w-0"
               phx-blur="rename_team"
               phx-value-team_id={team.id}
               data-team-id={team.id}
             />
-            <%= if team.claimed_at do %>
-              <%= if team.id in @connected_team_ids do %>
-                <span class="badge badge-sm badge-success badge-soft shrink-0">OK</span>
+            <div class="flex items-center justify-between gap-2">
+              <%= if team.claimed_at do %>
+                <div class="flex flex-col items-start gap-0.5">
+                  <span class="badge badge-sm badge-success badge-soft">Angemeldet</span>
+                  <span class="text-xs text-base-content">
+                    {if team.id in @connected_team_ids, do: "Online", else: "Zurzeit offline"}
+                  </span>
+                </div>
               <% else %>
-                <span class="badge badge-sm badge-warning badge-soft shrink-0">Getrennt</span>
+                <span class="badge badge-sm badge-neutral badge-soft">Noch nicht gescannt</span>
               <% end %>
-            <% else %>
-              <span class="badge badge-sm badge-neutral badge-soft shrink-0">Wartend</span>
-            <% end %>
-            <%= if team.claimed_at do %>
-              <button
-                phx-click="kick_team"
-                phx-value-team_id={team.id}
-                class="btn btn-soft btn-xs btn-square shrink-0"
-                title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
-                aria-label={"Team #{team.slot_index + 1} rauswerfen"}
-              >
-                <.icon name="hero-arrow-right-on-rectangle" class="size-3.5" />
-              </button>
-            <% end %>
-            <button
-              phx-click="remove_team"
-              phx-value-team_id={team.id}
-              class="btn btn-outline btn-error btn-xs btn-square border-2 shrink-0"
-              disabled={@event.team_count <= 1}
-              aria-label={"Team #{team.slot_index + 1} entfernen"}
-            >
-              <.icon name="hero-x-mark" class="size-3.5" />
-            </button>
+              <div class="flex items-center gap-2 shrink-0">
+                <%= if team.claimed_at do %>
+                  <button
+                    id={"release-team-#{team.id}"}
+                    phx-click="kick_team"
+                    phx-value-team_id={team.id}
+                    class="btn btn-soft btn-sm"
+                    title="Anmeldung aufheben und Platz freigeben"
+                    aria-label={"Platz für Team #{team.slot_index + 1} freigeben"}
+                  >
+                    Freigeben
+                  </button>
+                <% end %>
+                <button
+                  id={"remove-team-#{team.id}"}
+                  phx-click="remove_team"
+                  phx-value-team_id={team.id}
+                  class="btn btn-outline btn-error btn-sm btn-square border-2"
+                  disabled={@event.team_count <= 1}
+                  aria-label={"Team #{team.slot_index + 1} entfernen"}
+                >
+                  <.icon name="hero-x-mark" class="size-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -189,13 +205,14 @@
             </:col>
             <:col :let={team} label="Status">
               <%= if team.claimed_at do %>
-                <%= if team.id in @connected_team_ids do %>
-                  <span class="badge badge-lg badge-success badge-soft transition-colors duration-200">Beigetreten</span>
-                <% else %>
-                  <span class="badge badge-lg badge-warning badge-soft transition-colors duration-200">Getrennt</span>
-                <% end %>
+                <div class="flex flex-col items-start gap-1">
+                  <span class="badge badge-lg badge-success badge-soft transition-colors duration-200">Angemeldet</span>
+                  <span class="text-xs text-base-content">
+                    {if team.id in @connected_team_ids, do: "Online", else: "Zurzeit offline"}
+                  </span>
+                </div>
               <% else %>
-                <span class="badge badge-lg badge-neutral badge-soft transition-colors duration-200">Wartend</span>
+                <span class="badge badge-lg badge-neutral badge-soft transition-colors duration-200">Noch nicht gescannt</span>
               <% end %>
             </:col>
             <:action :let={team}>
@@ -205,7 +222,8 @@
                     phx-click="kick_team"
                     phx-value-team_id={team.id}
                     class="btn btn-sm btn-soft"
-                    title="Team rauswerfen (alle Geräte trennen, Slot bleibt)"
+                    title="Anmeldung aufheben und Platz freigeben"
+                    aria-label={"Platz für Team #{team.slot_index + 1} freigeben"}
                   >
                     <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
                   </button>

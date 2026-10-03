@@ -2,7 +2,7 @@
   flash={@flash}
   max_width="max-w-md"
   hide_nav_actions
-  main_class="px-3 pt-1 pb-3 sm:pt-3 sm:pb-4 sm:px-4 lg:px-6"
+  main_class="px-3 pt-1 pb-3 @min-[640px]/public:pt-3 @min-[640px]/public:pb-4 @min-[640px]/public:px-4 @min-[1024px]/public:px-6"
 >
   <%!-- Team name header always visible --%>
   <div class="text-center mt-3 mb-3">
@@ -16,6 +16,13 @@
         <.icon name="hero-clock" class="size-4" />
         <span class="font-semibold">Warte auf den Quiz-Start</span>
       </div>
+      <p id="team-registration" class="text-base font-semibold text-base-content mt-4">
+        Euer Team ist angemeldet.
+      </p>
+      <p class="text-sm text-base-content mt-2">
+        Ihr könnt das Handy sperren. Öffnet diese Seite wieder, wenn der Moderator startet.
+        Weitere Handys können denselben QR-Code scannen.
+      </p>
       <p class="text-sm text-base-content/50 mt-3">
         Quiz-Code: <span class="font-mono font-bold">{@event.code}</span>
       </p>
@@ -88,8 +95,9 @@
 
       <div class="flex flex-col gap-2">
         <%= for {option, idx} <- Enum.with_index(question.options) do %>
-          <% is_selected = @selected_index == idx or our_answer == idx %>
+          <% is_selected = our_answer == idx %>
           <button
+            id={"team-answer-#{idx}"}
             phx-click="select_answer"
             phx-value-index={idx}
             phx-value-question_id={question.id}
@@ -107,6 +115,9 @@
           </button>
         <% end %>
       </div>
+      <p class="text-sm text-base-content mt-3">
+        Eine Antwort pro Team. Die letzte Auswahl zählt auf allen Handys.
+      </p>
     </div>
   <% end %>
 

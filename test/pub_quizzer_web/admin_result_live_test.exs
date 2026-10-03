@@ -67,6 +67,30 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
   end
 
   describe "stats" do
+    for status <- ["topic_selection", "finished"] do
+      test "links directly back to the moderator console for #{status} events", %{conn: conn} do
+        {:ok, event} = Quiz.create_event(%{team_count: 2})
+        {:ok, event} = Quiz.update_event(event, %{status: unquote(status)})
+
+        {:ok, view, _html} =
+          conn |> log_in_user() |> live(~p"/admin/events/#{event.id}/results")
+
+        assert has_element?(
+                 view,
+                 "#results-host-console[href='/quiz/#{event.code}/host']"
+               )
+      end
+    end
+
+    test "does not offer a console link that would start an unstarted quiz", %{conn: conn} do
+      {:ok, event} = Quiz.create_event(%{team_count: 2})
+
+      {:ok, view, _html} =
+        conn |> log_in_user() |> live(~p"/admin/events/#{event.id}/results")
+
+      refute has_element?(view, "#results-host-console")
+    end
+
     test "round rows identify questions by number without showing their prompts", %{conn: conn} do
       %{event: event, round: round, questions: [first, second]} = setup_finished_event()
 

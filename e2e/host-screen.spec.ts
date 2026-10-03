@@ -49,7 +49,7 @@ test("host reacquires screen wake lock after Safari restores the page", async ({
   expect(errors).toEqual([])
 })
 
-test("team lobby still holds a screen wake lock", async ({ hostPage, browser }) => {
+test("team can register without keeping its screen awake", async ({ hostPage, browser }) => {
   const code = await createEvent(hostPage)
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
   const teamPage = await context.newPage()
@@ -71,7 +71,8 @@ test("team lobby still holds a screen wake lock", async ({ hostPage, browser }) 
 
   try {
     await joinTeam(teamPage, code)
-    await expect.poll(() => teamPage.evaluate(() => (window as any).wakeRequests)).toBe(1)
+    await expect(teamPage.locator("#team-registration")).toBeVisible()
+    expect(await teamPage.evaluate(() => (window as any).wakeRequests)).toBe(0)
     expect(errors).toEqual([])
   } finally {
     await context.close()

@@ -63,6 +63,16 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
         <:back>
           <.back_link navigate={~p"/admin/events"} />
         </:back>
+        <:actions>
+          <.link
+            :if={@event.status != "lobby"}
+            id="results-host-console"
+            navigate={~p"/quiz/#{@event.code}/host"}
+            class="btn btn-sm btn-soft"
+          >
+            <.icon name="hero-arrow-left" class="size-4" /> Zur Moderator-Konsole
+          </.link>
+        </:actions>
       </.header>
 
       <%!-- Final standings summary --%>

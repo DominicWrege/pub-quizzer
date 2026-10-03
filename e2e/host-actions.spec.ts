@@ -7,8 +7,8 @@ test.describe("host actions", () => {
     const code = await createEvent(hostPage, 2)
     const { pages: [pageA], contexts } = await joinTeams(browser, code, 1)
 
-    // Team A is connected (shows "Beigetreten" badge in the desktop table)
-    await expect(hostPage.locator("#event-teams >> text=Beigetreten")).toBeVisible({
+    // Team A is registered. Connection status is secondary and never gates start.
+    await expect(hostPage.locator("#event-teams >> text=Angemeldet")).toBeVisible({
       timeout: 10_000,
     })
 

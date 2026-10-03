@@ -4,7 +4,9 @@
 // visible viewport height into a CSS custom property so those containers
 // always match what is actually on screen.
 function setAppHeight(): void {
-  document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`)
+  const root = document.documentElement
+  const zoom = Number.parseFloat(root.style.getPropertyValue("--phone-viewport-zoom")) || 1
+  root.style.setProperty("--app-height", `${window.innerHeight / zoom}px`)
 }
 
 setAppHeight()

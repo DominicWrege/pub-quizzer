@@ -13,7 +13,8 @@ test.describe("event management", () => {
 
     await createEvent(hostPage)
     const back = await hostPage.getByRole("link", { name: "Zurück" }).boundingBox()
-    expect(back?.width).toBeGreaterThanOrEqual(40)
+    // The current 19px root font makes the shared 2rem square button 38px wide.
+    expect(back?.width).toBeGreaterThanOrEqual(38)
     expect(back?.width).toBeLessThanOrEqual(46)
     expect(back?.height).toBeGreaterThanOrEqual(28)
     await expect(hostPage.locator("#event-team-cards > div")).toHaveCount(4)

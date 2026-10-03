@@ -71,7 +71,7 @@ defmodule PubQuizzerWeb.Layouts do
           bar collapses on scroll instead of permanently clipping the shell's
           bottom; lg+ keeps the viewport-locked shell with <main> as scroller. --%>
       <div
-        class="flex min-h-[var(--app-height)] flex-col lg:h-[var(--app-height)] lg:overflow-hidden"
+        class="flex min-h-(--app-height) flex-col lg:h-(--app-height) lg:overflow-hidden"
         data-app-shell
       >
         <input type="checkbox" id="nav-drawer-toggle" class="peer hidden" />
@@ -162,7 +162,7 @@ defmodule PubQuizzerWeb.Layouts do
           for="nav-drawer-toggle"
           aria-hidden="true"
           class={[
-            "fixed inset-x-0 top-0 z-40 h-[var(--app-height)] bg-black/50 opacity-0 invisible pointer-events-none peer-checked:opacity-100 peer-checked:visible peer-checked:pointer-events-auto transition-[opacity,visibility] duration-200 sm:hidden",
+            "fixed inset-x-0 top-0 z-40 h-(--app-height) bg-black/50 opacity-0 invisible pointer-events-none peer-checked:opacity-100 peer-checked:visible peer-checked:pointer-events-auto transition-[opacity,visibility] duration-200 sm:hidden",
             @print_chrome_class
           ]}
         ></label>
@@ -183,7 +183,7 @@ defmodule PubQuizzerWeb.Layouts do
         <%!-- shadow only while open: a shadow on the translated-off-screen drawer
             bleeds into the top of the viewport when closed --%>
         <aside class={[
-          "fixed inset-x-0 top-0 z-50 max-h-[var(--app-height)] overflow-y-auto bg-base-100 border-b border-base-300 -translate-y-full peer-checked:translate-y-0 peer-checked:shadow-xl transition-[transform,box-shadow] duration-200 sm:hidden flex flex-col",
+          "fixed inset-x-0 top-0 z-50 max-h-(--app-height) overflow-y-auto bg-base-100 border-b border-base-300 -translate-y-full peer-checked:translate-y-0 peer-checked:shadow-xl transition-[transform,box-shadow] duration-200 sm:hidden flex flex-col",
           @print_chrome_class
         ]}>
           <div class="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4 border-b border-base-300">
@@ -235,14 +235,16 @@ defmodule PubQuizzerWeb.Layouts do
           logged-in header; explicit top padding replaces it. The header is
           sticky on mobile so the brand/menu stay visible while page content
           scrolls (matching the logged-in header behavior). --%>
-      <div class="flex min-h-[var(--app-height)] flex-col">
-        <header class="navbar min-h-0 shrink-0 bg-base-100 max-sm:sticky max-sm:top-0 max-sm:z-20 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:pl-[calc(env(safe-area-inset-left)+1.5rem)] sm:pr-[calc(env(safe-area-inset-right)+1.5rem)] lg:pl-[calc(env(safe-area-inset-left)+2rem)] lg:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300">
+      <%!-- Query the rendered shell width rather than a desktop-mode phone's
+          oversized viewport. The sizing fallback reflows this shell to phone width. --%>
+      <div class="@container/public flex min-h-(--app-height) flex-col">
+        <header class="navbar min-h-0 shrink-0 bg-base-100 @max-[640px]/public:sticky @max-[640px]/public:top-0 @max-[640px]/public:z-20 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] @min-[640px]/public:pl-[calc(env(safe-area-inset-left)+1.5rem)] @min-[640px]/public:pr-[calc(env(safe-area-inset-right)+1.5rem)] @min-[1024px]/public:pl-[calc(env(safe-area-inset-left)+2rem)] @min-[1024px]/public:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300">
           <div class="flex-1 min-w-0 mr-3">
             <%= if @nav_title != [] do %>
               {render_slot(@nav_title)}
             <% else %>
               <a href="/" class="flex-1 flex w-fit items-center gap-2">
-                <span class="text-sm sm:text-xl font-semibold">Quiz for a better life</span>
+                <span class="text-sm @min-[640px]/public:text-xl font-semibold">Quiz for a better life</span>
               </a>
             <% end %>
           </div>
@@ -250,7 +252,7 @@ defmodule PubQuizzerWeb.Layouts do
             {render_slot(@nav_actions)}
           </div>
           <%= unless @hide_nav_actions do %>
-            <div class="flex-none hidden sm:flex">
+            <div class="flex-none hidden @min-[640px]/public:flex">
               <ul class="flex px-1 space-x-4 items-center">
                 <%= if @current_scope && @current_scope[:user] do %>
                   <li>
@@ -265,7 +267,7 @@ defmodule PubQuizzerWeb.Layouts do
                 <% end %>
               </ul>
             </div>
-            <div class="flex-none sm:hidden">
+            <div class="flex-none @min-[640px]/public:hidden">
               <div class="dropdown dropdown-end">
                 <button tabindex="0" class="btn btn-sm btn-square" aria-label="Menü">
                   <.icon name="hero-bars-3" class="size-6" />

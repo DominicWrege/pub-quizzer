@@ -41,7 +41,6 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
               |> assign_standings(state)
               |> assign_available_topics(state)
               |> assign(:current_topic_name, EngineState.current_topic_name(state))
-              |> assign(:selected_index, nil)
 
             {:ok, socket}
 
@@ -69,31 +68,13 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
   @impl true
   def handle_info({:engine_state, state}, socket) do
     team_state = EngineState.strip_for_team(state, socket.assigns.team.id)
-    current_q = EngineState.current_question(team_state)
-    prev_q = EngineState.current_question(socket.assigns.engine_state)
-
-    selected_index =
-      cond do
-        state.status != :question ->
-          nil
-
-        current_q == nil ->
-          nil
-
-        prev_q != nil and current_q.id == prev_q.id ->
-          socket.assigns.selected_index
-
-        true ->
-          nil
-      end
 
     {:noreply,
      socket
      |> assign(:engine_state, team_state)
      |> assign_standings(state)
      |> assign_available_topics(state)
-     |> assign(:current_topic_name, EngineState.current_topic_name(state))
-     |> assign(:selected_index, selected_index)}
+     |> assign(:current_topic_name, EngineState.current_topic_name(state))}
   end
 
   def handle_info({:team_connected, _team_id}, socket) do
@@ -131,8 +112,8 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobby do
       team_id = socket.assigns.team.id
 
       case Engine.submit_answer(event_id, team_id, index, question_id) do
-        {:ok, _state} ->
-          {:noreply, assign(socket, :selected_index, index)}
+        {:ok, state} ->
+          {:noreply, assign(socket, :engine_state, EngineState.strip_for_team(state, team_id))}
 
         {:error, reason} ->
           {:noreply,

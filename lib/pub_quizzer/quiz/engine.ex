@@ -225,6 +225,28 @@ defmodule PubQuizzer.Quiz.Engine do
   def handle_call(:start_quiz, _from, state) do
     {:ok, state} = ensure_loaded(state)
 
+    # Scans, renamed teams and released slots may have changed the lobby roster
+    # since this engine was loaded. Registration, not device presence, decides
+    # who participates at the moment the moderator starts the quiz.
+    state =
+      if state.engine_state.status == :lobby do
+        teams =
+          state.event_id
+          |> PubQuizzer.Quiz.list_teams_for_event()
+          |> Enum.filter(& &1.claimed_at)
+          |> Enum.map(&%{id: &1.id, name: &1.name, slot_index: &1.slot_index})
+
+        engine_state = %{
+          state.engine_state
+          | teams: teams,
+            standings: Map.new(teams, &{&1.id, 0})
+        }
+
+        %{state | engine_state: engine_state}
+      else
+        state
+      end
+
     case EngineState.start_quiz(state.engine_state) do
       {:ok, new_es} ->
         persist_event_status(new_es)

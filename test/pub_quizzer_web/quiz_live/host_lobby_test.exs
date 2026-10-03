@@ -96,8 +96,10 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
 
       assert has_element?(
                view,
-               "header #host-quiz-menu #host-live-values[href='/admin/events/#{event.id}/results']"
+               "header #host-live-values[href='/admin/events/#{event.id}/results']"
              )
+
+      refute has_element?(view, "#host-quiz-menu #host-live-values")
 
       refute has_element?(view, "main #host-finish-quiz")
       refute has_element?(view, "h1", "Moderator")

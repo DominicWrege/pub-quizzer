@@ -23,8 +23,8 @@ test.describe("topic CRUD", () => {
     // --- Edit ---
     // The card's primary button now navigates to the question list, where the
     // topic editor lives in the header.
-    const topicCard = hostPage.locator(".card", { hasText: topicName })
-    await topicCard.locator("a[href*='/questions']").click()
+    const topicCard = hostPage.locator("a[id^='topics-']", { hasText: topicName })
+    await topicCard.click()
     await expect(hostPage).toHaveURL(/\/admin\/topics\/\d+\/questions$/, { timeout: 10_000 })
     await waitForLiveView(hostPage)
 
@@ -55,7 +55,7 @@ test.describe("topic CRUD", () => {
     await hostPage.waitForSelector('[phx-click="start_new"]', { state: "visible" })
 
     // Open the first topic's question list, then its topic editor
-    await hostPage.locator(".card").first().locator("a[href*='/questions']").click()
+    await hostPage.locator("a[id^='topics-']").first().click()
     await expect(hostPage).toHaveURL(/\/admin\/topics\/\d+\/questions$/, { timeout: 10_000 })
     await waitForLiveView(hostPage)
 
