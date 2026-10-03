@@ -11,19 +11,20 @@ Realtime pub-quiz ("Kneipenquiz") for teams. Phoenix LiveView + SQLite. German-l
 - `Accounts` (users, magic-link auth email), `Uploads`, `Names`.
 
 **Web** (`lib/pub_quizzer_web/`):
-- Quiz LiveViews: `QuizLive.HostLobby` (moderator "shadow console" — sees the question prompt, live answer-distribution bars, standings, drives reveal), `QuizLive.TeamLobby` (public, per-team answer UI).
+- Quiz LiveViews: `QuizLive.HostLobby` (moderator "shadow console" — sees the question prompt, live answer-distribution bars, standings, drives reveal; typography sized for tablet readability from a distance; the answer-count button toggles the list of teams missing an answer, hidden by default and reset for each question), `QuizLive.TeamLobby` (public, per-team answer UI).
 - Admin LiveViews (`Admin` namespace): `TopicLive`, `QuestionLive` (3-column editor: rail | Q&A | meta), `EventLive`, `TeamCardLive` (printable per-team QR cards), `ResultLive`, `UserLive` (superadmin), `ProfileLive`.
 - Auth: `AdminAuth` plug (roles `moderator` / `superadmin`), magic-link login via `MagicLinkController`. Dev-only backdoor `DevAuthController` (`/dev/login-as/:email`) for E2E.
-- Join flow: `QuizJoinController` — `POST /quiz/join` (code), `GET /quiz/join/:code` (code link), `GET /quiz/join/:code/:slot` (QR slot join, claims Team 1–N via `Quiz.claim_team_slot/2`).
+- Join flow: `QuizJoinController` — `POST /quiz/join` (code), `GET /quiz/join/:code` (code link), `GET /quiz/join/:code/:team_code` (QR join: resolves the team by its three-letter lowercase `link_code`; legacy numeric `/quiz/join/:code/:slot` links still claim via `Quiz.claim_team_slot/2`) → redirect to `/quiz/:code/lobby/:team_code`. A legacy `/quiz/:code/lobby` without a browser session redirects to `/quiz/:code/rejoin`, which lists only claimed teams. Blocked new-team joins render a persistent in-page alert (`QuizJoinHTML` blocked template) with a rejoin link for existing teams.
 
-**Quiz flow:** teams join via code or QR card → host starts quiz → round's chooser picks a topic → teams answer on their devices → host advances questions and reveals the round (all question stats + winner at once) → standings → next round.
+**Quiz flow:** teams join via code or QR card → host starts quiz → round's chooser picks a topic → teams answer on their devices → host advances questions and reveals the round (all question stats + winner at once) → standings → next round. The advance button stays enabled even when answers are missing; then the host must confirm via a dialog listing the missing teams (unanswered questions score zero). If every team answered, advancing needs no confirmation.
 
 ## Project rules
 
-- **Registration does not depend on a live phone connection** — the first scan claims the team permanently until the moderator releases or removes it. Use `claimed_at`, never online presence or a time window, to enable quiz start; at least one registered team is required. Repeated scans from different phones join the same team. At start, refresh the engine's roster from persisted claims so released slots are excluded. Team devices share one answer per question, with the latest choice reflected on every phone.
-- **Phone desktop-mode sizing** — Android/Samsung can spoof a desktop user agent and ignore the viewport meta tag. `assets/js/phone-viewport.ts` uses small screen dimensions plus touch input to compensate for an oversized layout viewport using CSS zoom. Do not detect this by user agent or disable pinch zoom. Keep `assets/js/viewport-height.ts` consistent with that zoom, and reset zoom for printing. Regression coverage is in `e2e/phone-desktop-mode.spec.ts`; Chromium simulation does not replace verification on an actual Samsung device.
+- **Registration does not depend on a live phone connection** — the first scan claims the team permanently until the moderator releases or removes it. Use `claimed_at`, never online presence or a time window, to enable quiz start; at least one registered team is required. Repeated scans from different phones join the same team. At start, refresh the engine's roster from persisted claims so released slots are excluded. Team devices share one answer per question, with the latest choice reflected on every phone (highlighting derives from the engine state, not a per-device local selection).
+- **Phone desktop-mode sizing** — Android/Samsung can spoof a desktop user agent and ignore the viewport meta tag. `assets/js/phone-viewport.ts` uses small screen dimensions plus touch input to compensate for an oversized layout viewport using CSS zoom. Do not detect this by user agent or disable pinch zoom. Keep `assets/js/viewport-height.ts` consistent with that zoom, and reset zoom for printing. The public `Layouts.app` shell is `@container/public`, and its navigation plus joining/team-screen spacing use rendered-width container queries instead of viewport media queries. Regression coverage is in `e2e/phone-desktop-mode.spec.ts`; Chromium simulation does not replace verification on an actual Samsung device.
 - **Rejoining is always allowed for existing teams** — a claimed team can return through its browser session or printed QR link, including during and after the quiz. Only unclaimed slots/new teams are blocked after the lobby. During a running quiz, remove teams through `Quiz.Engine.remove_team/2` (not a raw database deletion), so the engine roster, answers, standings, topic-choice priority, and connected devices stay in sync. The last participating team cannot be removed.
 - **Answer order is fixed and identical for everyone** — team devices and the moderator console must show answer options in exactly the same order (A, B, C, D). Never shuffle or reorder options per team. The per-team `OptionShuffle` feature was removed in Oct 2026; `QuizLive.TeamLobby` renders `question.options` directly and submits the option index unmodified. Do not reintroduce shuffling.
+- **Icons come from a whitelist** — `PubQuizzerWeb.CoreComponents.icon/1` renders hand-maintained inline SVGs via `icon_svg/1`; an unlisted name raises `CaseClauseError`. Check the whitelist before using a Heroicon name (`chevron-right` is supported; `chevron-down`/`chevron-up` are not — rotate `chevron-right` instead).
 - **QR cards print exactly N pages for N teams, with no blank pages and no visible defects** — `/admin/events/:id/team-cards` uses browser `window.print()` → Save as PDF. Layout lives in `assets/css/app.css` and `team_cards.html.heex`, with named A4 pages and zero margins. Every page must be a full white DIN A4 sheet with the card content in the **upper half** (QR not at the page bottom): cards are **content-sized** — never give a print card a `min-height` (`100vh` resolves from the *browser window* in a real print dialog, not the page box, so a maximized window overflowed every card and printed one blank page per card, 2 teams → 4 pages; an absolute `250mm` minimum grew past the sheet at 125%+ print scale, same symptom). One card per sheet via `break-inside: avoid` + `break-after: page`; top-heavy print padding in the template (`print:pt-24 print:pb-14`) places the content block. The theme's cream must be overridden on **both** `html:has(.team-card)` and `body:has(.team-card)` — with a background on `<html>`, the body's white no longer covers the canvas and the sheet below the body fragment stays cream. Content must never be clipped at a page edge. `e2e/team-cards-print.spec.ts` must generate real PDFs for 1, 4, and 12 teams at 100%, 125%, and 150% scale with CSS page sizing both enabled and disabled, and verify each page: A4 dimensions via `pdfinfo`, page count, pure neutral black/white pixels, white paper edges, upper-half content start inside margins, and per-team text via `pdftoppm`/`pdftotext` (poppler-utils is in the dev shell). Because headless `pdf()` re-lays-out with the paper as the viewport, DOM checks under emulated print media are required too — including a tall maximized window (1920×1200) where every card must stay under the A4 page box; DOM height checks alone are otherwise insufficient. Check the Drucken button invokes printing and capture browser errors. QR max `60mm`. Browser-added date/URL/page-number headers and footers can be disabled in the print dialog.
 - **Max teams per event is 12** — keep the three enforcement points in sync: the `validate_number(:team_count, less_than_or_equal_to:)` changeset in `lib/pub_quizzer/quiz/quiz_event.ex`, the `add_team_slot/1` guard in `lib/pub_quizzer/quiz.ex`, and the disabled condition in `lib/pub_quizzer_web/admin/event_live/event_show.html.heex`.
 - **NEVER commit or push without asking the user first** — always wait for explicit confirmation. This is a hard rule.
@@ -43,7 +44,7 @@ Shared vocabulary so we name the same things (German UI ↔ English/code):
 |---|---|
 | Moderator-Konsole | host lobby (`QuizLive.HostLobby`) — the "shadow console" for the moderator |
 | Team-Lobby | team lobby (`QuizLive.TeamLobby`) |
-| Runde auflösen | round reveal (shows all question stats + round winner at once) |
+| Runde auflösen | round reveal (shows all question stats + round winner at once; on a tie, show each tied team's name and score, never a bare "Remis") |
 | Auswertung | standings (per-round evaluation) |
 | Nächste Frage / Nächste Runde | next question / next round |
 | Überspringen — nächste Kategorie | skip to next topic |
@@ -51,10 +52,11 @@ Shared vocabulary so we name the same things (German UI ↔ English/code):
 | Frage / Fragen | question / questions (`Question`) |
 | Event | event (`QuizEvent`) |
 | Quiz starten | start quiz |
-| Team-Karten / QR-Code-PDF | per-team QR cards — each team (Team 1–N) gets its own printable card with a unique QR linking to `/quiz/join/:code/:slot`, which claims that slot on scan (`TeamCardLive`, `/admin/events/:id/team-cards`) |
+| Team-Karten / QR-Code-PDF | per-team QR cards — each team (Team 1–N) gets its own printable card with a unique QR linking to `/quiz/join/:code/:team_code` (the team's three-letter `link_code`), which restores/claims that team on scan (`TeamCardLive`, `/admin/events/:id/team-cards`) |
 | QR-Code | the per-team QR on each card (one per team, not one per event) |
-| Slot | a team's assigned slot (Team 1–N), claimed by scanning its card (`Quiz.claim_team_slot/2`) |
-| Beitreten / Code | join / event code (`/quiz/join/:code`, `/quiz/join/:code/:slot`) |
+| Slot | a team's assigned slot (Team 1–N); QR cards carry the team's `link_code`; legacy numeric slot links still claim via `Quiz.claim_team_slot/2` |
+| Beitreten / Code | join / event code (`/quiz/join/:code`; QR/team links use `/quiz/join/:code/:team_code`; the per-team lobby is `/quiz/:code/lobby/:team_code`) |
+| Angemeldet / Noch nicht gescannt | registered team vs not-yet-scanned card — live/offline connection status is secondary, never the gate |
 | Team hat Runde N gewonnen · Vortritt | round winner / precedence for topic choice |
 | Ergebnisse für Teams freigeben | release final results to teams |
 
@@ -65,13 +67,15 @@ Shared vocabulary so we name the same things (German UI ↔ English/code):
 
 **Fixtures** (`e2e/fixtures.ts`): `loginAsHost`, `createEvent`, `joinTeam`, `completeRound` (optional `showStandings` param, default true).
 
-**Spec files**: `smoke.spec.ts` (3), `quiz-flow.spec.ts` (full round), `multi-round.spec.ts` (2), `edge-cases.spec.ts` (2), `team-cards-print.spec.ts` (QR cards: one page per card, QR ≤ 65mm — fails if a card approaches page height), plus `four-teams`, `host-actions`, `question-crud`.
+**Spec files**: `smoke.spec.ts` (3), `quiz-flow.spec.ts` (full round), `multi-round.spec.ts` (2), `edge-cases.spec.ts` (2), `team-cards-print.spec.ts` (QR cards: one page per card, QR max 60 mm in print; spec ceiling 65 mm — fails if a card approaches page height), plus `four-teams`, `host-actions`, `question-crud`.
 
 **Key details**:
 - `completeRound` uses `for(;;)` with `revealBtn.count()` / `revealNext.count()` — never non-blocking `locator.count()` in while-conditions.
 - Round reveal is no longer paginated; the host clicks "Runde auflösen" once and the shadow console shows all question stats + winner immediately.
 - Team pages use isolated browser contexts (separate session cookies each); host page uses the typed `test` fixture with `reuseExistingServer: true`.
 - Auth backdoor: `GET /dev/login-as/:email` sets `user_id` directly (dev only).
+- `LazyHTML.query/2` searches descendants, while `LazyHTML.filter/2` only filters root nodes — use `query` to find IDs inside complete controller HTML parsed with `LazyHTML.from_document/1`.
+- SQLite can emit sporadic `Database busy` errors when async test modules run concurrently; `mix test --max-cases 1` runs the full suite reliably in ~2s.
 
 ## Browser verification
 
@@ -509,6 +513,7 @@ And **never** do this:
 
 - Arbitrary values use bracket syntax as in v3: `class="w-[200px]"`
 - `@apply` still works but prefer component classes or inline utilities where practical
+- Prefer Tailwind v4 custom-property shorthand (`min-h-(--app-height)`, `h-(--app-height)`, `top-(--header-h)`) over `[var(--...)]` arbitrary values; plain CSS and `calc(...)` still use `var()`.
 - When using conditional classes in HEEx, prefer the list syntax documented in the Phoenix HTML guidelines above
 <!-- phoenix:tailwind-end -->
 
