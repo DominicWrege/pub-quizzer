@@ -207,17 +207,26 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
         Bei mehreren Quiz werden die Antworten zusammengezählt.
       </p>
 
-      <div class="lg:overflow-x-auto lg:rounded-lg lg:border-2 lg:border-base-300">
-        <table class="table block! w-full text-[0.95rem] lg:table! lg:[&_th]:px-3! lg:[&_td]:px-3!">
+      <div class="w-full lg:overflow-x-auto lg:rounded-lg lg:border-2 lg:border-base-300">
+        <table class="table block! w-full text-[0.95rem] lg:[display:table]! lg:table-fixed">
+          <colgroup class="hidden lg:table-column-group">
+            <col class="w-[14%] xl:w-[11%]" />
+            <col class="w-[11%] xl:w-[9.5%]" />
+            <col class="w-[14%] xl:w-[11.5%]" />
+            <col class="w-[10%] xl:w-[8.75%]" />
+            <col class="w-[14%] xl:w-[14.25%]" />
+            <col class="w-[25%] xl:w-[32.5%]" />
+            <col class="w-[12%] xl:w-[12.5%]" />
+          </colgroup>
           <thead class="hidden lg:table-header-group">
             <tr class="border-b-2 border-base-300 bg-base-200 text-base-content">
-              <th class="px-3 py-3">
+              <th class="pl-4 pr-1 py-3 whitespace-normal">
                 Thema / Frage
               </th>
-              <th class="px-3 py-3 text-center">
+              <th class="px-2 py-3 text-center">
                 <.sort_button label="Gefragt" key="asked" sort_key={@sort_key} sort_dir={@sort_dir} />
               </th>
-              <th class="px-3 py-3 text-center">
+              <th class="px-2 py-3 text-center">
                 <.sort_button
                   label="Antworten"
                   key="answers"
@@ -225,10 +234,10 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
                   sort_dir={@sort_dir}
                 />
               </th>
-              <th class="px-3 py-3 text-center">
+              <th class="px-2 py-3 text-center">
                 <.sort_button label="Falsch" key="wrong" sort_key={@sort_key} sort_dir={@sort_dir} />
               </th>
-              <th class="px-3 py-3 text-center">
+              <th class="px-2 py-3 text-center">
                 <.sort_button label="Richtig" key="right" sort_key={@sort_key} sort_dir={@sort_dir} />
               </th>
               <th class="px-3 py-3 min-w-[280px]">Team-Antworten</th>
@@ -254,29 +263,33 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
               id={id}
               class="grid grid-cols-2 overflow-hidden rounded-lg border border-base-300 bg-base-200 hover:bg-base-300/60 lg:table-row lg:rounded-none lg:border-0"
             >
-              <td class="col-span-2 block min-w-0 border-b border-base-300 px-4 py-3 lg:px-3 lg:table-cell lg:border-0">
+              <td class="col-span-2 block min-w-0 border-b border-base-300 px-4 py-3 lg:pl-4 lg:pr-1 lg:table-cell lg:border-0">
                 <div class="text-[1.0625rem] font-semibold break-words">{entry.topic_name}</div>
-                <div data-test="question-label" class="text-[1.0625rem]">
-                  Frage {entry.question.position + 1}
+                <div class="flex items-center gap-1 mt-1">
+                  <span data-test="question-label" class="text-[1.0625rem] whitespace-nowrap">
+                    Frage {entry.question.position + 1}
+                  </span>
+                  <button
+                    id={"view-question-#{entry.question.id}"}
+                    type="button"
+                    class="btn btn-xs btn-square size-7 min-h-7 border-base-content/30 bg-base-100 hover:bg-base-300 shadow-none shrink-0"
+                    phx-click="show_question"
+                    phx-value-id={entry.question.id}
+                    aria-haspopup="dialog"
+                    aria-label={"Frage #{entry.question.position + 1} ansehen"}
+                    title="Frage ansehen"
+                  >
+                    <.icon name="hero-eye" class="size-4" />
+                  </button>
                 </div>
-                <button
-                  id={"view-question-#{entry.question.id}"}
-                  type="button"
-                  class="btn btn-sm min-h-10 px-2 mt-2 text-sm whitespace-nowrap"
-                  phx-click="show_question"
-                  phx-value-id={entry.question.id}
-                  aria-haspopup="dialog"
-                >
-                  Frage ansehen
-                </button>
               </td>
-              <td class="block px-4 py-2 font-mono lg:px-3 lg:table-cell lg:py-3 lg:text-center">
+              <td class="block px-4 py-2 font-mono lg:px-2 lg:table-cell lg:py-3 lg:text-center">
                 <span class="block font-sans lg:hidden">Gefragt</span><span class="text-[1.4375rem] font-semibold tabular-nums">{entry.asked_in}×</span>
               </td>
-              <td class="block px-4 py-2 font-mono lg:px-3 lg:table-cell lg:py-3 lg:text-center">
+              <td class="block px-4 py-2 font-mono lg:px-2 lg:table-cell lg:py-3 lg:text-center">
                 <span class="block font-sans lg:hidden">Antworten</span><span class="text-[1.4375rem] font-semibold tabular-nums">{entry.answers}</span>
               </td>
-              <td class="block px-4 py-2 font-mono text-base-content/70 lg:px-3 lg:table-cell lg:py-3 lg:text-center">
+              <td class="block px-4 py-2 font-mono text-base-content/70 lg:px-2 lg:table-cell lg:py-3 lg:text-center">
                 <span class="block font-sans lg:hidden">Falsch</span>
                 <span class="text-[1.4375rem] font-semibold tabular-nums">{entry.answers -
                   entry.correct}</span>
@@ -285,7 +298,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
                 <span class="block lg:hidden">Richtig</span>
                 <span
                   data-test="correct-percent"
-                  class="text-[1.4375rem] tabular-nums font-bold whitespace-nowrap text-base-content"
+                  class="text-xl tabular-nums font-semibold whitespace-nowrap text-base-content"
                 >
                   {entry.pct} %
                 </span>
@@ -305,7 +318,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
                       data-answer-index={idx}
                       data-correct={to_string(idx in entry.correct_options)}
                       class={[
-                        "min-w-0 rounded-md border p-2 text-center",
+                        "min-w-0 rounded-md border px-2 py-1.5 text-center",
                         idx in entry.correct_options && "bg-success text-success-content",
                         idx in entry.correct_options && "border-success",
                         idx not in entry.correct_options &&
@@ -316,12 +329,15 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
                       <div class="font-semibold whitespace-nowrap">
                         {letter_for_index(idx)}
                       </div>
-                      <div data-test="answer-count" class="text-[1.4375rem] font-bold tabular-nums">
+                      <div
+                        data-test="answer-count"
+                        class="text-[1.4375rem] leading-tight font-bold tabular-nums"
+                      >
                         {count}
                       </div>
                       <div
                         class={[
-                          "mt-2 h-2 overflow-hidden rounded-full",
+                          "mt-1 h-1.5 overflow-hidden rounded-full",
                           if(idx in entry.correct_options,
                             do: "bg-success-content/20",
                             else: "bg-base-300"
@@ -430,14 +446,11 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
       id={"sort-#{@key}"}
       phx-click="sort"
       phx-value-key={@key}
-      class={[
-        "btn btn-sm btn-soft border-0 shadow-none min-h-11 px-2 text-[0.95rem] inline-flex items-center gap-1",
-        @sort_key == @key && "underline underline-offset-4"
-      ]}
+      class="btn btn-sm btn-soft border-0 shadow-none min-h-11 px-2 text-[0.95rem] inline-flex items-center gap-1"
       aria-sort={if @sort_key == @key, do: to_string(@sort_dir), else: "none"}
     >
       {@label}
-      <span class="text-xs w-3">
+      <span :if={@sort_key == @key} class="text-xs leading-none shrink-0">
         <%= cond do %>
           <% @sort_key == @key and @sort_dir == :asc -> %>
             ↑
