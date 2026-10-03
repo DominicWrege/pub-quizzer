@@ -860,12 +860,20 @@ defmodule PubQuizzer.Quiz do
     }
   end
 
-  # Cross-quiz question performance over all finished events:
+  # Question performance over all finished events or a single finished event:
   # [%{question, topic_name, asked_in, answers, pct, picks, trap}]
-  def get_question_report do
+  def get_question_report(event_id \\ nil) do
+    finished_events = where(QuizEvent, status: "finished")
+
+    finished_events =
+      if event_id do
+        where(finished_events, [e], e.id == ^event_id)
+      else
+        finished_events
+      end
+
     finished_ids =
-      QuizEvent
-      |> where(status: "finished")
+      finished_events
       |> select([e], e.id)
       |> Repo.all()
 

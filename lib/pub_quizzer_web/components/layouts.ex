@@ -147,6 +147,14 @@ defmodule PubQuizzerWeb.Layouts do
             >
               <.icon name="hero-bookmark" class="size-4 hidden sm:inline" /> Themen verwalten
             </.link>
+            <.link
+              id="question-report-nav"
+              navigate={~p"/admin/question-report"}
+              class={nav_tab_class(@current_path, "/admin/question-report")}
+              aria-current={if @current_path == "/admin/question-report", do: "page"}
+            >
+              <.icon name="hero-document-chart-bar" class="size-4 hidden sm:inline" /> Fragen-Bericht
+            </.link>
             <%= if @current_scope.user.role == "superadmin" do %>
               <.link
                 navigate={~p"/admin/import"}
@@ -213,6 +221,14 @@ defmodule PubQuizzerWeb.Layouts do
               class={drawer_link_class(@current_path, "/admin/topics")}
             >
               <.icon name="hero-bookmark" class="size-4" /> Themen verwalten
+            </.link>
+            <.link
+              id="question-report-mobile-nav"
+              navigate={~p"/admin/question-report"}
+              class={drawer_link_class(@current_path, "/admin/question-report")}
+              aria-current={if @current_path == "/admin/question-report", do: "page"}
+            >
+              <.icon name="hero-document-chart-bar" class="size-4" /> Fragen-Bericht
             </.link>
             <%= if @current_scope.user.role == "superadmin" do %>
               <.link

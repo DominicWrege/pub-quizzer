@@ -80,7 +80,157 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
     %{q1: q1, q2: q2, qc: qc, topic: topic, topic_c: topic_c, events: [event_a, event_b]}
   end
 
+  defp row_ids(view) do
+    view
+    |> render()
+    |> LazyHTML.from_fragment()
+    |> LazyHTML.query("#question-report-rows > tr")
+    |> LazyHTML.attribute("id")
+  end
+
   describe "cross-quiz question report" do
+    test "identifies rows by topic and question number, with text available on demand", %{
+      conn: conn
+    } do
+      %{q1: q1, q2: q2} = seed()
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+
+      assert has_element?(
+               view,
+               "#question-report-#{q1.id} [data-test='question-label']",
+               "Frage 1"
+             )
+
+      assert has_element?(
+               view,
+               "#question-report-#{q2.id} [data-test='question-label']",
+               "Frage 2"
+             )
+
+      assert has_element?(view, "#question-report-#{q1.id}", "Report Topic")
+      refute has_element?(view, "#question-report-#{q1.id} td:first-child", "Richtig:")
+      refute has_element?(view, "#question-report-rows", "Hard question")
+      refute has_element?(view, "#question-report-details")
+
+      view |> element("#view-question-#{q1.id}") |> render_click()
+      assert has_element?(view, "#question-report-details", "Hard question")
+      assert has_element?(view, "#question-report-details [data-option='1']", "b")
+      refute has_element?(view, "#question-report-details", "Richtig")
+
+      assert has_element?(
+               view,
+               "#question-report-details [data-option='1'] [data-test='answer-text']",
+               "b"
+             )
+
+      refute has_element?(view, "#question-report-details [data-test='correct-label']")
+
+      close_buttons =
+        view
+        |> render()
+        |> LazyHTML.from_fragment()
+        |> LazyHTML.query("#question-report-details button[phx-click='close_question']")
+        |> LazyHTML.attribute("id")
+
+      assert close_buttons == ["question-report-details-close"]
+
+      view |> element("#question-report-details-close") |> render_click()
+      refute has_element?(view, "#question-report-details")
+    end
+
+    test "shows each option's answer count, including zero, separately from its bar", %{
+      conn: conn
+    } do
+      %{q1: q1} = seed()
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+      row = "#question-report-#{q1.id}"
+
+      assert has_element?(view, "#{row} [data-answer-index='0'] [data-test='answer-count']", "2")
+      assert has_element?(view, "#{row} [data-answer-index='1'] [data-test='answer-count']", "3")
+      assert has_element?(view, "#{row} [data-answer-index='2'] [data-test='answer-count']", "0")
+      assert has_element?(view, "#{row} [data-answer-index='3'] [data-test='answer-count']", "0")
+      assert has_element?(view, "#{row} [data-answer-index='1'][data-correct='true']")
+    end
+
+    test "switching quizzes closes the question details", %{conn: conn} do
+      %{q1: q1, events: [_, event_b]} = seed()
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+      view |> element("#view-question-#{q1.id}") |> render_click()
+      assert has_element?(view, "#question-report-details")
+      view |> form("#question-report-quiz-form", %{event_id: event_b.id}) |> render_change()
+      refute has_element?(view, "#question-report-details")
+    end
+
+    test "is available as a separate desktop and mobile navigation tab", %{conn: conn} do
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/events")
+
+      assert has_element?(view, "#question-report-nav[href='/admin/question-report']")
+      assert has_element?(view, "#question-report-mobile-nav[href='/admin/question-report']")
+      assert has_element?(view, "a[href='/admin/topics'] + #question-report-nav")
+      assert has_element?(view, "a[href='/admin/topics'] + #question-report-mobile-nav")
+      refute has_element?(view, "#question-report-btn")
+
+      {:ok, report, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+      assert has_element?(report, "#question-report-nav[aria-current='page']")
+      assert has_element?(report, "#question-report-mobile-nav[aria-current='page']")
+      refute has_element?(report, "a[aria-label='Zurück']")
+      refute has_element?(report, "main header p")
+    end
+
+    test "switches quiz statistics immediately and can return to all quizzes", %{conn: conn} do
+      %{q1: q1, events: [event_a, event_b]} = seed()
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+
+      assert has_element?(view, "#question-report-quiz option[value='#{event_a.id}']", "Quiz A")
+      assert has_element?(view, "#question-report-quiz option[value='#{event_b.id}']", "Quiz B")
+      refute has_element?(view, "#question-report-quiz option", "Quiz C")
+
+      view |> form("#question-report-quiz-form", %{event_id: event_a.id}) |> render_change()
+      assert has_element?(view, "#question-report-#{q1.id}", "67 %")
+      assert has_element?(view, "#question-report-#{q1.id}", "1×")
+
+      view |> form("#question-report-quiz-form", %{event_id: event_b.id}) |> render_change()
+      assert has_element?(view, "#question-report-#{q1.id}", "50 %")
+
+      view |> form("#question-report-quiz-form", %{event_id: ""}) |> render_change()
+      assert has_element?(view, "#question-report-#{q1.id}", "60 %")
+      assert has_element?(view, "#question-report-#{q1.id}", "2×")
+      assert has_element?(view, "#question-report-distribution-help", "Anzahl der Teams")
+    end
+
+    test "quiz switching preserves topic filtering and sorting", %{conn: conn} do
+      %{q1: q1, q2: q2, topic: topic, events: [event_a, _]} = seed()
+      {:ok, other_topic} = Quiz.create_topic(%{name: "Another finished topic"})
+      other_question = create_question(other_topic, "Other quiz question")
+      {_event, [team | _], round} = finished_event_with_round(other_topic, "Other Quiz")
+      insert_answer(round, other_question, team, 1)
+
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+      view |> form("#question-report-filter-form", %{topic_id: topic.id}) |> render_change()
+      view |> element("#sort-right") |> render_click()
+      view |> form("#question-report-quiz-form", %{event_id: event_a.id}) |> render_change()
+
+      assert has_element?(view, "#question-report-#{q1.id}", "67 %")
+      assert has_element?(view, "#question-report-#{q2.id}", "100 %")
+      refute has_element?(view, "#question-report-#{other_question.id}")
+      assert has_element?(view, "#sort-right[aria-sort='desc']")
+      assert has_element?(view, "#question-report-topic option[value='#{topic.id}'][selected]")
+
+      view |> form("#question-report-quiz-form", %{event_id: ""}) |> render_change()
+      refute has_element?(view, "#question-report-#{other_question.id}")
+    end
+
+    test "a completed quiz without questions shows an empty report", %{conn: conn} do
+      seed()
+      {:ok, empty} = Quiz.create_event(%{team_count: 1})
+      {:ok, empty} = Quiz.update_event(empty, %{status: "finished"})
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+
+      assert has_element?(view, "#question-report-quiz option[value='#{empty.id}']", empty.code)
+      view |> form("#question-report-quiz-form", %{event_id: empty.id}) |> render_change()
+      assert has_element?(view, "#question-report-empty")
+    end
+
     test "aggregates answers across finished events", %{conn: conn} do
       %{q1: q1, q2: q2} = seed()
 
@@ -112,38 +262,36 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
     end
 
     test "sorts hardest question first by default", %{conn: conn} do
-      seed()
+      %{q1: q1, q2: q2} = seed()
 
-      {:ok, _view, html} =
+      {:ok, view, _html} =
         conn
         |> log_in_user()
         |> live(~p"/admin/question-report")
 
-      assert html =~ ~r/Hard question.*Easy question/s
+      assert row_ids(view) == ["question-report-#{q1.id}", "question-report-#{q2.id}"]
     end
 
     test "clicking column headers re-sorts the table", %{conn: conn} do
-      seed()
+      %{q1: q1, q2: q2} = seed()
 
-      {:ok, view, html} =
+      {:ok, view, _html} =
         conn
         |> log_in_user()
         |> live(~p"/admin/question-report")
 
       # default: hardest first (q1 60 % before q2 100 %)
-      assert html =~ ~r/Hard question.*Easy question/s
+      assert row_ids(view) == ["question-report-#{q1.id}", "question-report-#{q2.id}"]
 
       # toggle Richtig to desc -> q2 first
       view |> element("#sort-right") |> render_click()
-      assert render(view) =~ ~r/Easy question.*Hard question/s
+      assert row_ids(view) == ["question-report-#{q2.id}", "question-report-#{q1.id}"]
 
       # Antworten desc -> q1 (5 answers) before q2 (2)
       view |> element("#sort-answers") |> render_click()
-      assert render(view) =~ ~r/Hard question.*Easy question/s
+      assert row_ids(view) == ["question-report-#{q1.id}", "question-report-#{q2.id}"]
 
-      # name asc -> Easy before Hard
-      view |> element("#sort-name") |> render_click()
-      assert render(view) =~ ~r/Easy question.*Hard question/s
+      refute has_element?(view, "#sort-name")
     end
 
     test "mobile sort control reorders the questions", %{conn: conn} do
@@ -152,15 +300,16 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
       {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
 
       assert has_element?(view, "#question-report-mobile-sort select")
-      assert has_element?(view, "header a.btn-square[href='/admin/events'][aria-label='Zurück']")
+      refute has_element?(view, "#question-report-mobile-sort option[value='name']")
+      refute has_element?(view, "header a.btn-square[aria-label='Zurück']")
 
       view
       |> element("#question-report-mobile-sort")
-      |> render_change(%{"key" => "name"})
+      |> render_change(%{"key" => "right"})
 
       assert has_element?(view, "#question-report-#{q1.id}")
       assert has_element?(view, "#question-report-#{q2.id}")
-      assert render(view) =~ ~r/Easy question.*Hard question/s
+      assert row_ids(view) == ["question-report-#{q2.id}", "question-report-#{q1.id}"]
     end
 
     test "filters by topic", %{conn: conn} do
@@ -189,7 +338,10 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
 
       {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
 
-      assert has_element?(view, "#question-report-#{question.id}", "Richtig: C")
+      assert has_element?(
+               view,
+               "#question-report-#{question.id} [data-answer-index='2'][data-correct='true']"
+             )
     end
   end
 end
