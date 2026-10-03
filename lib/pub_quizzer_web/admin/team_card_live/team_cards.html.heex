@@ -16,10 +16,11 @@
       </:subtitle>
       <:actions>
         <button
+          id="print-team-cards"
           onclick="window.print()"
           class="btn btn-primary btn-sm"
         >
-          <.icon name="hero-arrow-down-tray" class="size-4" /> Drucken
+          <.icon name="hero-printer" class="size-4" /> Drucken
         </button>
       </:actions>
     </.header>
@@ -35,10 +36,10 @@
         [
           # screen: daisyUI card chrome
           "team-card card bg-base-100 border-2 border-base-300",
-          # print: blank sheet, no chrome, content centered (card kept under
-          # page height so default print margins can't push an empty page out)
+           # print: content-sized card so browser print scaling cannot expand
+           # an artificial minimum height onto an empty second sheet
           "print:bg-white print:border-0 print:shadow-none print:rounded-none",
-          "print:max-w-none print:mx-0 print:w-full print:min-h-[250mm]",
+           "print:max-w-none print:mx-0 print:w-full",
           "print:flex print:flex-col"
         ]
       }

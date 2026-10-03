@@ -376,6 +376,11 @@ dialog::backdrop {
 
   body:has(.team-card) main {
     padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  body:has(.team-card) [data-app-shell] > div {
+    display: block !important;
   }
 
   /* The content wrapper carries screen-only top padding, centering, and flex
@@ -389,6 +394,7 @@ dialog::backdrop {
   }
 
   .team-card {
+    break-inside: avoid;
     break-after: page;
     page-break-after: always;
   }
