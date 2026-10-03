@@ -77,8 +77,22 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
 
         assert has_element?(
                  view,
-                 "#results-host-console[href='/quiz/#{event.code}/host']"
+                 "#results-host-console[href='/quiz/#{event.code}/host']",
+                 "Moderator"
                )
+
+        assert has_element?(view, "#results-host-console svg")
+
+        assert view
+               |> element("#results-host-console")
+               |> render()
+               |> LazyHTML.from_fragment()
+               |> LazyHTML.text()
+               |> String.trim() == "Moderator"
+
+        assert has_element?(view, "header #results-nav-title")
+        refute has_element?(view, "#nav-drawer-toggle")
+        refute has_element?(view, "header a[href='/']")
       end
     end
 
@@ -89,6 +103,7 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
         conn |> log_in_user() |> live(~p"/admin/events/#{event.id}/results")
 
       refute has_element?(view, "#results-host-console")
+      assert has_element?(view, "#results-quiz-overview[href='/admin/events']")
     end
 
     test "round rows identify questions by number without showing their prompts", %{conn: conn} do
@@ -136,7 +151,7 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
         |> live(~p"/admin/events/#{event.id}/results")
 
       assert has_element?(view, "#result-timing")
-      assert has_element?(view, "header a.btn-square[href='/admin/events'][aria-label='Zurück']")
+      assert has_element?(view, "#results-event-label")
       assert has_element?(view, "#result-timing", "47 Min.")
       assert has_element?(view, "#result-timing", "2 Min.")
     end

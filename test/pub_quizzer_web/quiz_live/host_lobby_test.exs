@@ -100,6 +100,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
              )
 
       refute has_element?(view, "#host-quiz-menu #host-live-values")
+      assert has_element?(view, "#host-live-values svg")
 
       refute has_element?(view, "main #host-finish-quiz")
       refute has_element?(view, "h1", "Moderator")

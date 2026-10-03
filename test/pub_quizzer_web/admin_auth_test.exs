@@ -10,10 +10,12 @@ defmodule PubQuizzerWeb.AdminAuthTest do
         Accounts.create_user(%{email: "admin@test.com", name: "Admin", role: "superadmin"})
 
       conn = get(conn, ~p"/admin/login")
-      assert html_response(conn, 200) =~ "Login"
-      assert html_response(conn, 200) =~ "admin-login-form"
-      assert html_response(conn, 200) =~ ~s(aria-label="Zurück zur Startseite")
-      assert html_response(conn, 200) =~ "btn-square"
+      document = conn |> html_response(200) |> LazyHTML.from_document()
+      assert document |> LazyHTML.query("#admin-login-form") |> LazyHTML.to_tree() != []
+
+      home = LazyHTML.query(document, "#admin-login-home[href='/']")
+      assert home |> LazyHTML.text() |> String.trim() == "Zur Startseite"
+      assert home |> LazyHTML.query("svg") |> LazyHTML.to_tree() == []
     end
 
     test "GET /admin/login redirects to /setup when no users exist", %{conn: conn} do

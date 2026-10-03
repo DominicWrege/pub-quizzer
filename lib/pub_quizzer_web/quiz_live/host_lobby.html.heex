@@ -58,13 +58,14 @@
     <.link
       id="host-live-values"
       navigate={~p"/admin/events/#{@event.id}/results"}
-      class="btn btn-sm btn-soft shrink-0"
+      class="btn btn-sm btn-soft min-h-[44px] gap-1 px-2 shrink-0"
       aria-label={
         if @engine_state.status == :finished,
           do: "Ergebnisse anzeigen",
           else: "Live-Werte anzeigen"
       }
     >
+      <.icon name="hero-clipboard" class="size-4 shrink-0" />
       {if @engine_state.status == :finished, do: "Ergebnisse", else: "Live"}
     </.link>
     <%= if @engine_state.status != :finished do %>

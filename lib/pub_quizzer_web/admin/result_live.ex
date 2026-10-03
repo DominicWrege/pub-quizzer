@@ -43,37 +43,37 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
     ~H"""
     <Layouts.app
       flash={@flash}
-      current_scope={@current_scope}
-      current_path={@current_path}
       max_width="max-w-7xl"
+      hide_nav_actions
     >
-      <.header>
-        <div class="flex items-baseline gap-2 sm:gap-3 flex-wrap">
-          <span>Ergebnisse</span>
-          <%= if @event.status != "finished" do %>
-            <span class="badge badge-sm badge-primary gap-1">
-              <span class="size-1.5 rounded-full bg-current animate-pulse"></span> Live
-            </span>
-          <% end %>
-          <span class="text-sm text-base-content/70 whitespace-nowrap">
-            {@results.event.name || "Quiz"} · Code
-            <span class="font-mono font-bold">{@results.event.code}</span>
-          </span>
-        </div>
-        <:back>
-          <.back_link navigate={~p"/admin/events"} />
-        </:back>
-        <:actions>
-          <.link
-            :if={@event.status != "lobby"}
-            id="results-host-console"
-            navigate={~p"/quiz/#{@event.code}/host"}
-            class="btn btn-sm btn-soft"
-          >
-            <.icon name="hero-arrow-left" class="size-4" /> Zur Moderator-Konsole
-          </.link>
-        </:actions>
-      </.header>
+      <:nav_title>
+        <span id="results-nav-title" class="block text-base font-semibold truncate">
+          {if @event.status == "finished", do: "Ergebnisse", else: "Live-Werte"}
+        </span>
+      </:nav_title>
+      <:nav_actions>
+        <.link
+          :if={@event.status != "lobby"}
+          id="results-host-console"
+          navigate={~p"/quiz/#{@event.code}/host"}
+          class="btn btn-sm btn-soft min-h-[44px] gap-1 px-2"
+        >
+          <.icon name="hero-microphone" class="size-4 shrink-0" /> Moderator
+        </.link>
+        <.link
+          :if={@event.status == "lobby"}
+          id="results-quiz-overview"
+          navigate={~p"/admin/events"}
+          class="btn btn-sm btn-soft"
+        >
+          Quiz-Übersicht
+        </.link>
+      </:nav_actions>
+
+      <p id="results-event-label" class="text-sm text-base-content/70">
+        {@results.event.name || "Quiz"} · Code
+        <span class="font-mono font-bold">{@results.event.code}</span>
+      </p>
 
       <%!-- Final standings summary --%>
       <div class="mb-8">
