@@ -62,9 +62,7 @@ test("the answer count toggles missing teams and skipped answers require confirm
     await hostPage.locator("#host-answer-count").click()
     await expect(pending).toBeVisible()
 
-    await hostPage.locator("#host-quiz-menu > summary").click()
     await hostPage.locator("#host-finish-quiz").click()
-    await expect(hostPage.locator("#host-quiz-menu")).not.toHaveAttribute("open")
     await expect(hostPage.locator("#finish-quiz-modal")).toBeVisible()
     await hostPage.locator("#finish-quiz-modal-cancel").click()
     expect(errors).toEqual([])

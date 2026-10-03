@@ -6,52 +6,20 @@
 >
   <div
     data-sticky-bar
-    class="sticky top-(--header-h) lg:top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-base-100 border-b border-transparent transition-[box-shadow,border-color] duration-200 pt-3 pb-3 lg:pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mb-4"
+    class="sticky top-(--header-h) lg:top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-base-100 border-b border-transparent transition-[box-shadow,border-color] duration-200 pt-3 pb-3 lg:pt-2 flex items-center justify-end gap-2 mb-4"
   >
-    <.form
-      for={%{}}
-      id="event-search"
-      phx-change="search"
-      class="group relative w-full sm:flex-1 sm:max-w-sm"
-    >
-      <.icon
-        name="hero-magnifying-glass"
-        class="pointer-events-none absolute z-10 left-3 top-1/2 size-4 -translate-y-1/2 text-base-content/50 transition-colors duration-150 group-focus-within:text-base-content/70"
-      />
-      <input
-        type="text"
-        name="query"
-        placeholder="Nach Code oder Name suchen..."
-        value={@search_query}
-        class="input input-bordered peer w-full pl-10 pr-10"
-      />
-      <button
-        type="button"
-        data-clear-input
-        aria-label="Suche leeren"
-        class="absolute z-10 right-2 top-1/2 hidden size-7 -translate-y-1/2 items-center justify-center rounded-full text-base-content/50 transition duration-150 hover:bg-base-300 hover:text-base-content active:scale-90 peer-[:not(:placeholder-shown)]:flex"
-      >
-        <.icon name="hero-x-mark" class="size-4" />
-      </button>
-    </.form>
-    <div class="flex items-center gap-2">
-      <.link navigate={~p"/admin/question-report"} class="btn btn-soft" id="question-report-btn">
-        <.icon name="hero-document-chart-bar" class="size-4" /> Fragen-Bericht
-      </.link>
-      <.button phx-click="start_new" id="new-event-btn">
-        <.icon name="hero-plus" class="size-4" /> Neues Quiz
-      </.button>
-    </div>
+    <.link navigate={~p"/admin/question-report"} class="btn btn-soft" id="question-report-btn">
+      <.icon name="hero-document-chart-bar" class="size-4" /> Fragen-Bericht
+    </.link>
+    <.button phx-click="start_new" id="new-event-btn">
+      <.icon name="hero-plus" class="size-4" /> Neues Quiz
+    </.button>
   </div>
 
   <%= cond do %>
-    <% @filtered_events == [] -> %>
+    <% @events == [] -> %>
       <div class="text-center py-12 text-base-content/70">
-        <%= if @search_query != "" do %>
-          Keine Quiz gefunden
-        <% else %>
-          Noch keine Quiz erstellt.
-        <% end %>
+        Noch keine Quiz erstellt.
       </div>
     <% true -> %>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

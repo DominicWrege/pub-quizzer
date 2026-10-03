@@ -47,7 +47,6 @@ test.describe("multi-round", () => {
     await pickTopic(hostPage)
 
     // Finish early (instead of playing all 6 rounds)
-    await hostPage.locator("#host-quiz-menu > summary").click()
     await hostPage.locator("#host-finish-quiz").click()
     await expect(hostPage.locator("#finish-quiz-modal")).toBeVisible({ timeout: 5_000 })
     await hostPage.locator('[phx-click="confirm_finish_quiz"]').click()

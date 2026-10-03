@@ -87,16 +87,20 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       event: event
     } do
       view = host_start_quiz(conn, event)
-      assert has_element?(view, "header #host-quiz-menu #host-finish-quiz")
+      assert has_element?(view, "header.sticky")
+      assert has_element?(view, "header #host-quiz-menu #host-finish-quiz-menu")
 
-      assert has_element?(
-               view,
-               "header #host-quiz-menu #host-quiz-overview[href='/admin/events']"
-             )
+      assert has_element?(view, "header #host-home[href='/admin/events']")
+      assert has_element?(view, "header #host-finish-quiz")
 
       assert has_element?(
                view,
                "header #host-live-values[href='/admin/events/#{event.id}/results']"
+             )
+
+      assert has_element?(
+               view,
+               "header #host-quiz-menu #host-live-values-menu[href='/admin/events/#{event.id}/results']"
              )
 
       refute has_element?(view, "#host-quiz-menu #host-live-values")
@@ -175,7 +179,8 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       # Host connects — should see waiting message, not topic buttons
       {:ok, view, html} = live(log_in_user(conn), ~p"/quiz/#{event.code}/host")
 
-      assert html =~ "gewonnen — Vortritt"
+      assert html =~ "wählt das Thema"
+      assert html =~ "Runde 2"
       assert has_element?(view, "button[phx-click='choose_topic']")
     end
   end
@@ -677,10 +682,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       assert html =~ "Punkten!"
       assert has_element?(view, ~s|#host-winner-line|)
 
-      assert has_element?(
-               view,
-               "header a.btn-square[href='/admin/events'][aria-label='Zurück']"
-             )
+      assert has_element?(view, "header #host-home[href='/admin/events']")
 
       assert has_element?(
                view,

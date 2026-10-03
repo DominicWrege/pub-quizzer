@@ -5,25 +5,24 @@
   main_class="px-3 pt-1 pb-3 @min-[640px]/public:pt-3 @min-[640px]/public:pb-4 @min-[640px]/public:px-4 @min-[1024px]/public:px-6"
 >
   <%!-- Team name header always visible --%>
-  <div class="text-center mt-3 mb-3">
+  <div class="text-center mt-[10vh] mb-3">
     <h1 class="text-lg font-bold">{@team.name}</h1>
   </div>
 
   <%!-- Lobby: waiting for start --%>
   <%= if @engine_state.status == :lobby do %>
     <div class="text-center max-w-xs mx-auto animate-fade-in">
-      <div class="alert shadow-md text-base border border-base-300 px-4 py-3">
-        <.icon name="hero-clock" class="size-4" />
-        <span class="font-semibold">Warte auf den Quiz-Start</span>
-      </div>
-      <p id="team-registration" class="text-base font-semibold text-base-content mt-4">
-        Euer Team ist angemeldet.
+      <.icon name="hero-check-circle" class="size-8 text-success mx-auto" />
+      <p id="team-registration" class="text-xl font-bold mt-3">
+        Ihr seid angemeldet.
       </p>
-      <p class="text-sm text-base-content mt-2">
-        Ihr könnt das Handy sperren. Öffnet diese Seite wieder, wenn der Moderator startet.
-        Weitere Handys können denselben QR-Code scannen.
+      <p class="text-lg mt-1">
+        Wartet hier, bis das Quiz startet.
       </p>
-      <p class="text-sm text-base-content/50 mt-3">
+      <p class="text-base mt-2">
+        Handy sperren ist okay. Öffnet diese Seite wieder, wenn es losgeht.
+      </p>
+      <p class="text-xs text-base-content/60 mt-28">
         Quiz-Code: <span class="font-mono font-bold">{@event.code}</span>
       </p>
     </div>

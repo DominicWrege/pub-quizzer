@@ -31,55 +31,43 @@ defmodule PubQuizzerWeb.Admin.EventLive do
     socket
     |> assign(:page_title, "Events")
     |> assign(:events, events)
-    |> assign(:search_query, "")
-    |> assign(:filtered_events, events)
     |> assign_active_finished(events)
   end
 
   defp apply_action(socket, :show, %{"id" => id}, url) do
-    event = Quiz.get_event_with_teams!(id)
-    base = base_url_from_request(url)
-    join_url = base <> ~p"/quiz/join/#{event.code}"
+    case Quiz.get_event_with_teams(id) do
+      nil ->
+        socket
+        |> put_flash(:error, "Event nicht gefunden.")
+        |> redirect(to: ~p"/admin/events")
 
-    if connected?(socket) do
-      Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
+      event ->
+        base = base_url_from_request(url)
+        join_url = base <> ~p"/quiz/join/#{event.code}"
+
+        if connected?(socket) do
+          Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
+        end
+
+        claimed_ids = claimed_team_ids(event.teams)
+
+        connected_ids =
+          claimed_ids
+          |> Enum.filter(&(Registry.lookup(PubQuizzer.TeamPresence, &1) != []))
+          |> MapSet.new()
+
+        socket
+        |> assign(:page_title, page_title_for(event))
+        |> assign(:event, event)
+        |> assign(:join_url, join_url)
+        |> assign(:connected_team_ids, connected_ids)
+        |> assign(:registered_team_count, MapSet.size(claimed_ids))
+        |> assign(:edit_name_dialog, false)
+        |> assign(:name_form, to_form(%{"name" => event.name || ""}))
     end
-
-    claimed_ids = claimed_team_ids(event.teams)
-
-    connected_ids =
-      claimed_ids
-      |> Enum.filter(&(Registry.lookup(PubQuizzer.TeamPresence, &1) != []))
-      |> MapSet.new()
-
-    socket
-    |> assign(:page_title, page_title_for(event))
-    |> assign(:event, event)
-    |> assign(:join_url, join_url)
-    |> assign(:connected_team_ids, connected_ids)
-    |> assign(:registered_team_count, MapSet.size(claimed_ids))
-    |> assign(:edit_name_dialog, false)
-    |> assign(:name_form, to_form(%{"name" => event.name || ""}))
   end
 
   @impl true
-  def handle_event("search", %{"query" => query}, socket) do
-    events = socket.assigns.events
-    query = String.trim(query)
-
-    filtered =
-      if query == "" do
-        events
-      else
-        Enum.filter(events, fn e ->
-          String.contains?(String.downcase(e.code), String.downcase(query)) or
-            (e.name && String.contains?(String.downcase(e.name), String.downcase(query)))
-        end)
-      end
-
-    {:noreply, socket |> assign(:filtered_events, filtered) |> assign_active_finished(filtered)}
-  end
-
   def handle_event("start_new", _params, socket) do
     case Quiz.create_event(%{team_count: 4, name: ""}) do
       {:ok, event} ->

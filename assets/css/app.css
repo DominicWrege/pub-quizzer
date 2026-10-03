@@ -362,7 +362,14 @@ dialog::backdrop {
   }
 
   /* Flatten the admin shell so each card owns its full A4 sheet, and drop the
-     content padding that would otherwise inset the card from the page edges. */
+     content padding that would otherwise inset the card from the page edges.
+     html must be white too: the theme paints its cream on <html>, and when
+     <html> has a background the body's white no longer covers the canvas, so
+     the sheet below the body fragment stayed cream. */
+  html:has(.team-card) {
+    background: #ffffff !important;
+  }
+
   body:has(.team-card) {
     background: #ffffff !important;
   }
@@ -394,6 +401,11 @@ dialog::backdrop {
   }
 
   .team-card {
+    /* Center the card on the sheet. 100vh equals the print page box at any
+       browser print scale, unlike the former absolute 250mm minimum which
+       grew past the sheet at 125%+ and pushed blank pages out. */
+    min-height: 100vh;
+    justify-content: center;
     break-inside: avoid;
     break-after: page;
     page-break-after: always;

@@ -157,4 +157,17 @@ defmodule PubQuizzerWeb.Admin.ReportLiveTest do
       refute has_element?(view, "a[href='/admin/events/#{lobby_event.id}/report']")
     end
   end
+
+  describe "missing event" do
+    test "redirects unknown ids to the event list instead of crashing", %{conn: conn} do
+      for id <- ["999999", "not-a-number"] do
+        assert {:error, {:redirect, %{to: "/admin/events", flash: flash}}} =
+                 conn
+                 |> log_in_user()
+                 |> live(~p"/admin/events/#{id}/report")
+
+        assert flash["error"] =~ "nicht gefunden"
+      end
+    end
+  end
 end

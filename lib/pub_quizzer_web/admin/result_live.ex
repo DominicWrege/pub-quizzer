@@ -5,19 +5,24 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
-    event = Quiz.get_event!(id)
+    case Quiz.get_event(id) do
+      nil ->
+        {:ok,
+         socket |> put_flash(:error, "Event nicht gefunden.") |> redirect(to: ~p"/admin/events")}
 
-    if connected?(socket) do
-      Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
+      event ->
+        if connected?(socket) do
+          Phoenix.PubSub.subscribe(PubQuizzer.PubSub, "quiz:event:#{event.id}")
+        end
+
+        results = Quiz.get_event_results(id)
+
+        {:ok,
+         socket
+         |> assign(:page_title, "Ergebnisse")
+         |> assign(:event, event)
+         |> assign(:results, results)}
     end
-
-    results = Quiz.get_event_results(id)
-
-    {:ok,
-     socket
-     |> assign(:page_title, "Ergebnisse")
-     |> assign(:event, event)
-     |> assign(:results, results)}
   end
 
   @impl true
@@ -44,12 +49,25 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
     <Layouts.app
       flash={@flash}
       max_width="max-w-7xl"
+      main_class="px-4 pt-6 pb-4 sm:px-6 sm:pt-8 sm:pb-10 lg:px-8"
       hide_nav_actions
+      sticky_nav
     >
       <:nav_title>
-        <span id="results-nav-title" class="block text-base font-semibold truncate">
-          {if @event.status == "finished", do: "Ergebnisse", else: "Live-Werte"}
-        </span>
+        <div class="flex items-center gap-2 min-w-0">
+          <.link
+            id="results-home"
+            navigate={~p"/admin/events"}
+            class="btn btn-sm btn-soft btn-square min-h-[44px] min-w-[44px] shrink-0"
+            aria-label="Zur Quiz-Übersicht"
+          >
+            <.icon name="hero-home" class="size-5" />
+          </.link>
+          <span id="results-nav-title" class="block text-base font-semibold truncate">
+            {if @event.status == "finished", do: "Ergebnisse", else: "Live-Werte"} ·
+            <span class="font-mono">{@event.code}</span>
+          </span>
+        </div>
       </:nav_title>
       <:nav_actions>
         <.link
@@ -60,20 +78,7 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
         >
           <.icon name="hero-microphone" class="size-4 shrink-0" /> Moderator
         </.link>
-        <.link
-          :if={@event.status == "lobby"}
-          id="results-quiz-overview"
-          navigate={~p"/admin/events"}
-          class="btn btn-sm btn-soft"
-        >
-          Quiz-Übersicht
-        </.link>
       </:nav_actions>
-
-      <p id="results-event-label" class="text-sm text-base-content/70">
-        {@results.event.name || "Quiz"} · Code
-        <span class="font-mono font-bold">{@results.event.code}</span>
-      </p>
 
       <%!-- Final standings summary --%>
       <div class="mb-8">

@@ -5,15 +5,20 @@ defmodule PubQuizzerWeb.Admin.ReportLive do
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
-    event = Quiz.get_event!(id)
+    case Quiz.get_event(id) do
+      nil ->
+        {:ok,
+         socket |> put_flash(:error, "Event nicht gefunden.") |> redirect(to: ~p"/admin/events")}
 
-    if event.status != "finished" do
-      {:ok, redirect(socket, to: ~p"/admin/events/#{id}/results")}
-    else
-      {:ok,
-       socket
-       |> assign(:page_title, "Bericht")
-       |> assign(:report, Quiz.get_event_report(id))}
+      event ->
+        if event.status != "finished" do
+          {:ok, redirect(socket, to: ~p"/admin/events/#{id}/results")}
+        else
+          {:ok,
+           socket
+           |> assign(:page_title, "Bericht")
+           |> assign(:report, Quiz.get_event_report(id))}
+        end
     end
   end
 

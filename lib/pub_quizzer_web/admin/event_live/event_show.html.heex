@@ -103,8 +103,7 @@
 
     <%= if @event.status == "lobby" do %>
       <section class="mt-2">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h3 class="card-title text-base sm:text-lg">{@event.team_count} Teams</h3>
+        <div class="flex flex-wrap items-center justify-end gap-2 mb-3">
           <div class="flex items-center gap-2">
             <button
               phx-click="add_slot"

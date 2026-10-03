@@ -60,22 +60,6 @@ test.describe("event management", () => {
     await expect(hostPage.locator("tbody#event-teams tr")).toHaveCount(5, { timeout: 10_000 })
   })
 
-  test("host can search events by code", async ({ browser, hostPage }) => {
-    test.setTimeout(60_000)
-
-    const code = await createEvent(hostPage, 2)
-
-    // Go to events index
-    await hostPage.goto("/admin/events")
-
-    // Search by code
-    await hostPage.locator("#event-search input[name='query']").fill(code)
-    await hostPage.waitForTimeout(500)
-
-    // The event card with our code should be visible
-    await expect(hostPage.locator(`text=${code}`)).toBeVisible({ timeout: 10_000 })
-  })
-
   test("host can delete an event from the events index", async ({ browser, hostPage }) => {
     test.setTimeout(60_000)
 

@@ -107,7 +107,7 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
       |> render_click()
 
       refute has_element?(view, "#team-card-#{team.id}")
-      assert has_element?(view, "h3", "3 Teams")
+      assert has_element?(view, "#event-registration-summary", "0 von 3 Teams angemeldet")
       assert Quiz.get_event!(event.id).team_count == 3
     end
 
@@ -179,6 +179,30 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
       assert html =~ "QR-Code scannen oder Link im Browser eingeben"
       refute html =~ "Kamera auf QR-Code richten"
       refute html =~ "Oder Link im Browser eingeben"
+    end
+  end
+
+  describe "missing event" do
+    test "redirects unknown event ids to the event list instead of crashing", %{conn: conn} do
+      for id <- ["999999", "not-a-number"] do
+        assert {:error, {:redirect, %{to: "/admin/events", flash: flash}}} =
+                 conn
+                 |> auth_conn()
+                 |> live(~p"/admin/events/#{id}")
+
+        assert flash["error"] =~ "nicht gefunden"
+      end
+    end
+
+    test "redirects unknown team-card ids to the event list instead of crashing", %{conn: conn} do
+      for id <- ["999999", "not-a-number"] do
+        assert {:error, {:redirect, %{to: "/admin/events", flash: flash}}} =
+                 conn
+                 |> auth_conn()
+                 |> live(~p"/admin/events/#{id}/team-cards")
+
+        assert flash["error"] =~ "nicht gefunden"
+      end
     end
   end
 end

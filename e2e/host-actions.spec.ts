@@ -62,7 +62,6 @@ test.describe("host actions", () => {
     const { contexts } = await setupQuiz(hostPage, browser, 2)
 
     // Open finish modal
-    await hostPage.locator("#host-quiz-menu > summary").click()
     await hostPage.locator("#host-finish-quiz").click()
     await expect(hostPage.locator("#finish-quiz-modal")).toBeVisible({ timeout: 5_000 })
 

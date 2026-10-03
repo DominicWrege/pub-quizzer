@@ -30,6 +30,7 @@
               beamPackages.elixir
               beamPackages.erlang
               sqlite
+              poppler-utils
               inotify-tools
               watchman
               nodejs

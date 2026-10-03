@@ -91,6 +91,7 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
                |> String.trim() == "Moderator"
 
         assert has_element?(view, "header #results-nav-title")
+        assert has_element?(view, "header.sticky")
         refute has_element?(view, "#nav-drawer-toggle")
         refute has_element?(view, "header a[href='/']")
       end
@@ -103,7 +104,7 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
         conn |> log_in_user() |> live(~p"/admin/events/#{event.id}/results")
 
       refute has_element?(view, "#results-host-console")
-      assert has_element?(view, "#results-quiz-overview[href='/admin/events']")
+      assert has_element?(view, "#results-home[href='/admin/events']")
     end
 
     test "round rows identify questions by number without showing their prompts", %{conn: conn} do
@@ -151,7 +152,8 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
         |> live(~p"/admin/events/#{event.id}/results")
 
       assert has_element?(view, "#result-timing")
-      assert has_element?(view, "#results-event-label")
+      assert has_element?(view, "#results-nav-title", event.code)
+      refute has_element?(view, "#results-event-label")
       assert has_element?(view, "#result-timing", "47 Min.")
       assert has_element?(view, "#result-timing", "2 Min.")
     end
@@ -177,6 +179,19 @@ defmodule PubQuizzerWeb.Admin.ResultLiveTest do
         |> live(~p"/admin/events/#{event.id}/results")
 
       refute has_element?(view, "#result-stats")
+    end
+  end
+
+  describe "missing event" do
+    test "redirects unknown ids to the event list instead of crashing", %{conn: conn} do
+      for id <- ["999999", "not-a-number"] do
+        assert {:error, {:redirect, %{to: "/admin/events", flash: flash}}} =
+                 conn
+                 |> log_in_user()
+                 |> live(~p"/admin/events/#{id}/results")
+
+        assert flash["error"] =~ "nicht gefunden"
+      end
     end
   end
 end

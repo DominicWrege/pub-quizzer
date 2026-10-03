@@ -20,25 +20,33 @@ defmodule PubQuizzerWeb.Admin.TeamCardLive do
 
   @impl true
   def handle_params(%{"id" => id}, url, socket) do
-    event = Quiz.get_event_with_teams!(id)
-    base = base_url_from_request(url)
+    case Quiz.get_event_with_teams(id) do
+      nil ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Event nicht gefunden.")
+         |> redirect(to: ~p"/admin/events")}
 
-    cards =
-      event.teams
-      |> Enum.sort_by(& &1.slot_index)
-      |> Enum.map(fn team ->
-        slot = team.slot_index + 1
-        card_url = "#{base}#{~p"/quiz/join/#{event.code}/#{team.link_code}"}"
+      event ->
+        base = base_url_from_request(url)
 
-        svg =
-          card_url
-          |> EQRCode.encode()
-          |> EQRCode.svg(color: "#000000", background: "#ffffff", width: 400)
+        cards =
+          event.teams
+          |> Enum.sort_by(& &1.slot_index)
+          |> Enum.map(fn team ->
+            slot = team.slot_index + 1
+            card_url = "#{base}#{~p"/quiz/join/#{event.code}/#{team.link_code}"}"
 
-        %{team: team, slot: slot, url: card_url, display_url: display_url(card_url), svg: svg}
-      end)
+            svg =
+              card_url
+              |> EQRCode.encode()
+              |> EQRCode.svg(color: "#000000", background: "#ffffff", width: 400)
 
-    {:noreply, assign(socket, event: event, cards: cards)}
+            %{team: team, slot: slot, url: card_url, display_url: display_url(card_url), svg: svg}
+          end)
+
+        {:noreply, assign(socket, event: event, cards: cards)}
+    end
   end
 
   # Human-readable join link for the printed card fallback: no scheme, no port

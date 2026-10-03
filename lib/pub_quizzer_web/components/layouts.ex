@@ -49,6 +49,11 @@ defmodule PubQuizzerWeb.Layouts do
     default: false,
     doc: "hides the navbar action buttons (for quiz lobby screens)"
 
+  attr :sticky_nav, :boolean,
+    default: false,
+    doc:
+      "keeps the public navbar sticky on every width (app-like host console and live results screens)"
+
   attr :print_chrome, :boolean,
     default: true,
     doc: "when false, the admin header/drawer/flashes get print:hidden (for printable pages)"
@@ -238,7 +243,13 @@ defmodule PubQuizzerWeb.Layouts do
       <%!-- Query the rendered shell width rather than a desktop-mode phone's
           oversized viewport. The sizing fallback reflows this shell to phone width. --%>
       <div class="@container/public flex min-h-(--app-height) flex-col">
-        <header class="navbar min-h-0 shrink-0 bg-base-100 @max-[640px]/public:sticky @max-[640px]/public:top-0 @max-[640px]/public:z-20 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] @min-[640px]/public:pl-[calc(env(safe-area-inset-left)+1.5rem)] @min-[640px]/public:pr-[calc(env(safe-area-inset-right)+1.5rem)] @min-[1024px]/public:pl-[calc(env(safe-area-inset-left)+2rem)] @min-[1024px]/public:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300">
+        <header class={[
+          "navbar min-h-0 shrink-0 bg-base-100 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] @min-[640px]/public:pl-[calc(env(safe-area-inset-left)+1.5rem)] @min-[640px]/public:pr-[calc(env(safe-area-inset-right)+1.5rem)] @min-[1024px]/public:pl-[calc(env(safe-area-inset-left)+2rem)] @min-[1024px]/public:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300",
+          if(@sticky_nav,
+            do: "sticky top-0 z-20",
+            else: "@max-[640px]/public:sticky @max-[640px]/public:top-0 @max-[640px]/public:z-20"
+          )
+        ]}>
           <div class="flex-1 min-w-0 mr-3">
             <%= if @nav_title != [] do %>
               {render_slot(@nav_title)}

@@ -2,38 +2,49 @@
   flash={@flash}
   max_width="max-w-2xl"
   hide_nav_actions
+  sticky_nav
   main_class="px-4 py-4 sm:pt-2 sm:pb-10 sm:px-6 lg:px-8 text-sm"
 >
   <:nav_title>
-    <%= if @engine_state.status == :question do %>
-      <div class="flex items-baseline gap-2 min-w-0">
-        <h3 class="text-base font-semibold shrink-0">
-          Frage {(@engine_state.question_index || 0) + 1} / {length(
-            @engine_state.current_questions
-          )}
-        </h3>
-        <span
-          :if={@current_topic_name}
-          id="host-question-topic"
-          class="text-sm text-base-content truncate"
-        >
-          {@current_topic_name}
+    <div class="flex items-center gap-2 min-w-0">
+      <.link
+        id="host-home"
+        navigate={~p"/admin/events"}
+        class="btn btn-sm btn-soft btn-square min-h-[44px] min-w-[44px] shrink-0"
+        aria-label="Zur Quiz-Übersicht"
+      >
+        <.icon name="hero-home" class="size-5" />
+      </.link>
+      <%= if @engine_state.status == :question do %>
+        <div class="flex items-baseline gap-2 min-w-0">
+          <h3 class="text-base font-semibold shrink-0">
+            Frage {(@engine_state.question_index || 0) + 1} / {length(
+              @engine_state.current_questions
+            )}
+          </h3>
+          <span
+            :if={@current_topic_name}
+            id="host-question-topic"
+            class="text-sm text-base-content truncate"
+          >
+            {@current_topic_name}
+          </span>
+        </div>
+      <% else %>
+        <span class="text-base font-semibold truncate">
+          <%= case @engine_state.status do %>
+            <% :topic_selection -> %>
+              Themenwahl
+            <% :round_reveal -> %>
+              Runde {@engine_state.round_number} · Auswertung
+            <% :finished -> %>
+              Quiz beendet
+            <% _ -> %>
+              Quiz
+          <% end %>
         </span>
-      </div>
-    <% else %>
-      <span class="text-base font-semibold">
-        <%= case @engine_state.status do %>
-          <% :topic_selection -> %>
-            Themenwahl
-          <% :round_reveal -> %>
-            Runde {@engine_state.round_number} · Auswertung
-          <% :finished -> %>
-            Quiz beendet
-          <% _ -> %>
-            Quiz
-        <% end %>
-      </span>
-    <% end %>
+      <% end %>
+    </div>
   </:nav_title>
   <:nav_actions>
     <button
@@ -43,7 +54,7 @@
       aria-expanded={to_string(@pending_teams_visible?)}
       aria-controls="host-pending-teams"
       title="Teams ohne Antwort anzeigen"
-      class="btn btn-sm btn-soft px-3 text-sm shrink-0 tabular-nums"
+      class="btn btn-sm btn-soft min-h-[44px] px-3 text-sm shrink-0 tabular-nums"
       data-test="answered-badge"
     >
       {MapSet.size(@answered_team_ids)} / {length(@engine_state.teams)}
@@ -55,55 +66,66 @@
         ]}
       />
     </button>
+    <%!-- Tablet and up: direct actions. On phones everything lives in the
+         hamburger menu, so the right side of the header stays one button. --%>
     <.link
       id="host-live-values"
       navigate={~p"/admin/events/#{@event.id}/results"}
-      class="btn btn-sm btn-soft min-h-[44px] gap-1 px-2 shrink-0"
+      class="btn btn-sm btn-soft min-h-[44px] gap-1 px-2 shrink-0 hidden sm:inline-flex"
       aria-label={
         if @engine_state.status == :finished,
           do: "Ergebnisse anzeigen",
-          else: "Live-Werte anzeigen"
+          else: "Live-Ergebnisse anzeigen"
       }
     >
       <.icon name="hero-clipboard" class="size-4 shrink-0" />
-      {if @engine_state.status == :finished, do: "Ergebnisse", else: "Live"}
+      {if @engine_state.status == :finished, do: "Ergebnisse", else: "Live-Ergebnisse"}
     </.link>
-    <%= if @engine_state.status != :finished do %>
-      <details
-        id="host-quiz-menu"
-        class="dropdown dropdown-end"
-        phx-mounted={JS.ignore_attributes(["open"])}
-        phx-click-away={JS.remove_attribute("open", to: "#host-quiz-menu")}
+    <button
+      :if={@engine_state.status != :finished}
+      id="host-finish-quiz"
+      phx-click="ask_finish_quiz"
+      class="btn btn-sm btn-outline min-h-[44px] gap-1 px-2 shrink-0 hidden sm:inline-flex"
+    >
+      <.icon name="hero-flag" class="size-4 shrink-0" /> Quiz beenden
+    </button>
+
+    <details
+      id="host-quiz-menu"
+      class="dropdown dropdown-end sm:hidden"
+      phx-mounted={JS.ignore_attributes(["open"])}
+      phx-click-away={JS.remove_attribute("open", to: "#host-quiz-menu")}
+    >
+      <summary
+        class="btn btn-sm btn-soft btn-square min-h-[44px] min-w-[44px]"
+        aria-label="Quiz-Menü"
       >
-        <summary class="btn btn-sm btn-soft btn-square" aria-label="Quiz-Menü">
-          <.icon name="hero-bars-3" class="size-5" />
-        </summary>
-        <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg w-52 p-2 mt-2 z-50 border border-base-300">
-          <li>
-            <button
-              id="host-finish-quiz"
-              phx-click={
-                JS.remove_attribute("open", to: "#host-quiz-menu") |> JS.push("ask_finish_quiz")
-              }
-              class="btn btn-sm btn-soft justify-start"
-            >
-              <.icon name="hero-flag" class="size-4" /> Quiz beenden
-            </button>
-          </li>
-          <li class="mt-1">
-            <.link
-              id="host-quiz-overview"
-              navigate={~p"/admin/events"}
-              class="btn btn-sm btn-soft justify-start"
-            >
-              Quiz-Übersicht
-            </.link>
-          </li>
-        </ul>
-      </details>
-    <% else %>
-      <.back_link navigate={~p"/admin/events"} />
-    <% end %>
+        <.icon name="hero-bars-3" class="size-5" />
+      </summary>
+      <ul class="dropdown-content menu bg-base-100 rounded-box shadow-lg w-56 p-2 mt-2 z-50 border border-base-300">
+        <li>
+          <.link
+            id="host-live-values-menu"
+            navigate={~p"/admin/events/#{@event.id}/results"}
+            class="btn btn-sm btn-soft justify-start"
+          >
+            <.icon name="hero-clipboard" class="size-4" />
+            {if @engine_state.status == :finished, do: "Ergebnisse", else: "Live-Ergebnisse"}
+          </.link>
+        </li>
+        <li :if={@engine_state.status != :finished} class="mt-1">
+          <button
+            id="host-finish-quiz-menu"
+            phx-click={
+              JS.remove_attribute("open", to: "#host-quiz-menu") |> JS.push("ask_finish_quiz")
+            }
+            class="btn btn-sm btn-outline justify-start"
+          >
+            <.icon name="hero-flag" class="size-4" /> Quiz beenden
+          </button>
+        </li>
+      </ul>
+    </details>
   </:nav_actions>
 
   <div id="host-screen-control" phx-hook="HostScreen" phx-update="ignore" class="hidden"></div>
@@ -119,17 +141,16 @@
             end) %>
           <div class="alert alert-info max-w-2xl mx-auto text-base font-semibold">
             <.icon name="hero-hand-raised" class="size-5" />
-            <span><strong>{chooser.name}</strong>
-            hat Runde {@engine_state.round_number} gewonnen — Vortritt</span>
+            <span><strong>Runde {@engine_state.round_number + 1}</strong>
+            · {chooser.name} wählt das Thema</span>
           </div>
         <% else %>
           <div class="alert alert-info text-base">
             <.icon name="hero-hand-raised" class="size-5" />
             <span>
-              <strong>Moderator wählt das Thema</strong>
-              <%= if @engine_state.round_number == 0 do %>
-                (Runde 1)
-              <% else %>
+              <strong>Runde {@engine_state.round_number + 1}</strong>
+              · Moderator wählt das Thema
+              <%= if @engine_state.round_number > 0 do %>
                 (Remis oder kein Gewinner in der letzten Runde)
               <% end %>
             </span>

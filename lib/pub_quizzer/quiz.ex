@@ -391,12 +391,55 @@ defmodule PubQuizzer.Quiz do
     |> Repo.get!(id)
   end
 
+  @doc """
+  Fetches an event by id, returning nil for unknown or non-numeric ids so
+  URL-addressable LiveViews can redirect instead of crashing.
+  """
+  def get_event(id) do
+    case parse_id(id) do
+      nil ->
+        nil
+
+      id ->
+        QuizEvent
+        |> preload([:teams])
+        |> Repo.get(id)
+    end
+  end
+
   def get_event_with_teams!(id) do
     teams_query = from t in Team, order_by: t.slot_index
 
     QuizEvent
     |> preload(teams: ^teams_query)
     |> Repo.get!(id)
+  end
+
+  @doc """
+  Same as `get_event_with_teams!/1` but returns nil for unknown or
+  non-numeric ids.
+  """
+  def get_event_with_teams(id) do
+    case parse_id(id) do
+      nil ->
+        nil
+
+      id ->
+        teams_query = from t in Team, order_by: t.slot_index
+
+        QuizEvent
+        |> preload(teams: ^teams_query)
+        |> Repo.get(id)
+    end
+  end
+
+  defp parse_id(id) when is_integer(id), do: id
+
+  defp parse_id(id) do
+    case Integer.parse(to_string(id)) do
+      {id, ""} -> id
+      _ -> nil
+    end
   end
 
   def get_event_by_code(code) do

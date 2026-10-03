@@ -90,7 +90,6 @@ test("the team's timer counts up without resets on answers and restarts for the 
     await first.clock.runFor(3000)
     await expect(timer).toHaveText("00:03")
 
-    await hostPage.locator("#host-quiz-menu > summary").click()
     await hostPage.locator("#host-finish-quiz").click()
     await hostPage.locator("#finish-quiz-modal-confirm").click()
     await expect(first.locator("#team-question-timer")).toHaveCount(0)

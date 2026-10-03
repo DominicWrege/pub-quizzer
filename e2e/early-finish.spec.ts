@@ -7,7 +7,6 @@ test.describe("early finish", () => {
     const { contexts } = await setupQuiz(hostPage, browser, 2)
 
     // Host clicks "Quiz beenden"
-    await hostPage.locator("#host-quiz-menu > summary").click()
     await hostPage.locator("#host-finish-quiz").click()
 
     // Confirm modal appears
