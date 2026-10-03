@@ -207,6 +207,19 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       refute has_element?(view, "main #host-question-topic")
     end
 
+    test "shows the question timer next to the advance button", %{
+      conn: conn,
+      event: event,
+      topic: topic
+    } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+
+      assert has_element?(view, ".sticky #host-question-timer[role='timer']", "00:00")
+      assert has_element?(view, ".sticky [data-test='advance-button']")
+      refute has_element?(view, "header #host-question-timer")
+    end
+
     test "the topic name has normal text contrast", %{conn: conn, event: event, topic: topic} do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()

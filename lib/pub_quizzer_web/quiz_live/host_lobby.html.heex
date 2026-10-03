@@ -228,17 +228,32 @@
         </div>
 
         <div class="sticky bottom-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 pt-2 bg-base-100/95 backdrop-blur border-t border-base-300">
-          <button
-            phx-click="next_question"
-            class="btn btn-primary btn-lg w-full text-base"
-            data-test="advance-button"
-          >
-            <%= if has_next do %>
-              <.icon name="hero-chevron-right" class="size-5" /> Nächste Frage
-            <% else %>
-              <.icon name="hero-eye" class="size-5" /> Runde auflösen
-            <% end %>
-          </button>
+          <div class="flex items-center gap-3">
+            <span
+              id="host-question-timer"
+              phx-hook=".HostQuestionTimer"
+              phx-update="ignore"
+              data-question-key={"#{@engine_state.round_number}-#{@engine_state.question_index}"}
+              role="timer"
+              aria-label="Zeit für diese Frage"
+              aria-live="off"
+              class="inline-flex items-center gap-1 text-base font-semibold tabular-nums shrink-0 min-h-[44px]"
+            >
+              <.icon name="hero-clock" class="size-5" />
+              <span data-timer-value>00:00</span>
+            </span>
+            <button
+              phx-click="next_question"
+              class="btn btn-primary btn-lg flex-1 text-base"
+              data-test="advance-button"
+            >
+              <%= if has_next do %>
+                <.icon name="hero-chevron-right" class="size-5" /> Nächste Frage
+              <% else %>
+                <.icon name="hero-eye" class="size-5" /> Runde auflösen
+              <% end %>
+            </button>
+          </div>
         </div>
       </div>
     <% end %>
@@ -513,4 +528,32 @@
       />
     <% _ -> %>
   <% end %>
+
+  <script :type={Phoenix.LiveView.ColocatedHook} name=".HostQuestionTimer">
+    export default {
+      mounted() {
+        this.reset()
+      },
+      updated() {
+        if (this.questionKey !== this.el.dataset.questionKey) this.reset()
+      },
+      destroyed() {
+        clearInterval(this.interval)
+      },
+      reset() {
+        clearInterval(this.interval)
+        this.questionKey = this.el.dataset.questionKey
+        this.startedAt = performance.now()
+        this.value = this.el.querySelector("[data-timer-value]")
+        this.tick()
+        this.interval = setInterval(() => this.tick(), 1000)
+      },
+      tick() {
+        const seconds = Math.floor((performance.now() - this.startedAt) / 1000)
+        const minutes = String(Math.floor(seconds / 60)).padStart(2, "0")
+        const remainder = String(seconds % 60).padStart(2, "0")
+        this.value.textContent = `${minutes}:${remainder}`
+      }
+    }
+  </script>
 </Layouts.app>
