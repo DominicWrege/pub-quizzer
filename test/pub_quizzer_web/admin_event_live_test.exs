@@ -43,6 +43,25 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
 
       assert has_element?(view, "a[href='/quiz/#{event.code}/host']", "Moderator")
     end
+
+    test "hides the delete button for running events, shows it for lobby and finished", %{
+      conn: conn
+    } do
+      {:ok, lobby} = Quiz.create_event(%{team_count: 2})
+      {:ok, running} = Quiz.create_event(%{team_count: 2})
+      {:ok, running} = Quiz.start_event(running)
+      {:ok, finished} = Quiz.create_event(%{team_count: 2})
+      {:ok, finished} = Quiz.update_event(finished, %{status: "finished"})
+
+      {:ok, view, _html} =
+        conn
+        |> auth_conn()
+        |> live(~p"/admin/events")
+
+      assert has_element?(view, "#event-#{lobby.id} button[phx-click='ask_delete']")
+      refute has_element?(view, "#event-#{running.id} button[phx-click='ask_delete']")
+      assert has_element?(view, "#event-#{finished.id} button[phx-click='ask_delete']")
+    end
   end
 
   describe "new" do

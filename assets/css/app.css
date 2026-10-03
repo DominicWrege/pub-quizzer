@@ -400,12 +400,14 @@ dialog::backdrop {
     max-width: none !important;
   }
 
+  /* Content-sized card, one per sheet: never give the card a
+     min-height. `100vh` resolves from the BROWSER WINDOW in a real
+     print dialog (only headless/PDF printing uses the paper as
+     viewport), so a tall maximized window made page-tall cards that
+     spilled onto a blank sheet — 2 teams printed 4 pages. The card's
+     own top/bottom print padding (in the template) places the QR in
+     the upper half of the sheet without any viewport dependence. */
   .team-card {
-    /* Center the card on the sheet. 100vh equals the print page box at any
-       browser print scale, unlike the former absolute 250mm minimum which
-       grew past the sheet at 125%+ and pushed blank pages out. */
-    min-height: 100vh;
-    justify-content: center;
     break-inside: avoid;
     break-after: page;
     page-break-after: always;
@@ -431,8 +433,11 @@ dialog::backdrop {
   }
 }
 
-/* Tighter daisyUI card padding on mobile (default 1.5rem is too roomy on phones) */
-@media (max-width: 639px) {
+/* Tighter daisyUI card padding on mobile (default 1.5rem is too roomy on phones).
+   Screen-only: in a scaled print layout the A4 page box can be narrower than
+   640 CSS px (e.g. 125% scale -> 635px), and this rule would then strip the
+   team-card print padding, shoving the QR against the top page edge. */
+@media screen and (max-width: 639px) {
   .card-body {
     padding: 1rem;
   }

@@ -65,6 +65,9 @@ async function joinTeam(page: Page, code: string): Promise<void> {
   await page.waitForSelector('span.font-mono.font-bold:has-text("' + code + '")', {
     timeout: 10_000,
   })
+  // Wait for the LiveView socket: a kick broadcast sent before the socket has
+  // joined is missed (PubSub does not replay), which made the kick test flaky.
+  await waitForLiveView(page)
 }
 
 /**

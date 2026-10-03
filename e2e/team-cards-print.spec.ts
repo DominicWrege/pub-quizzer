@@ -48,8 +48,9 @@ function verifyPrintedSheets(path: string, teams: number): void {
     // clipped at an edge (the old layout cut the last card off mid-page).
     expect(firstDarkRow, `page ${page} content must start below the top edge`).toBeGreaterThan(height * 0.05)
     expect(lastDarkRow, `page ${page} content must end above the bottom edge`).toBeLessThan(height * 0.95)
-    // One centered card per sheet: roughly balanced white margins above/below.
-    expect(Math.abs(firstDarkRow - (height - lastDarkRow)), `page ${page} content must be vertically centered`).toBeLessThan(height * 0.15)
+    // QR in the upper/middle region of the sheet, never in the bottom half:
+    // content must begin at or above the sheet's vertical midpoint.
+    expect(firstDarkRow, `page ${page} content must start in the upper half of the sheet`).toBeLessThan(height * 0.5)
     const text = execFileSync("pdftotext", ["-f", String(page), "-l", String(page), path, "-"], { encoding: "utf8" }).replace(/\s+/g, " ")
     expect(text).toContain(`Team ${page}`)
     expect(text).toContain("QR-Code scannen oder Link im Browser eingeben")
@@ -122,6 +123,12 @@ test.describe("team-card print layout", () => {
     // Root-cause guard: a card must never be tall enough to fill/overflow the
     // sheet. The old layout forced `min-height: 296mm`, so real print-dialog
     // margins pushed an empty page out after every card (10 teams -> 20 pages).
+    // A later variant used `min-height: 100vh`, which resolves from the
+    // BROWSER WINDOW in a real print dialog — a tall maximized window made
+    // every card taller than the sheet: 2 teams printed 4 pages with the
+    // content near the page bottom. pdf() re-lays-out with the paper as the
+    // viewport, so this DOM check is the only one that can catch that class
+    // of bug; keep both the print-media check and a tall-window check below.
     const cardHeights = await cards.evaluateAll((els) =>
       els.map((el) => el.getBoundingClientRect().height),
     )
@@ -149,6 +156,42 @@ test.describe("team-card print layout", () => {
     ])
     for (const pdf of pdfs) {
       expect(pdfPageCount(pdf)).toBe(cardCount)
+    }
+  })
+
+  test("tall browser window must not push cards onto blank pages (real window.print)", async ({ hostPage }) => {
+    // Regresses the Oct 2026 bug: `min-height: 100vh` on print cards resolved
+    // from the maximized window (~1200px) instead of the A4 sheet (1123px) in
+    // a real print dialog, so each card overflowed its page and Chromium
+    // emitted one blank page per card — 2 teams printed 4 pages, content near
+    // the bottom. Headless pdf() uses the paper as the viewport and cannot
+    // see this; drive the print-media layout from a tall maximized window and
+    // inspect the DOM instead.
+    await createEvent(hostPage) // 4 team slots
+    const eventId = new URL(hostPage.url()).pathname.split("/").filter(Boolean).pop()!
+    await hostPage.goto(`/admin/events/${eventId}/team-cards`)
+    const cards = hostPage.locator('[data-test="team-card"]')
+    await expect(cards.first()).toBeVisible({ timeout: 10_000 })
+
+    // A maximized full-HD/large display: taller than the A4 page box.
+    await hostPage.setViewportSize({ width: 1920, height: 1200 })
+    await hostPage.emulateMedia({ media: "print" })
+
+    const { cardHeights, windowInnerHeight } = await hostPage.evaluate(() => ({
+      cardHeights: [...document.querySelectorAll('[data-test="team-card"]')].map(
+        (el) => el.getBoundingClientRect().height,
+      ),
+      windowInnerHeight: window.innerHeight,
+    }))
+    const a4HeightPx = 297 * (96 / 25.4)
+    // Sanity: the simulated window really is taller than the sheet —
+    // otherwise this test would not exercise the failure mode at all.
+    expect(windowInnerHeight).toBeGreaterThan(a4HeightPx)
+    for (const height of cardHeights) {
+      expect(
+        height,
+        `card must stay under the A4 page box even when the window is ${windowInnerHeight}px tall`,
+      ).toBeLessThan(a4HeightPx)
     }
   })
 })

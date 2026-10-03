@@ -220,16 +220,23 @@ defmodule PubQuizzerWeb.Admin.EventLive do
   def handle_event("confirm_delete", _params, socket) do
     event = Quiz.get_event!(socket.assigns.delete_event_id)
 
-    case Quiz.delete_event(event) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> assign(:delete_event_id, nil)
-         |> put_flash(:info, "Event gelöscht.")
-         |> push_navigate(to: ~p"/admin/events")}
+    if Quiz.status_active?(event.status) do
+      {:noreply,
+       socket
+       |> assign(:delete_event_id, nil)
+       |> put_flash(:error, "Ein laufendes Quiz kann nicht gelöscht werden. Beende es zuerst.")}
+    else
+      case Quiz.delete_event(event) do
+        {:ok, _} ->
+          {:noreply,
+           socket
+           |> assign(:delete_event_id, nil)
+           |> put_flash(:info, "Event gelöscht.")
+           |> push_navigate(to: ~p"/admin/events")}
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Event konnte nicht gelöscht werden.")}
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Event konnte nicht gelöscht werden.")}
+      end
     end
   end
 
@@ -329,13 +336,15 @@ defmodule PubQuizzerWeb.Admin.EventLive do
               <.link navigate={~p"/admin/events/#{@event}/results"} class="btn btn-sm btn-primary">Ergebnisse</.link>
               <.link navigate={~p"/admin/events/#{@event}/report"} class="btn btn-sm btn-soft">Bericht</.link>
           <% end %>
-          <button
-            phx-click="ask_delete"
-            phx-value-id={@event.id}
-            class="btn btn-sm btn-danger-soft"
-          >
-            Löschen
-          </button>
+          <%= unless Quiz.status_active?(@event.status) do %>
+            <button
+              phx-click="ask_delete"
+              phx-value-id={@event.id}
+              class="btn btn-sm btn-danger-soft"
+            >
+              Löschen
+            </button>
+          <% end %>
         </div>
       </div>
     </div>
@@ -351,6 +360,9 @@ defmodule PubQuizzerWeb.Admin.EventLive do
       true -> "badge-ghost"
     end
   end
+
+  def start_hint(1), do: "Es spielt nur das angemeldete Team mit"
+  def start_hint(n), do: "Es spielen nur die #{n} angemeldeten Teams mit"
 
   def status_label("lobby"), do: "Bereit"
   def status_label("topic_selection"), do: "Gestartet"

@@ -39,24 +39,8 @@
               <.icon name="hero-play" class="size-4" /> Live
             <% end %>
           </.link>
-        <% end %>
-        <%= if @event.status != "lobby" do %>
           <.link navigate={~p"/quiz/#{@event.code}/host"} class="btn btn-sm btn-primary">Moderator-Konsole</.link>
         <% end %>
-        <.link navigate={~p"/admin/events/#{@event}/team-cards"} class="btn btn-sm btn-soft">
-          <span class="max-sm:hidden"><.icon name="hero-qr-code" class="size-4" /></span>
-          QR-Karten
-        </.link>
-        <button
-          id="copy-join-link"
-          phx-hook="CopyLink"
-          phx-update="ignore"
-          data-url={@join_url}
-          class="btn btn-sm btn-soft"
-        >
-          <span class="max-sm:hidden"><.icon name="hero-clipboard" class="size-4" /></span>
-          Link kopieren
-        </button>
       </:actions>
     </.header>
   </div>
@@ -96,40 +80,51 @@
   <% end %>
 
   <div class="flex flex-col">
-    <div class="flex items-center gap-2 order-last mt-4">
-      <span data-testid="event-code" class="badge badge-lg font-mono tracking-widest">{@event.code}</span>
-      <span class="badge badge-lg badge-info badge-soft">{status_label(@event.status)}</span>
-    </div>
-
     <%= if @event.status == "lobby" do %>
-      <section class="mt-2">
-        <div class="flex flex-wrap items-center justify-end gap-2 mb-3">
-          <div class="flex items-center gap-2">
-            <button
-              phx-click="add_slot"
-              class="btn btn-soft btn-sm"
-              disabled={@event.team_count >= 12}
+      <%!-- Invite card: code + share actions in one row on tablet/desktop --%>
+      <div class="card bg-base-200 border border-base-content/10 mt-2">
+        <div class="card-body py-4">
+          <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <p
+              data-testid="event-code"
+              class="font-mono text-base sm:text-2xl font-bold tracking-[0.15em]"
             >
-              <.icon name="hero-plus" class="size-4" /> Hinzufügen
-            </button>
-            <button
-              id="start-quiz"
-              phx-click="do_start"
-              class="btn btn-primary btn-sm"
-              disabled={@registered_team_count == 0}
-            >
-              ▶ Quiz starten
-            </button>
+              {@event.code}
+            </p>
+            <div class="flex gap-2 sm:ms-auto max-sm:w-full">
+              <button
+                id="copy-join-link"
+                phx-hook="CopyLink"
+                phx-update="ignore"
+                data-url={@join_url}
+                class="btn btn-soft max-sm:flex-1 whitespace-nowrap"
+              >
+                <.icon name="hero-clipboard" class="size-4" /> Link
+              </button>
+              <.link
+                navigate={~p"/admin/events/#{@event}/team-cards"}
+                class="btn btn-soft max-sm:flex-1 whitespace-nowrap"
+              >
+                <.icon name="hero-qr-code" class="size-4" /> QR-Karten
+              </.link>
+            </div>
           </div>
         </div>
+      </div>
 
-        <p id="event-registration-summary" class="text-base font-semibold mb-1">
-          {@registered_team_count} von {@event.team_count} Teams angemeldet
-        </p>
-        <p id="event-registration-help" class="text-sm text-base-content mb-3">
-          Einmal scannen genügt. Gesperrte Handys bleiben angemeldet.
-          Nur angemeldete Teams spielen mit. Mehrere Handys pro Team sind möglich.
-        </p>
+      <section class="mt-6">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <p id="event-registration-summary" class="text-base font-semibold">
+            {@registered_team_count} von {@event.team_count} Teams angemeldet
+          </p>
+          <button
+            phx-click="add_slot"
+            class="btn btn-soft btn-sm"
+            disabled={@event.team_count >= 12}
+          >
+            <.icon name="hero-plus" class="size-4" /> Hinzufügen
+          </button>
+        </div>
 
         <%!-- Mobile: cards --%>
         <div id="event-team-cards" class="space-y-1.5 lg:hidden">
@@ -142,14 +137,14 @@
               type="text"
               value={team.name}
               aria-label={"Name für Team #{team.slot_index + 1}"}
-              class="input input-bordered input-sm w-full min-w-0"
+              class="input input-bordered w-full min-w-0 text-base"
               phx-blur="rename_team"
               phx-value-team_id={team.id}
               data-team-id={team.id}
             />
-            <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center justify-end gap-3">
               <%= if team.claimed_at do %>
-                <div class="flex flex-col items-start gap-0.5">
+                <div class="flex flex-col items-end gap-0.5 text-right">
                   <span class="badge badge-sm badge-success badge-soft">Angemeldet</span>
                   <span class="text-xs text-base-content">
                     {if team.id in @connected_team_ids, do: "Online", else: "Zurzeit offline"}
@@ -240,6 +235,18 @@
             </:action>
           </.table>
         </div>
+
+        <button
+          id="start-quiz"
+          phx-click="do_start"
+          class="btn btn-primary btn-lg w-full mt-6 text-xl min-h-14"
+          disabled={@registered_team_count == 0}
+        >
+          <.icon name="hero-play" class="size-6" /> Quiz starten
+        </button>
+        <p class="text-center text-sm text-base-content/60 mt-2">
+          {start_hint(@registered_team_count)}
+        </p>
       </section>
     <% else %>
       <div class="alert alert-info text-base py-4">

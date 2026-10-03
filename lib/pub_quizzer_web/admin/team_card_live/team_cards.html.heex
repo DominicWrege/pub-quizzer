@@ -36,8 +36,8 @@
         [
           # screen: daisyUI card chrome
           "team-card card bg-base-100 border-2 border-base-300",
-           # print: content-sized card so browser print scaling cannot expand
-           # an artificial minimum height onto an empty second sheet
+           # print: content-sized card, one page per card; with the card never
+           # page-tall, no card can spill onto a blank sheet (2 teams -> 4 pages)
           "print:bg-white print:border-0 print:shadow-none print:rounded-none",
            "print:max-w-none print:mx-0 print:w-full",
           "print:flex print:flex-col"
@@ -46,7 +46,10 @@
     >
       <div class={[
         "card-body items-center text-center p-8",
-        "print:p-16 print:gap-6 print:justify-center"
+        # Top-heavy print padding puts the QR in the upper half of the sheet
+        # without viewport-dependent min-heights; the card can never become
+        # tall enough to overflow the page at any browser print scale.
+        "print:pt-24 print:pb-14 print:px-16 print:gap-6"
       ]}>
         <div class="text-3xl sm:text-4xl font-bold tracking-tight print:text-5xl">
           Team {slot}
