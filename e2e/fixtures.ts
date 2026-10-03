@@ -161,18 +161,18 @@ async function completeRound(
 
     await hostPage.locator('[phx-click="next_question"]').click()
 
-    const statList = hostPage.locator('[data-test="round-stat-list"]')
+    const reveal = hostPage.locator('[phx-click="next_round"]')
     try {
-      await expect(statList).toBeVisible({ timeout: 5_000 })
+      await expect(reveal).toBeVisible({ timeout: 5_000 })
       break
     } catch {
       // Round not revealed yet — continue to the next question.
     }
   }
 
-  // After reveal_round the host immediately sees the stats list + winner banner
-  // (no paginated reveal — all questions are shown at once in the shadow console).
-  await expect(hostPage.locator('[data-test="round-stat-list"]')).toBeVisible({
+  // After reveal_round the host sees the winner next to the next-topic button;
+  // the per-question stats and the ranking live in collapsed panels.
+  await expect(hostPage.locator('[phx-click="next_round"]')).toBeVisible({
     timeout: 10_000,
   })
   await expect(
@@ -182,7 +182,8 @@ async function completeRound(
   ).toBeVisible({ timeout: 10_000 })
 
   if (showStandings) {
-    await hostPage.locator('[phx-click="show_standings"]').click()
+    // The ranking panel is open by default and lists both teams.
+    await expect(hostPage.locator("#host-round-standings[open]")).toHaveCount(1)
     await expect(hostPage.locator('[id^="standing-"]')).toHaveCount(2, {
       timeout: 10_000,
     })

@@ -323,7 +323,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
   end
 
   describe "round reveal" do
-    test "shows standings", %{
+    test "never shows standings to teams", %{
       conn: conn,
       event: event,
       topic: topic,
@@ -338,7 +338,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       {:ok, view, _html} =
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
 
-      assert has_element?(view, ~s|[id^="team-standing-"]|)
+      refute has_element?(view, ~s|[id^="team-standing-"]|)
     end
 
     test "shows winner banner when team won", %{
@@ -360,7 +360,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
   end
 
   describe "finished" do
-    test "shows final standings", %{
+    test "shows the winner but never the final ranking", %{
       conn: conn,
       event: event,
       topic: topic,
@@ -377,7 +377,8 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
 
       assert html =~ "Quiz beendet!"
-      assert has_element?(view, ~s|[id^="team-final-"]|)
+      assert has_element?(view, "#team-winner-alert")
+      refute has_element?(view, ~s|[id^="team-final-"]|)
     end
   end
 

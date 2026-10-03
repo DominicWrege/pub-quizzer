@@ -24,7 +24,7 @@ test.describe("host actions", () => {
     for (const ctx of contexts) await ctx.close()
   })
 
-  test("host can skip standings (Überspringen) and go straight to next topic", async ({
+  test("host can go straight to the next topic without opening the stats panel", async ({
     browser,
     hostPage,
   }) => {
@@ -35,20 +35,24 @@ test.describe("host actions", () => {
     await startQuiz(hostPage)
     await pickTopic(hostPage)
 
-    // Complete round WITHOUT showing standings
+    // Complete the round without touching the collapsed stats panel
     await completeRound(hostPage, pageA, pageB, 0, 1, false)
 
-    // Winner or tie banner is visible (team option order matches the host, so
-    // which option is correct decides the winner) but standings are NOT shown
+    // Winner or tie banner sits next to the next-topic button
     await expect(
       hostPage
         .locator("text=gewinnt die Runde")
         .or(hostPage.locator("text=Remis")),
     ).toBeVisible({ timeout: 10_000 })
-    await expect(hostPage.locator('[id^="standing-"]')).toHaveCount(0)
+    await expect(hostPage.locator('[phx-click="next_round"]')).toBeVisible()
 
-    // Click "Überspringen" to skip standings
-    await hostPage.locator("button", { hasText: "Überspringen" }).click()
+    // Stats stay collapsed; the open ranking panel is host-only
+    await expect(hostPage.locator("#host-round-stats[open]")).toHaveCount(0)
+    await expect(hostPage.locator("#host-round-standings[open]")).toHaveCount(1)
+    await expect(pageA.locator('[id^="team-standing-"]')).toHaveCount(0)
+
+    // Go straight to the next topic
+    await hostPage.locator('[phx-click="next_round"]').click()
 
     // Topic selection reappears for next round
     await hostPage.waitForSelector('[phx-click="choose_topic"]', { timeout: 10_000 })

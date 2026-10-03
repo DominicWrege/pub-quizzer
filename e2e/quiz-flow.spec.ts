@@ -16,12 +16,17 @@ test.describe("quiz flow", () => {
     await expect(teamAnswerBtns(teamAPage)).toHaveCount(4, { timeout: 15_000 })
     await expect(teamAnswerBtns(teamBPage)).toHaveCount(4, { timeout: 15_000 })
 
-    // Play the full round using the shared helper (answer → advance → reveal → standings)
+    // Play the full round using the shared helper (answer → advance → reveal)
     await completeRound(hostPage, teamAPage, teamBPage)
 
-    // Teams see the standings too (cross-tab PubSub sync)
-    await expect(teamAPage.locator('[id^="team-standing-"]')).toHaveCount(2, { timeout: 10_000 })
-    await expect(teamBPage.locator('[id^="team-standing-"]')).toHaveCount(2, { timeout: 10_000 })
+    // Teams see the round winner (cross-tab PubSub sync) but never the ranking
+    await expect(
+      teamAPage
+        .locator("text=hat Runde 1 gewonnen")
+        .or(teamAPage.locator("text=Remis!")),
+    ).toBeVisible({ timeout: 10_000 })
+    await expect(teamAPage.locator('[id^="team-standing-"]')).toHaveCount(0)
+    await expect(teamBPage.locator('[id^="team-standing-"]')).toHaveCount(0)
 
     for (const ctx of contexts) await ctx.close()
   })

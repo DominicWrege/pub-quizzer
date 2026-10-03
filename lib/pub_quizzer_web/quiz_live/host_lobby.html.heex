@@ -36,7 +36,7 @@
             <% :topic_selection -> %>
               Themenwahl
             <% :round_reveal -> %>
-              Runde {@engine_state.round_number} · Auswertung
+              Runde {(@engine_state.round_number || 0) + 1} · Auswertung
             <% :finished -> %>
               Quiz beendet
             <% _ -> %>
@@ -258,87 +258,73 @@
       </div>
     <% end %>
 
-    <%!-- Round reveal phase — stats-first, no paginated slide --%>
+    <%!-- Round reveal — winner next to the next-topic button; stats and ranking collapsed --%>
     <%= if @engine_state.status == :round_reveal do %>
       <div class="space-y-4 animate-fade-in">
-        <h3 class="text-base font-semibold">
-          Runde {(@engine_state.round_number || 0) + 1} · Auswertung
-        </h3>
-
-        <% winner =
-          Enum.find(@engine_state.teams, &(&1.id == @engine_state.current_winner_team_id)) %>
-        <% round_score =
-          @standings_with_deltas |> Enum.map(&elem(&1, 3)) |> Enum.max(fn -> 0 end) %>
-        <% round_leaders = Enum.filter(@standings_with_deltas, &(elem(&1, 3) == round_score)) %>
-        <%= cond do %>
-          <% winner -> %>
-            <div id="host-round-winner" class="alert alert-success text-sm font-semibold">
-              <.icon name="hero-trophy" class="size-5" />
-              <span><strong>{winner.name}</strong> gewinnt die Runde!</span>
-            </div>
-          <% length(round_leaders) > 1 -> %>
-            <div id="host-round-tie" class="alert alert-info text-sm">
-              <.icon name="hero-hand-raised" class="size-5" />
-              <span>
-                <strong>Remis: {Enum.map_join(round_leaders, ", ", &elem(&1, 1))}</strong>
-                mit je {round_score} {if round_score == 1, do: "Punkt", else: "Punkten"} in dieser Runde.
-              </span>
-            </div>
-          <% true -> %>
-            <div id="host-round-no-winner" class="alert alert-info text-sm">
-              <.icon name="hero-hand-raised" class="size-5" />
-              <span>Kein Rundensieger.</span>
-            </div>
-        <% end %>
-
-        <%!-- Per-question distribution breakdowns — all questions in the round --%>
-        <div class="space-y-3" data-test="round-stat-list">
-          <%= for {question, distribution} <- @round_distributions do %>
-            <div class="card bg-base-200">
-              <div class="card-body p-4 sm:p-5">
-                <div class="flex items-baseline gap-2 mb-1">
-                  <span class="text-xs font-mono text-base-content/60 shrink-0">
-                    Frage {(question.position || 0) + 1}
-                  </span>
-                </div>
-                <h4 class="card-title text-[1.1rem] leading-snug break-words">
-                  <.multiline_text text={question.prompt} />
-                </h4>
-
-                <ul class="mt-2 divide-y divide-base-300">
-                  <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                    <% count = Map.get(distribution, idx, 0) %>
-                    <% is_correct = idx == question.correct_index %>
-                    <li class={[
-                      "flex items-center gap-3 rounded px-2 py-1.5",
-                      is_correct && "bg-success/15"
-                    ]}>
-                      <span class={[
-                        "font-mono w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded text-sm shrink-0",
-                        is_correct && "bg-success text-success-content",
-                        !is_correct && "bg-base-300 text-base-content/70"
-                      ]}>
-                        {letter_for_index(idx)}
+        <%!-- Per-question distribution breakdowns — collapsed by default --%>
+        <details
+          id="host-round-stats"
+          phx-mounted={JS.ignore_attributes(["open"])}
+          class="collapse collapse-arrow border border-base-300 bg-base-200"
+        >
+          <summary class="collapse-title font-semibold">
+            Fragen-Auswertung ({length(@round_distributions)})
+          </summary>
+          <div class="collapse-content">
+            <div class="space-y-3" data-test="round-stat-list">
+              <%= for {question, distribution} <- @round_distributions do %>
+                <div class="card bg-base-200">
+                  <div class="card-body p-4 sm:p-5">
+                    <div class="flex items-baseline gap-2 mb-1">
+                      <span class="text-xs font-mono text-base-content/60 shrink-0">
+                        Frage {(question.position || 0) + 1}
                       </span>
-                      <span class="flex-1 min-w-0 text-[0.9625rem] break-words">
-                        <.multiline_text text={option["text"]} />
-                      </span>
-                      <%= if is_correct do %>
-                        <.icon name="hero-check-circle" class="size-4 text-success shrink-0" />
+                    </div>
+                    <h4 class="card-title text-[1.1rem] leading-snug break-words">
+                      <.multiline_text text={question.prompt} />
+                    </h4>
+
+                    <ul class="mt-2 divide-y divide-base-300">
+                      <%= for {option, idx} <- Enum.with_index(question.options) do %>
+                        <% count = Map.get(distribution, idx, 0) %>
+                        <% is_correct = idx == question.correct_index %>
+                        <li class={[
+                          "flex items-center gap-3 rounded px-2 py-1.5",
+                          is_correct && "bg-success/15"
+                        ]}>
+                          <span class={[
+                            "font-mono w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded text-sm shrink-0",
+                            is_correct && "bg-success text-success-content",
+                            !is_correct && "bg-base-300 text-base-content/70"
+                          ]}>
+                            {letter_for_index(idx)}
+                          </span>
+                          <span class="flex-1 min-w-0 text-[0.9625rem] break-words">
+                            <.multiline_text text={option["text"]} />
+                          </span>
+                          <%= if is_correct do %>
+                            <.icon name="hero-check-circle" class="size-4 text-success shrink-0" />
+                          <% end %>
+                          <span class="tabular-nums text-xs sm:text-sm w-5 text-right shrink-0">{count}</span>
+                        </li>
                       <% end %>
-                      <span class="tabular-nums text-xs sm:text-sm w-5 text-right shrink-0">{count}</span>
-                    </li>
-                  <% end %>
-                </ul>
-              </div>
+                    </ul>
+                  </div>
+                </div>
+              <% end %>
             </div>
-          <% end %>
-        </div>
+          </div>
+        </details>
 
-        <%!-- Winner banner + standings-or-skip section --%>
-        <%= if @engine_state.standings_revealed do %>
-          <div class="space-y-3 animate-fade-in-up">
-            <h3 class="text-base font-semibold">🏆 Platzierung</h3>
+        <%!-- Ranking — host-only, expanded by default --%>
+        <details
+          id="host-round-standings"
+          open
+          phx-mounted={JS.ignore_attributes(["open"])}
+          class="collapse collapse-arrow border border-base-300 bg-base-200"
+        >
+          <summary class="collapse-title font-semibold">Platzierung</summary>
+          <div class="collapse-content">
             <ol class="space-y-2" data-test="standings-list">
               <%= for {{id, name, total, delta}, rank} <- Enum.with_index(@standings_with_deltas) do %>
                 <li
@@ -370,20 +356,45 @@
                 </li>
               <% end %>
             </ol>
-            <button phx-click="next_round" class="btn btn-primary btn-lg w-full text-base">
-              <.icon name="hero-chevron-right" class="size-5" /> Nächste Runde
+          </div>
+        </details>
+
+        <% winner =
+          Enum.find(@engine_state.teams, &(&1.id == @engine_state.current_winner_team_id)) %>
+        <% round_score =
+          @standings_with_deltas |> Enum.map(&elem(&1, 3)) |> Enum.max(fn -> 0 end) %>
+        <% round_leaders = Enum.filter(@standings_with_deltas, &(elem(&1, 3) == round_score)) %>
+
+        <div class="sticky bottom-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 pt-2 bg-base-100/95 backdrop-blur border-t border-base-300">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+            <%= cond do %>
+              <% winner -> %>
+                <div
+                  id="host-round-winner"
+                  class="alert alert-success text-sm font-semibold flex-1 min-w-0"
+                >
+                  <.icon name="hero-trophy" class="size-5" />
+                  <span><strong>{winner.name}</strong> gewinnt die Runde!</span>
+                </div>
+              <% length(round_leaders) > 1 -> %>
+                <div id="host-round-tie" class="alert alert-info text-sm flex-1 min-w-0">
+                  <.icon name="hero-hand-raised" class="size-5" />
+                  <span>
+                    <strong>Remis: {Enum.map_join(round_leaders, ", ", &elem(&1, 1))}</strong>
+                    mit je {round_score} {if round_score == 1, do: "Punkt", else: "Punkten"} in dieser Runde.
+                  </span>
+                </div>
+              <% true -> %>
+                <div id="host-round-no-winner" class="alert alert-info text-sm flex-1 min-w-0">
+                  <.icon name="hero-hand-raised" class="size-5" />
+                  <span>Kein Rundensieger.</span>
+                </div>
+            <% end %>
+            <button phx-click="next_round" class="btn btn-primary btn-lg text-base sm:shrink-0">
+              <.icon name="hero-bookmark" class="size-5" /> Nächstes Thema wählen
             </button>
           </div>
-        <% else %>
-          <div class="flex flex-col gap-2">
-            <button phx-click="show_standings" class="btn btn-primary btn-lg text-base">
-              <.icon name="hero-clipboard" class="size-5" /> Team-Ergebnisse anzeigen
-            </button>
-            <button phx-click="next_round" class="btn btn-soft btn-lg text-base">
-              <.icon name="hero-bookmark" class="size-5" /> Überspringen — nächste Kategorie
-            </button>
-          </div>
-        <% end %>
+        </div>
       </div>
     <% end %>
 

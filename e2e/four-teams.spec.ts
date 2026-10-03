@@ -34,24 +34,24 @@ test.describe("four teams", () => {
 
         await hostPage.locator('[phx-click="next_question"]').click()
 
-        const statList = hostPage.locator('[data-test="round-stat-list"]')
+        const reveal = hostPage.locator('[phx-click="next_round"]')
         try {
-          await expect(statList).toBeVisible({ timeout: 5_000 })
+          await expect(reveal).toBeVisible({ timeout: 5_000 })
           break
         } catch {
           // Round not revealed yet — continue to the next question.
         }
       }
 
-      // After reveal_round the host immediately shows stats + winner banner
-      await expect(hostPage.locator('[data-test="round-stat-list"]')).toBeVisible({
+      // After reveal_round the host shows the winner next to the next-topic button
+      await expect(hostPage.locator('[phx-click="next_round"]')).toBeVisible({
         timeout: 10_000,
       })
 
-      // Show standings — all 4 teams ranked
-      await hostPage.locator('[phx-click="show_standings"]').click()
+      // Ranking is host-only and open by default — all 4 teams ranked
       await expect(hostPage.locator('[id^="standing-"]')).toHaveCount(4, { timeout: 10_000 })
-      await expect(t0.locator('[id^="team-standing-"]')).toHaveCount(4, { timeout: 10_000 })
+      // Teams never see the ranking
+      await expect(t0.locator('[id^="team-standing-"]')).toHaveCount(0)
 
       // Advance to next round (if not the last) — pickTopic waits for the
       // topic-selection UI on the next iteration

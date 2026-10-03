@@ -19,9 +19,7 @@
         id="team-question-progress"
         class="text-sm font-semibold tabular-nums text-base-content/60 shrink-0"
       >
-        Frage {(@engine_state.question_index || 0) + 1} / {length(
-          @engine_state.current_questions
-        )}
+        Frage {(@engine_state.question_index || 0) + 1} / {length(@engine_state.current_questions)}
       </p>
     </div>
   </div>
@@ -69,7 +67,10 @@
       <div class="flex items-center justify-between gap-3 mb-2.5">
         <div class="min-w-0">
           <%= if @current_topic_name do %>
-            <h2 id="team-question-topic" class="text-sm font-semibold leading-tight break-words text-base-content/70">
+            <h2
+              id="team-question-topic"
+              class="text-sm font-semibold leading-tight break-words text-base-content/70"
+            >
               {@current_topic_name}
             </h2>
           <% end %>
@@ -114,7 +115,7 @@
     </div>
   <% end %>
 
-  <%!-- Round reveal: winner shown immediately; standings gated behind moderator trigger --%>
+  <%!-- Round reveal: only the round winner is shown — rankings stay host-only --%>
   <%= if @engine_state.status == :round_reveal do %>
     <div class="mb-3 animate-fade-in">
       <%= if @engine_state.current_winner_team_id == @team.id do %>
@@ -140,27 +141,6 @@
         <% end %>
       <% end %>
     </div>
-
-    <%= if @engine_state.standings_revealed do %>
-      <div class="text-center mb-4">
-        <span class="text-lg font-bold">Platzierung</span>
-      </div>
-      <div class="space-y-2">
-        <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-          <.podium_row
-            id={"team-standing-#{id}"}
-            rank={rank}
-            name={name}
-            score={score}
-            size="sm"
-          >
-            <%= if @team.id == id do %>
-              <span class="text-xs font-normal">(du)</span>
-            <% end %>
-          </.podium_row>
-        <% end %>
-      </div>
-    <% end %>
   <% end %>
 
   <%!-- Finished phase --%>
@@ -182,26 +162,6 @@
         >
           <.icon name="hero-star" class="size-4" />
           <span><strong>{winner_name}</strong> gewinnt mit {winner_score} Punkten!</span>
-        </div>
-
-        <div class="text-center mb-4">
-          <span class="text-lg font-bold">Endplatzierung</span>
-        </div>
-        <div class="space-y-2">
-          <%= for {{id, name, score}, rank} <- Enum.with_index(@standings) do %>
-            <.podium_row
-              id={"team-final-#{id}"}
-              rank={rank}
-              name={name}
-              score={score}
-              size="sm"
-              class={if @team.id == id, do: "font-bold"}
-            >
-              <%= if @team.id == id do %>
-                <span class="text-xs font-normal">(du)</span>
-              <% end %>
-            </.podium_row>
-          <% end %>
         </div>
       <% else %>
         <div class="alert alert-warning text-sm px-3 py-2">

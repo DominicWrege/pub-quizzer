@@ -53,10 +53,6 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
     view |> element("button[phx-click='next_question']", "Runde auflösen") |> render_click()
   end
 
-  defp host_show_standings(view) do
-    view |> element("button[phx-click='show_standings']") |> render_click()
-  end
-
   defp host_finish_quiz(view) do
     view |> element("#host-finish-quiz") |> render_click()
     view |> element("button[phx-click='confirm_finish_quiz']") |> render_click()
@@ -567,7 +563,6 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       assert has_element?(view, "#host-round-tie", second.name)
       assert has_element?(view, "#host-round-tie", "je 1 Punkt")
       refute has_element?(view, "#host-round-tie", third.name)
-      host_show_standings(view)
       assert has_element?(view, "#host-round-tie", first.name)
       assert has_element?(view, "#host-round-tie", second.name)
     end
@@ -589,13 +584,14 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       assert has_element?(view, "#host-round-tie", "je 0 Punkten")
     end
 
-    test "shows winner and standings", %{
-      conn: conn,
-      event: event,
-      topic: topic,
-      team: team,
-      teams: teams
-    } do
+    test "shows the winner next to the next-topic button with stats collapsed and ranking open",
+         %{
+           conn: conn,
+           event: event,
+           topic: topic,
+           team: team,
+           teams: teams
+         } do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
 
@@ -603,10 +599,12 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view |> element("button[phx-click='next_question']") |> render_click()
       submit_all(event, teams, team, view)
       host_reveal_round(view)
-      host_show_standings(view)
 
+      assert has_element?(view, ".sticky #host-round-winner", team.name)
+      assert has_element?(view, ".sticky button[phx-click='next_round']", "Nächstes Thema wählen")
+      refute has_element?(view, "#host-round-stats[open]")
+      assert has_element?(view, "#host-round-standings[open]")
       assert has_element?(view, ~s|[id^="standing-"]|)
-      assert has_element?(view, "button[phx-click='next_round']")
     end
 
     test "next round finishes when no topics remain", %{
@@ -623,7 +621,6 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view |> element("button[phx-click='next_question']") |> render_click()
       submit_all(event, teams, team, view)
       host_reveal_round(view)
-      host_show_standings(view)
 
       view |> element("button[phx-click='next_round']") |> render_click()
 
@@ -682,7 +679,6 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view |> element("button[phx-click='next_question']") |> render_click()
       submit_all(event, teams, team, view)
       host_reveal_round(view)
-      host_show_standings(view)
       view |> element("button[phx-click='next_round']") |> render_click()
 
       html = render(view)

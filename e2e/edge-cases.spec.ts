@@ -1,7 +1,7 @@
 import { test, expect, createEvent, joinTeams, startQuiz, pickTopic, completeRound } from "./fixtures"
 
 test.describe("edge cases", () => {
-  test("round reveal → standings → next round topic selection", async ({ browser, hostPage }) => {
+  test("round reveal → next round topic selection", async ({ browser, hostPage }) => {
     test.setTimeout(120_000)
 
     const code = await createEvent(hostPage, 2)
@@ -12,7 +12,7 @@ test.describe("edge cases", () => {
     // Play round with default answers (team A wins) then reveal + show standings.
     await completeRound(hostPage, pageA, pageB)
 
-    // Standings are shown — click "Nächste Runde"
+    // Advance to the next round's topic selection
     await hostPage.locator('[phx-click="next_round"]').click()
     await hostPage.waitForSelector('[phx-click="choose_topic"]', { timeout: 10_000 })
 

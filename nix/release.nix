@@ -9,7 +9,7 @@
 
 let
   pname = "pub_quizzer";
-  version = "0.1.11";
+  version = "0.1.13";
   src = ./..;
 
   mixFodDeps = beamPackages.fetchMixDeps {

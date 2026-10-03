@@ -59,9 +59,10 @@ test.describe("multi-round", () => {
     // Host shows compact winner line (final podium was minimized away)
     await expect(hostPage.locator("#host-winner-line")).toBeVisible({ timeout: 10_000 })
 
-    // Teams see the final podium
-    await expect(pageA.locator('[id^="team-final-"]')).toHaveCount(2, { timeout: 10_000 })
-    await expect(pageB.locator('[id^="team-final-"]')).toHaveCount(2, { timeout: 10_000 })
+    // Teams see the winner but never the ranking — the host announces the ranks
+    await expect(pageA.locator("text=gewinnt mit")).toBeVisible({ timeout: 10_000 })
+    await expect(pageA.locator('[id^="team-final-"]')).toHaveCount(0)
+    await expect(pageB.locator('[id^="team-final-"]')).toHaveCount(0)
 
     for (const ctx of contexts) await ctx.close()
   })

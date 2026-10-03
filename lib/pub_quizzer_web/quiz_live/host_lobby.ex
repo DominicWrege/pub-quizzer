@@ -168,10 +168,6 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
     {:noreply, update(socket, :pending_teams_visible?, &(!&1))}
   end
 
-  def handle_event("show_standings", _params, socket) do
-    {:noreply, engine_call(socket, &Engine.reveal_standings/1)}
-  end
-
   def handle_event("reveal_final_results", _params, socket) do
     {:noreply, engine_call(socket, &Engine.reveal_final_results/1)}
   end

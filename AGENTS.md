@@ -16,7 +16,7 @@ Realtime pub-quiz ("Kneipenquiz") for teams. Phoenix LiveView + SQLite. German-l
 - Auth: `AdminAuth` plug (roles `moderator` / `superadmin`), magic-link login via `MagicLinkController`. Dev-only backdoor `DevAuthController` (`/dev/login-as/:email`) for E2E.
 - Join flow: `QuizJoinController` — `POST /quiz/join` (code), `GET /quiz/join/:code` (code link), `GET /quiz/join/:code/:team_code` (QR join: resolves the team by its three-letter lowercase `link_code`; legacy numeric `/quiz/join/:code/:slot` links still claim via `Quiz.claim_team_slot/2`) → redirect to `/quiz/:code/lobby/:team_code`. A legacy `/quiz/:code/lobby` without a browser session redirects to `/quiz/:code/rejoin`, which lists only claimed teams. Blocked new-team joins render a persistent in-page alert (`QuizJoinHTML` blocked template) with a rejoin link for existing teams.
 
-**Quiz flow:** teams join via code or QR card → host starts quiz → round's chooser picks a topic → teams answer on their devices → host advances questions and reveals the round (all question stats + winner at once) → standings → next round. The advance button stays enabled even when answers are missing; then the host must confirm via a dialog listing the missing teams (unanswered questions score zero). If every team answered, advancing needs no confirmation.
+**Quiz flow:** teams join via code or QR card → host starts quiz → round's chooser picks a topic → teams answer on their devices → host advances questions and reveals the round: the winner/tie sits next to the "Nächstes Thema wählen" button, the per-question stats are collapsed behind "Fragen-Auswertung", and the ranking is a host-only panel (teams never see standings) → next round. The advance button stays enabled even when answers are missing; then the host must confirm via a dialog listing the missing teams (unanswered questions score zero). If every team answered, advancing needs no confirmation.
 
 ## Project rules
 
@@ -70,8 +70,8 @@ Shared vocabulary so we name the same things (German UI ↔ English/code):
 **Spec files**: `smoke.spec.ts` (3), `quiz-flow.spec.ts` (full round), `multi-round.spec.ts` (2), `edge-cases.spec.ts` (2), `team-cards-print.spec.ts` (QR cards: one page per card, QR max 60 mm in print; spec ceiling 65 mm — fails if a card approaches page height), plus `four-teams`, `host-actions`, `question-crud`.
 
 **Key details**:
-- `completeRound` uses `for(;;)` with `revealBtn.count()` / `revealNext.count()` — never non-blocking `locator.count()` in while-conditions.
-- Round reveal is no longer paginated; the host clicks "Runde auflösen" once and the shadow console shows all question stats + winner immediately.
+- `completeRound` uses `for(;;)` with blocking `expect(...).toBeVisible()` polls — never non-blocking `locator.count()` in while-conditions.
+- Round reveal is no longer paginated; the host clicks "Runde auflösen" once and the shadow console immediately shows the winner/tie in the sticky next-topic bar; question stats ("Fragen-Auswertung", collapsed) and the host-only ranking ("Platzierung", open by default) are details panels. Teams never see standings — only the round winner and the final winner alert.
 - Team pages use isolated browser contexts (separate session cookies each); host page uses the typed `test` fixture with `reuseExistingServer: true`.
 - Auth backdoor: `GET /dev/login-as/:email` sets `user_id` directly (dev only).
 - `LazyHTML.query/2` searches descendants, while `LazyHTML.filter/2` only filters root nodes — use `query` to find IDs inside complete controller HTML parsed with `LazyHTML.from_document/1`.
