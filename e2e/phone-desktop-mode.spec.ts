@@ -41,7 +41,7 @@ test("a phone requesting a desktop viewport stays readable through joining and q
 
     await expect(hostPage.locator("#event-registration-summary")).toHaveText("1 von 4 Teams angemeldet")
     await startQuiz(hostPage)
-    await expect(phone.getByText("Der Moderator wählt ein Thema")).toBeVisible()
+    await expect(phone.getByText("Wartet, bis das Thema gewählt ist.")).toBeVisible()
     await pickTopic(hostPage)
     const answer = phone.locator("button[phx-click='select_answer']").first()
     await expect(answer).toBeVisible()

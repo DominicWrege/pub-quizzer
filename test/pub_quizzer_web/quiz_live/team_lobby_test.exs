@@ -73,7 +73,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       {:ok, _view, html} =
         conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
 
-      assert html =~ "Der Moderator wählt ein Thema"
+      assert html =~ "Wartet, bis das Thema gewählt ist."
     end
 
     test "chooser team sees topic buttons and can pick a topic", %{
@@ -156,7 +156,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       {:ok, view, html} =
         conn |> team_conn(team2) |> live(~p"/quiz/#{event.code}/lobby")
 
-      assert html =~ "hat Vortritt"
+      assert html =~ "Wartet, bis das Thema gewählt ist."
       refute has_element?(view, "button[phx-click='choose_topic']")
     end
   end

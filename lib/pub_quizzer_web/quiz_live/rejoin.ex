@@ -22,7 +22,12 @@ defmodule PubQuizzerWeb.QuizLive.Rejoin do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} max_width="max-w-md" hide_nav_actions>
+    <Layouts.app
+      flash={@flash}
+      max_width="max-w-md"
+      hide_nav_actions
+      main_class="px-4 pt-6 pb-4 sm:pb-10 sm:px-6 lg:px-8"
+    >
       <h1 class="text-xl font-bold mb-3">Team wieder beitreten</h1>
       <p class="text-sm mb-4">Wähle dein bestehendes Team, um weiterzuspielen.</p>
       <p :if={@teams_empty?} class="text-sm">

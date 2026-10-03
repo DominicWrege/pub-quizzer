@@ -244,7 +244,7 @@ defmodule PubQuizzerWeb.Layouts do
           oversized viewport. The sizing fallback reflows this shell to phone width. --%>
       <div class="@container/public flex min-h-(--app-height) flex-col">
         <header class={[
-          "navbar min-h-0 shrink-0 bg-base-100 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] @min-[640px]/public:pl-[calc(env(safe-area-inset-left)+1.5rem)] @min-[640px]/public:pr-[calc(env(safe-area-inset-right)+1.5rem)] @min-[1024px]/public:pl-[calc(env(safe-area-inset-left)+2rem)] @min-[1024px]/public:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300",
+          "navbar min-h-0 shrink-0 bg-base-200 pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] @min-[640px]/public:pl-[calc(env(safe-area-inset-left)+1.5rem)] @min-[640px]/public:pr-[calc(env(safe-area-inset-right)+1.5rem)] @min-[1024px]/public:pl-[calc(env(safe-area-inset-left)+2rem)] @min-[1024px]/public:pr-[calc(env(safe-area-inset-right)+2rem)] pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-2 border-b border-base-300",
           if(@sticky_nav,
             do: "sticky top-0 z-20",
             else: "@max-[640px]/public:sticky @max-[640px]/public:top-0 @max-[640px]/public:z-20"

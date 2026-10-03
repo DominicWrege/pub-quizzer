@@ -4,9 +4,26 @@
   hide_nav_actions
   main_class="px-3 pt-1 pb-3 @min-[640px]/public:pt-3 @min-[640px]/public:pb-4 @min-[640px]/public:px-4 @min-[1024px]/public:px-6"
 >
-  <%!-- Team name header always visible --%>
-  <div class="text-center mt-[10vh] mb-3">
-    <h1 class="text-lg font-bold">{@team.name}</h1>
+  <%!-- Team name header always visible; the question counter joins it in the question phase --%>
+  <div class={[
+    "mb-3",
+    if(@engine_state.status == :lobby, do: "mt-[10vh]", else: "mt-3")
+  ]}>
+    <div class={[
+      "flex items-center gap-3",
+      if(@engine_state.status == :question, do: "justify-between", else: "justify-center")
+    ]}>
+      <h1 class="text-lg font-bold truncate min-w-0">{@team.name}</h1>
+      <p
+        :if={@engine_state.status == :question}
+        id="team-question-progress"
+        class="text-sm font-semibold tabular-nums text-base-content/60 shrink-0"
+      >
+        Frage {(@engine_state.question_index || 0) + 1} / {length(
+          @engine_state.current_questions
+        )}
+      </p>
+    </div>
   </div>
 
   <%!-- Lobby: waiting for start --%>
@@ -28,31 +45,16 @@
     </div>
   <% end %>
 
-  <%!-- Topic selection: team votes or waits --%>
+  <%!-- Topic selection: the round winner tells the host, everyone else waits --%>
   <%= if @engine_state.status == :topic_selection do %>
-    <div class="text-center mb-4 mt-8 animate-fade-in">
+    <div class="text-center mt-8 animate-fade-in">
       <%= if @engine_state.current_chooser_team_id == @team.id do %>
-        <div class="alert alert-success mb-3 text-sm px-3 py-2">
-          <.icon name="hero-trophy" class="size-4" />
-          <span><strong>Dein Team hat Runde {@engine_state.round_number} gewonnen!</strong>
-          Sag dem Moderator dein gewünschtes Thema.</span>
-        </div>
+        <p class="text-xl font-bold">
+          Dein Team hat Runde {@engine_state.round_number} gewonnen!
+        </p>
+        <p class="text-lg mt-2">Sagt dem Moderator euer Wunschthema.</p>
       <% else %>
-        <% chooser =
-          Enum.find(@engine_state.teams, fn t ->
-            t.id == @engine_state.current_chooser_team_id
-          end) %>
-        <div class="alert alert-info text-sm px-3 py-2">
-          <.icon name="hero-sparkles" class="size-4" />
-          <span>
-            <%= if chooser do %>
-              <strong>{chooser.name}</strong>
-              hat Runde {@engine_state.round_number} gewonnen und hat Vortritt.
-            <% else %>
-              Der Moderator wählt ein Thema...
-            <% end %>
-          </span>
-        </div>
+        <p class="text-lg font-semibold">Wartet, bis das Thema gewählt ist.</p>
       <% end %>
     </div>
   <% end %>
@@ -64,18 +66,13 @@
     <% question = Enum.at(@engine_state.current_questions, @engine_state.question_index) %>
 
     <div class="mb-4 animate-fade-in">
-      <div class="flex items-start justify-between gap-3 mb-5">
+      <div class="flex items-center justify-between gap-3 mb-2.5">
         <div class="min-w-0">
           <%= if @current_topic_name do %>
-            <h2 id="team-question-topic" class="text-xl font-bold leading-tight break-words mb-1">
+            <h2 id="team-question-topic" class="text-sm font-semibold leading-tight break-words text-base-content/70">
               {@current_topic_name}
             </h2>
           <% end %>
-          <p id="team-question-progress" class="text-base font-semibold tabular-nums">
-            Frage {(@engine_state.question_index || 0) + 1} / {length(
-              @engine_state.current_questions
-            )}
-          </p>
         </div>
         <span
           id="team-question-timer"
@@ -85,7 +82,7 @@
           role="timer"
           aria-label="Zeit für diese Frage"
           aria-live="off"
-          class="inline-flex items-center gap-1.5 text-sm shrink-0 tabular-nums"
+          class="inline-flex items-center gap-1 text-sm shrink-0 tabular-nums text-base-content/70"
         >
           <.icon name="hero-clock" class="size-4" />
           <span data-timer-value>00:00</span>
@@ -114,9 +111,6 @@
           </button>
         <% end %>
       </div>
-      <p class="text-sm text-base-content mt-3">
-        Eine Antwort pro Team. Die letzte Auswahl zählt auf allen Handys.
-      </p>
     </div>
   <% end %>
 
