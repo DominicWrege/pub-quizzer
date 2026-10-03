@@ -198,6 +198,55 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
       assert has_element?(view, "#question-report-distribution-help", "Anzahl der Teams")
     end
 
+    test "selecting a topic defaults to question numbers and resets when changing topics", %{
+      conn: conn
+    } do
+      %{q1: q1, q2: q2, qc: qc, topic: topic, topic_c: topic_c} = seed()
+      q3 = create_question(topic, "Third question")
+      q4 = create_question(topic, "Fourth question")
+      q5 = create_question(topic, "Fifth question")
+      {_event, [team | _], round} = finished_event_with_round(topic, "Extra questions")
+      insert_answer(round, q3, team, 0)
+      insert_answer(round, q4, team, 1)
+      insert_answer(round, q5, team, 0)
+      {_event, [other_team | _], other_round} = finished_event_with_round(topic_c, "Other topic")
+      insert_answer(other_round, qc, other_team, 1)
+
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+      view |> form("#question-report-filter-form", %{topic_id: topic.id}) |> render_change()
+      expected = Enum.map([q1, q2, q3, q4, q5], &"question-report-#{&1.id}")
+      assert row_ids(view) == expected
+      assert has_element?(view, "#sort-question[aria-sort='asc']")
+
+      view |> element("#sort-question") |> render_click()
+      assert row_ids(view) == Enum.reverse(expected)
+
+      view |> form("#question-report-filter-form", %{topic_id: topic_c.id}) |> render_change()
+      assert row_ids(view) == ["question-report-#{qc.id}"]
+      assert has_element?(view, "#sort-question[aria-sort='asc']")
+
+      view |> form("#question-report-filter-form", %{topic_id: topic.id}) |> render_change()
+      assert row_ids(view) == expected
+    end
+
+    test "question-number sorting works on mobile and survives quiz switching", %{conn: conn} do
+      %{q1: q1, q2: q2, topic: topic, events: [event_a, _]} = seed()
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+      view |> form("#question-report-filter-form", %{topic_id: topic.id}) |> render_change()
+      assert has_element?(view, "#question-report-mobile-sort option[value='question'][selected]")
+
+      view |> element("#question-report-sort-direction") |> render_click()
+      assert row_ids(view) == ["question-report-#{q2.id}", "question-report-#{q1.id}"]
+      view |> form("#question-report-quiz-form", %{event_id: event_a.id}) |> render_change()
+      assert row_ids(view) == ["question-report-#{q2.id}", "question-report-#{q1.id}"]
+      assert has_element?(view, "#sort-question[aria-sort='desc']")
+
+      view |> form("#question-report-filter-form", %{topic_id: ""}) |> render_change()
+      refute has_element?(view, "#sort-question")
+      assert has_element?(view, "#sort-right[aria-sort='asc']")
+      assert has_element?(view, "#question-report-mobile-sort option[value='right'][selected]")
+    end
+
     test "quiz switching preserves topic filtering and sorting", %{conn: conn} do
       %{q1: q1, q2: q2, topic: topic, events: [event_a, _]} = seed()
       {:ok, other_topic} = Quiz.create_topic(%{name: "Another finished topic"})
@@ -207,6 +256,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
 
       {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
       view |> form("#question-report-filter-form", %{topic_id: topic.id}) |> render_change()
+      view |> element("#sort-right") |> render_click()
       view |> element("#sort-right") |> render_click()
       view |> form("#question-report-quiz-form", %{event_id: event_a.id}) |> render_change()
 

@@ -57,16 +57,25 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
   def handle_event("filter", params, socket) do
     topic_filter = Map.get(params, "topic_id", "")
 
+    {sort_key, sort_dir} =
+      cond do
+        topic_filter != "" -> {"question", :asc}
+        socket.assigns.sort_key == "question" -> {"right", :asc}
+        true -> {socket.assigns.sort_key, socket.assigns.sort_dir}
+      end
+
     {:noreply,
      socket
      |> assign(:topic_filter, topic_filter)
+     |> assign(:sort_key, sort_key)
+     |> assign(:sort_dir, sort_dir)
      |> assign(:question_details, nil)
      |> assign(:topic_form, to_form(%{"topic_id" => topic_filter}))
      |> assign_rows(
        socket.assigns.entries,
        topic_filter,
-       socket.assigns.sort_key,
-       socket.assigns.sort_dir
+       sort_key,
+       sort_dir
      )}
   end
 
@@ -96,6 +105,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
   end
 
   defp default_dir("right"), do: :asc
+  defp default_dir("question"), do: :asc
   defp default_dir(_key), do: :desc
 
   defp assign_rows(socket, entries, topic_filter, sort_key, sort_dir) do
@@ -114,6 +124,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
   defp sort_entries(entries, key, dir) do
     key_fun =
       case key do
+        "question" -> fn e -> {e.question.position, e.question.id} end
         "asked" -> fn e -> e.asked_in end
         "answers" -> fn e -> e.answers end
         "wrong" -> fn e -> e.answers - e.correct end
@@ -181,6 +192,9 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
                 aria-label="Sortieren nach"
                 class="select min-h-11 w-full"
               >
+                <option :if={@topic_filter != ""} value="question" selected={@sort_key == "question"}>
+                  Fragenummer
+                </option>
                 <option value="asked" selected={@sort_key == "asked"}>Gefragt</option>
                 <option value="answers" selected={@sort_key == "answers"}>Antworten</option>
                 <option value="wrong" selected={@sort_key == "wrong"}>Falsch</option>
@@ -221,7 +235,16 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
           <thead class="hidden lg:table-header-group">
             <tr class="border-b-2 border-base-300 bg-base-200 text-base-content">
               <th class="pl-4 pr-1 py-3 whitespace-normal">
-                Thema / Frage
+                <%= if @topic_filter != "" do %>
+                  <.sort_button
+                    label="Frage"
+                    key="question"
+                    sort_key={@sort_key}
+                    sort_dir={@sort_dir}
+                  />
+                <% else %>
+                  Thema / Frage
+                <% end %>
               </th>
               <th class="px-2 py-3 text-center">
                 <.sort_button label="Gefragt" key="asked" sort_key={@sort_key} sort_dir={@sort_dir} />
