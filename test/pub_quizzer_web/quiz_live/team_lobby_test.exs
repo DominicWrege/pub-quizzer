@@ -199,7 +199,7 @@ defmodule PubQuizzerWeb.QuizLive.TeamLobbyTest do
       [first, second] = state.current_questions
       {:ok, view, _} = conn |> team_conn(team) |> live(~p"/quiz/#{event.code}/lobby")
 
-      assert has_element?(view, "#team-question-timer[role='timer']", "00:00")
+      assert has_element?(view, "#team-question-timer[role='timer']", "0 s")
       assert has_element?(view, "#team-question-timer[data-question-key='0-#{first.id}']")
       refute has_element?(view, "main", "geantwortet")
 

@@ -85,7 +85,7 @@
           class="inline-flex items-center gap-1 text-sm shrink-0 tabular-nums text-base-content/70"
         >
           <.icon name="hero-clock" class="size-4" />
-          <span data-timer-value>00:00</span>
+          <span data-timer-value>0 s</span>
         </span>
       </div>
 
@@ -240,9 +240,7 @@
       },
       tick() {
         const seconds = Math.floor((performance.now() - this.startedAt) / 1000)
-        const minutes = String(Math.floor(seconds / 60)).padStart(2, "0")
-        const remainder = String(seconds % 60).padStart(2, "0")
-        this.value.textContent = `${minutes}:${remainder}`
+        this.value.textContent = `${seconds} s`
       }
     }
   </script>
