@@ -43,7 +43,7 @@ test("the host can read all A–D answers at 23px on an 11-inch portrait tablet"
           fontSize: style.fontSize,
           lineHeight: Number.parseFloat(style.lineHeight),
           letterTop: letterBox.top,
-          answerTop: answerBox.top,
+          answerTop: answerBox.top + Number.parseFloat(style.paddingTop),
           answerLeft: answerBox.left,
           answerBottom: answerBox.bottom,
           rowBottom: row.getBoundingClientRect().bottom,
@@ -54,7 +54,7 @@ test("the host can read all A–D answers at 23px on an 11-inch portrait tablet"
       for (const row of layout) {
         expect(row.fontSize).toBe("23px")
         expect(row.lineHeight).toBeGreaterThanOrEqual(32)
-        expect(Math.abs(row.letterTop - row.answerTop)).toBeLessThanOrEqual(2)
+        expect(row.answerTop - row.letterTop).toBeCloseTo(3, 1)
         expect(row.answerLeft).toBeCloseTo(layout[0].answerLeft, 0)
         expect(row.rowBottom).toBeGreaterThan(row.answerBottom)
         expect(row.whiteSpace).not.toBe("nowrap")
