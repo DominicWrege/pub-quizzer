@@ -64,6 +64,48 @@ test("registration summary sits close to the invite card", async ({ hostPage }) 
   }
 })
 
+test("invite card sits close below the event header", async ({ hostPage }, testInfo) => {
+  const errors: string[] = []
+  hostPage.on("console", message => { if (message.type() === "error") errors.push(message.text()) })
+  hostPage.on("pageerror", error => errors.push(error.message))
+  await createEvent(hostPage)
+
+  for (const width of [390, 768, 820, 1180, 1380]) {
+    await hostPage.setViewportSize({ width, height: 1180 })
+    const gap = await hostPage.locator("#copy-join-link").evaluate(element => {
+      const card = element.closest(".card")!.getBoundingClientRect()
+      const edit = document.querySelector('[phx-click="open_edit_name"]')!
+      const back = edit.closest("header")!.querySelector("a")!
+      return card.top - Math.max(edit.getBoundingClientRect().bottom, back.getBoundingClientRect().bottom)
+    })
+    expect(gap).toBeGreaterThanOrEqual(8)
+    expect(gap).toBeLessThanOrEqual(26)
+    if (width === 820 || width === 1380) {
+      await hostPage.screenshot({ path: testInfo.outputPath(`event-header-gap-${width}.png`) })
+    }
+  }
+
+  expect(errors).toEqual([])
+})
+
+test("invite card has compact inner horizontal padding", async ({ hostPage }) => {
+  await createEvent(hostPage)
+
+  for (const width of [390, 768, 820, 1180, 1380]) {
+    await hostPage.setViewportSize({ width, height: 1180 })
+    const padding = await hostPage.locator("#copy-join-link").evaluate(element => {
+      const styles = getComputedStyle(element.closest(".card-body")!)
+      return [parseFloat(styles.paddingLeft), parseFloat(styles.paddingRight)]
+    })
+    for (const value of padding) {
+      expect(value).toBeGreaterThanOrEqual(8)
+      expect(value).toBeLessThanOrEqual(16)
+    }
+    await expect(hostPage.locator("#copy-join-link")).toBeVisible()
+    await expect(hostPage.getByRole("link", { name: "QR-Karten", exact: true })).toBeVisible()
+  }
+})
+
 test("invite card has compact vertical padding", async ({ hostPage }) => {
   await createEvent(hostPage)
 
