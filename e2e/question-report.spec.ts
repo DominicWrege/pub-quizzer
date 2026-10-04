@@ -1,5 +1,28 @@
 import { test, expect, setupQuiz, waitForLiveView } from "./fixtures"
 
+test("Statistik navigation opens the question report on tablets and phones", async ({ hostPage }) => {
+  const errors: string[] = []
+  hostPage.on("console", message => { if (message.type() === "error") errors.push(message.text()) })
+  hostPage.on("pageerror", error => errors.push(error.message))
+
+  for (const width of [820, 390]) {
+    await hostPage.setViewportSize({ width, height: 1180 })
+    await hostPage.goto("/admin/events")
+    await waitForLiveView(hostPage)
+    if (width === 390) {
+      await hostPage.locator('label[for="nav-drawer-toggle"][aria-label="Menü"]').click()
+    }
+    const navigation = hostPage.locator(width === 390 ? "#question-report-mobile-nav" : "#question-report-nav")
+    await expect(navigation).toHaveAccessibleName("Statistik")
+    await navigation.click()
+    await expect(hostPage).toHaveURL(/\/admin\/question-report$/)
+    await expect(hostPage.locator("#question-report-filters")).toBeVisible()
+    await expect(navigation).toHaveAttribute("aria-current", "page")
+  }
+
+  expect(errors).toEqual([])
+})
+
 test("question analysis lives only in the shared report, with compact responsive highlights", async ({ browser, hostPage }, testInfo) => {
   const errors: string[] = []
   hostPage.on("console", message => {

@@ -153,7 +153,7 @@ defmodule PubQuizzerWeb.Layouts do
               class={nav_tab_class(@current_path, "/admin/question-report")}
               aria-current={if @current_path == "/admin/question-report", do: "page"}
             >
-              <.icon name="hero-document-chart-bar" class="size-4 hidden sm:inline" /> Fragen-Bericht
+              <.icon name="hero-document-chart-bar" class="size-4 hidden sm:inline" /> Statistik
             </.link>
             <%= if @current_scope.user.role == "superadmin" do %>
               <.link
@@ -180,7 +180,7 @@ defmodule PubQuizzerWeb.Layouts do
           ]}
         ></label>
         <div class="flex min-h-0 flex-1">
-          <main class={["flex-1 lg:overflow-y-auto lg:overscroll-contain", @main_class]}>
+          <main class={["min-w-0 flex-1 lg:overflow-y-auto lg:overscroll-contain", @main_class]}>
             <%!-- Top padding lives here (not on <main>) so sticky toolbars pin
               flush with the header instead of being inset by main's padding. --%>
             <div class={[
@@ -228,7 +228,7 @@ defmodule PubQuizzerWeb.Layouts do
               class={drawer_link_class(@current_path, "/admin/question-report")}
               aria-current={if @current_path == "/admin/question-report", do: "page"}
             >
-              <.icon name="hero-document-chart-bar" class="size-4" /> Fragen-Bericht
+              <.icon name="hero-document-chart-bar" class="size-4" /> Statistik
             </.link>
             <%= if @current_scope.user.role == "superadmin" do %>
               <.link

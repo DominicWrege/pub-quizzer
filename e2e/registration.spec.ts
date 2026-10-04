@@ -8,8 +8,8 @@ test("two phones register one team, can both disconnect, and can rejoin after th
   hostPage.on("pageerror", error => errors.push(error.message))
   await hostPage.setViewportSize({ width: 390, height: 844 })
   const code = await createEvent(hostPage)
-  const name = hostPage.locator("#event-team-cards input").first()
-  expect(await name.evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(200)
+  await expect(hostPage.locator("#event-team-cards").getByRole("textbox")).toHaveCount(0)
+  await expect(hostPage.locator("#event-team-cards > div").first()).toContainText("Team 1")
   await expect(hostPage.locator("#start-quiz")).toBeDisabled()
 
   const contexts = await Promise.all([

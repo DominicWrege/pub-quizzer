@@ -28,23 +28,11 @@ test.describe("event management", () => {
     expect(errors).toEqual([])
   })
 
-  test("host can rename a team", async ({ browser, hostPage }) => {
-    test.setTimeout(60_000)
-
-    const code = await createEvent(hostPage, 2)
-    const { contexts } = await joinTeams(browser, code, 1)
-
-    // Find the first team name input in the (desktop) table and change it
-    const nameInput = hostPage.locator("#event-teams input[phx-blur='rename_team']").first()
-    await nameInput.fill("Die Superhirne")
-    await nameInput.blur()
-
-    // The name should persist (re-render shows new value)
-    await expect(
-      hostPage.locator("#event-teams input[phx-blur='rename_team']").first(),
-    ).toHaveValue("Die Superhirne", { timeout: 10_000 })
-
-    for (const ctx of contexts) await ctx.close()
+  test("desktop team names are displayed without editable fields", async ({ hostPage }) => {
+    await createEvent(hostPage)
+    const teams = hostPage.locator("#event-teams")
+    await expect(teams.getByRole("textbox")).toHaveCount(0)
+    await expect(teams.locator("tr").first()).toContainText("Team 1")
   })
 
   test("host can add and remove team slots", async ({ hostPage }) => {
