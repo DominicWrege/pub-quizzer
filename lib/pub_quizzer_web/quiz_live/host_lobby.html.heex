@@ -1,6 +1,6 @@
 <Layouts.app
   flash={@flash}
-  max_width="max-w-2xl"
+  max_width={if @engine_state.status == :question, do: "max-w-3xl", else: "max-w-2xl"}
   hide_nav_actions
   sticky_nav
   main_class="px-4 py-4 sm:pt-2 sm:pb-10 sm:px-6 lg:px-8 text-sm"
@@ -203,29 +203,44 @@
           <% end %>
         </div>
 
-        <div id="host-question-card" class="card bg-base-200 border-2 border-base-content/40 mt-4">
-          <div class="card-body p-4 sm:p-5">
-            <h4
-              class="card-title text-[1.1rem] leading-snug break-words"
-              data-test="question-prompt"
-            >
-              <.multiline_text text={question.prompt} />
-            </h4>
+        <section
+          id="host-question-card"
+          class="mt-4 space-y-5 text-base-content"
+          aria-labelledby="host-question-prompt"
+        >
+          <h2
+            id="host-question-prompt"
+            class="text-[23px] font-semibold leading-[1.43] break-words"
+            data-test="question-prompt"
+          >
+            <.multiline_text text={question.prompt} />
+          </h2>
 
-            <ul class="mt-2 divide-y divide-base-300" data-test="answer-distribution">
-              <%= for {option, idx} <- Enum.with_index(question.options) do %>
-                <li class="flex items-center gap-3 py-2" data-test="distribution-row">
-                  <span class="font-mono w-8 h-8 flex items-center justify-center rounded bg-base-300 text-base-content/70 text-sm shrink-0">
-                    {letter_for_index(idx)}
-                  </span>
-                  <span class="flex-1 min-w-0 text-[0.9625rem] break-words">
-                    <.multiline_text text={option["text"]} />
-                  </span>
-                </li>
-              <% end %>
-            </ul>
-          </div>
-        </div>
+          <ol
+            id="host-answer-options"
+            class="divide-y divide-base-300 border-t border-base-300"
+            aria-label="Antwortmöglichkeiten"
+            data-test="answer-distribution"
+          >
+            <%= for {option, idx} <- Enum.with_index(question.options) do %>
+              <li
+                id={"host-answer-option-#{idx}"}
+                class="grid grid-cols-[44px_minmax(0,1fr)] items-start gap-3 sm:gap-4 py-4 sm:py-5"
+                data-test="distribution-row"
+              >
+                <span class="size-[44px] flex items-center justify-center rounded-lg border border-base-300 bg-base-200 text-[23px] font-semibold">
+                  {letter_for_index(idx)}
+                </span>
+                <span
+                  id={"host-answer-text-#{idx}"}
+                  class="min-w-0 text-[23px] font-medium leading-[1.45] break-words"
+                >
+                  <.multiline_text text={option["text"]} />
+                </span>
+              </li>
+            <% end %>
+          </ol>
+        </section>
 
         <section
           :if={@paper_teams != []}
@@ -502,7 +517,7 @@
     <details
       id="host-teams"
       phx-mounted={JS.ignore_attributes(["open"])}
-      class="collapse collapse-arrow border border-base-300 bg-base-200 mt-6"
+      class="collapse collapse-arrow border border-base-300 bg-base-200 mt-[64px]"
     >
       <summary class="collapse-title font-semibold">
         Teams verwalten · {length(@engine_state.teams)}

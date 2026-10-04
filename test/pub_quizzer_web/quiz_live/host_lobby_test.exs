@@ -182,6 +182,26 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
   end
 
   describe "question phase" do
+    test "presents the complete question and all answers as an accessible reading script", %{
+      conn: conn,
+      event: event,
+      topic: topic
+    } do
+      view = host_start_quiz(conn, event)
+      view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
+
+      assert has_element?(view, "#host-question-card[aria-labelledby='host-question-prompt']")
+      assert has_element?(view, "#host-question-prompt", "What is 2+2?")
+      assert has_element?(view, "#host-answer-options[aria-label='Antwortmöglichkeiten']")
+
+      for {answer, index} <- Enum.with_index(["3", "4", "5", "6"]) do
+        assert has_element?(view, "#host-answer-option-#{index}:nth-child(#{index + 1})")
+        assert has_element?(view, "#host-answer-text-#{index}", answer)
+      end
+
+      refute has_element?(view, "#host-question-card [phx-click]")
+    end
+
     test "the question card has extra top spacing", %{conn: conn, event: event, topic: topic} do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
@@ -220,7 +240,7 @@ defmodule PubQuizzerWeb.QuizLive.HostLobbyTest do
       view = host_start_quiz(conn, event)
       view |> element("button[phx-value-topic_id='#{topic.id}']") |> render_click()
       assert has_element?(view, "#host-question-topic.text-base-content", topic.name)
-      assert has_element?(view, "#host-question-card.border-2")
+      assert has_element?(view, "#host-question-card.text-base-content")
     end
 
     test "advancing with missing answers requires confirmation naming only missing teams", %{
