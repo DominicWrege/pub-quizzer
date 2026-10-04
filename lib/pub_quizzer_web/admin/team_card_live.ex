@@ -15,7 +15,12 @@ defmodule PubQuizzerWeb.Admin.TeamCardLive do
     # page_title intentionally nil: @page margin:0 suppresses the browser's
     # print header/footer anyway, and we don't want "Team-Karten" showing up
     # on the printed A4 sheet or in the tab title.
-    {:ok, assign(socket, page_title: nil)}
+    {:ok,
+     assign(socket,
+       page_title: nil,
+       selected_card: nil,
+       qr_dialog_form: to_form(%{}, as: :qr_dialog)
+     )}
   end
 
   @impl true
@@ -47,6 +52,16 @@ defmodule PubQuizzerWeb.Admin.TeamCardLive do
 
         {:noreply, assign(socket, event: event, cards: cards)}
     end
+  end
+
+  @impl true
+  def handle_event("show_qr", %{"team-id" => team_id}, socket) do
+    card = Enum.find(socket.assigns.cards, &(to_string(&1.team.id) == team_id))
+    {:noreply, assign(socket, selected_card: card)}
+  end
+
+  def handle_event("close_qr", _params, socket) do
+    {:noreply, assign(socket, selected_card: nil)}
   end
 
   # Human-readable join link for the printed card fallback: no scheme, no port

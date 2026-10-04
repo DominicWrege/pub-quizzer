@@ -6,7 +6,7 @@
   print_chrome={false}
 >
   <div class="print:hidden">
-    <.header>
+    <.header class="sm:flex-row sm:items-center sm:gap-6 [&>div:last-child]:sm:w-auto">
       <:back>
         <.back_link navigate={~p"/admin/events/#{@event}"} />
       </:back>
@@ -36,36 +36,61 @@
         [
           # screen: daisyUI card chrome
           "team-card card bg-base-100 border-2 border-base-300",
-           # print: content-sized card, one page per card; with the card never
-           # page-tall, no card can spill onto a blank sheet (2 teams -> 4 pages)
+          # print: content-sized card, one page per card; with the card never
+          # page-tall, no card can spill onto a blank sheet (2 teams -> 4 pages)
           "print:bg-white print:border-0 print:shadow-none print:rounded-none",
-           "print:max-w-none print:mx-0 print:w-full",
+          "print:max-w-none print:mx-0 print:w-full",
           "print:flex print:flex-col"
         ]
       }
     >
-      <div class={[
-        "card-body items-center text-center p-8",
-        # Top-heavy print padding puts the QR in the upper half of the sheet
-        # without viewport-dependent min-heights; the card can never become
-        # tall enough to overflow the page at any browser print scale.
-        "print:pt-24 print:pb-14 print:px-16 print:gap-6"
-      ]}>
+      <div class={
+        [
+          "card-body items-center text-center p-8",
+          # Top-heavy print padding puts the QR in the upper half of the sheet
+          # without viewport-dependent min-heights; the card can never become
+          # tall enough to overflow the page at any browser print scale.
+          "print:pt-24 print:pb-14 print:px-16 print:gap-6"
+        ]
+      }>
         <div class="text-3xl sm:text-4xl font-bold tracking-tight print:text-5xl">
           Team {slot}
         </div>
         <div class="team-card-qr mt-2 bg-white px-4 py-2 rounded-box print:mt-0 print:p-0 print:rounded-none">
-          {raw(svg)}
+          <div class={[@selected_card && "hidden print:block"]}>
+            {raw(svg)}
+          </div>
+          <div
+            :if={@selected_card}
+            data-test="team-qr-placeholder"
+            aria-hidden="true"
+            class="flex size-[180px] items-center justify-center rounded-field border border-dashed border-base-300 bg-base-200 text-sm text-base-content/70 print:hidden"
+          >
+            QR-Code
+          </div>
         </div>
-        <button
-          id={"copy-team-link-#{team.id}"}
-          phx-hook="CopyLink"
-          phx-update="ignore"
-          data-url={url}
-          class="btn btn-sm btn-soft mt-3 print:hidden"
-        >
-          <.icon name="hero-clipboard" class="size-4" /> Link kopieren
-        </button>
+        <div class="mt-3 flex flex-wrap justify-center gap-2 print:hidden">
+          <button
+            id={"copy-team-link-#{team.id}"}
+            type="button"
+            phx-hook="CopyLink"
+            phx-update="ignore"
+            data-url={url}
+            class="btn btn-sm btn-soft min-h-11"
+          >
+            <.icon name="hero-clipboard" class="size-4" /> Kopieren
+          </button>
+          <button
+            id={"show-team-qr-#{team.id}"}
+            type="button"
+            phx-click="show_qr"
+            phx-value-team-id={team.id}
+            aria-haspopup="dialog"
+            class="btn btn-sm btn-soft min-h-11"
+          >
+            <.icon name="hero-eye" class="size-4" /> Zeigen
+          </button>
+        </div>
         <div class="mt-3 hidden text-base text-base-content/70 print:block print:mt-0">
           <span class="font-mono font-semibold tracking-tight text-sm text-base-content break-words print:text-lg">
             {display_url}
@@ -80,4 +105,44 @@
       </div>
     </div>
   </div>
+
+  <dialog
+    :if={@selected_card}
+    id="team-qr-dialog"
+    phx-hook="Dialog"
+    phx-update="ignore"
+    data-cancel-event="close_qr"
+    data-team-id={@selected_card.team.id}
+    aria-labelledby="team-qr-dialog-title"
+    class="modal print:hidden"
+  >
+    <div class="modal-box w-[calc(100%-2rem)] max-w-md max-h-[calc(100dvh-2rem)] p-3 text-base-content">
+      <div class="grid grid-cols-[3rem_minmax(0,1fr)_3rem] items-center">
+        <h2 id="team-qr-dialog-title" class="col-start-2 text-center text-xl font-semibold">
+          Team {@selected_card.slot}
+        </h2>
+        <.form
+          for={@qr_dialog_form}
+          id="team-qr-dialog-dismiss"
+          method="dialog"
+          class="col-start-3 justify-self-end"
+        >
+          <button
+            id="team-qr-dialog-close"
+            class="btn btn-square min-h-11 min-w-11"
+            aria-label="Schließen"
+          >
+            <.icon name="hero-x-mark" class="size-5" />
+          </button>
+        </.form>
+      </div>
+      <div
+        data-test="team-qr-code"
+        class="mx-auto mt-3 w-[min(100%,22rem,calc(100dvh-9rem))] rounded-box bg-white p-5 [&>svg]:h-auto [&>svg]:w-full"
+      >
+        {raw(@selected_card.svg)}
+      </div>
+      <p class="mt-2 text-center text-sm">QR-Code scannen und beitreten</p>
+    </div>
+  </dialog>
 </Layouts.app>

@@ -194,6 +194,45 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
   end
 
   describe "team cards" do
+    test "shows the selected team's QR code and can close and reopen it", %{conn: conn} do
+      {:ok, event} = Quiz.create_event(%{team_count: 2})
+      [team1, team2] = Enum.sort_by(event.teams, & &1.slot_index)
+      {:ok, view, _html} = conn |> auth_conn() |> live(~p"/admin/events/#{event.id}/team-cards")
+
+      refute has_element?(view, "#team-qr-dialog")
+
+      view |> element("#show-team-qr-#{team2.id}") |> render_click()
+
+      assert has_element?(view, "#copy-team-link-#{team2.id}", "Kopieren")
+      assert has_element?(view, "#team-qr-dialog[data-team-id='#{team2.id}']")
+      assert has_element?(view, "#team-qr-dialog-title", "Team 2")
+
+      document = view |> render() |> LazyHTML.from_document()
+
+      card_svg =
+        document
+        |> LazyHTML.query("#team-card-#{team2.id} .team-card-qr svg")
+        |> LazyHTML.to_html()
+
+      dialog_svg =
+        document
+        |> LazyHTML.query("#team-qr-dialog [data-test='team-qr-code'] svg")
+        |> LazyHTML.to_html()
+
+      assert card_svg != ""
+      assert dialog_svg == card_svg
+
+      render_click(view, "close_qr")
+      refute has_element?(view, "#team-qr-dialog")
+
+      view |> element("#show-team-qr-#{team1.id}") |> render_click()
+      assert has_element?(view, "#team-qr-dialog[data-team-id='#{team1.id}']")
+      assert has_element?(view, "#team-qr-dialog-title", "Team 1")
+
+      render_click(view, "close_qr")
+      refute has_element?(view, "#team-qr-dialog")
+    end
+
     test "renders one printable card per team with QR code and slot number", %{conn: conn} do
       {:ok, event} = Quiz.create_event(%{team_count: 2})
 
