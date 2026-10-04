@@ -154,11 +154,6 @@ defmodule PubQuizzerWeb.Admin.UserLive do
       current_path={@current_path}
       max_width="max-w-4xl"
     >
-      <.header>
-        Benutzer
-        <:subtitle>Moderatoren verwalten und Login-Codes senden.</:subtitle>
-      </.header>
-
       <.form
         for={@form}
         id="add-user-form"
