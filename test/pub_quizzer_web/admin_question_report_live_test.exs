@@ -89,6 +89,64 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
   end
 
   describe "cross-quiz question report" do
+    test "shows compact highlights by topic and question number, without question text", %{
+      conn: conn
+    } do
+      %{q1: q1, q2: q2} = seed()
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+
+      assert has_element?(view, "#question-report-hardest", "Report Topic · Frage 1")
+      assert has_element?(view, "#question-report-hardest", "60 % richtig")
+      assert has_element?(view, "#question-report-easiest", "Report Topic · Frage 2")
+      assert has_element?(view, "#question-report-easiest", "100 % richtig")
+      assert has_element?(view, "#question-report-trap", "Report Topic · Frage 1")
+      assert has_element?(view, "#question-report-trap", "A · 2× gewählt")
+      refute has_element?(view, "#question-report-highlights", q1.prompt)
+      refute has_element?(view, "#question-report-highlights", q2.prompt)
+      refute has_element?(view, "#report-timing")
+      refute has_element?(view, "[id^='question-card-']")
+    end
+
+    test "highlights follow the selected quiz and topic, not table sorting", %{conn: conn} do
+      %{topic: topic, topic_c: other_topic, qc: other_question, events: [event_a, event_b]} =
+        seed()
+
+      {other_event, [team | _], round} = finished_event_with_round(other_topic, "Other Quiz")
+      insert_answer(round, other_question, team, 0)
+
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+      assert has_element?(view, "#question-report-hardest", "Other Topic · Frage 1")
+
+      view |> form("#question-report-filter-form", %{topic_id: topic.id}) |> render_change()
+      assert has_element?(view, "#question-report-hardest", "Report Topic · Frage 1")
+      view |> element("#sort-right") |> render_click()
+      assert has_element?(view, "#question-report-hardest", "Report Topic · Frage 1")
+
+      view |> form("#question-report-quiz-form", %{event_id: event_a.id}) |> render_change()
+      assert has_element?(view, "#question-report-hardest", "67 % richtig")
+      assert has_element?(view, "#question-report-trap", "A · 1× gewählt")
+      view |> form("#question-report-quiz-form", %{event_id: event_b.id}) |> render_change()
+      assert has_element?(view, "#question-report-hardest", "50 % richtig")
+
+      view |> form("#question-report-quiz-form", %{event_id: other_event.id}) |> render_change()
+      refute has_element?(view, "#question-report-highlights")
+      view |> form("#question-report-filter-form", %{topic_id: ""}) |> render_change()
+      assert has_element?(view, "#question-report-hardest", "Other Topic · Frage 1")
+      assert has_element?(view, "#question-report-hardest", "0 % richtig")
+    end
+
+    test "highlights show no trap when all answers are correct", %{conn: conn} do
+      {:ok, topic} = Quiz.create_topic(%{name: "Perfect Topic"})
+      question = create_question(topic, "A prompt that stays out of the card")
+      {_event, [team | _], round} = finished_event_with_round(topic, "Perfect Quiz")
+      insert_answer(round, question, team, 1)
+      {:ok, view, _html} = conn |> log_in_user() |> live(~p"/admin/question-report")
+
+      assert has_element?(view, "#question-report-hardest", "100 % richtig")
+      assert has_element?(view, "#question-report-easiest", "100 % richtig")
+      assert has_element?(view, "#question-report-trap", "Keine falschen Antworten")
+    end
+
     test "identifies rows by topic and question number, with text available on demand", %{
       conn: conn
     } do
@@ -279,6 +337,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
       assert has_element?(view, "#question-report-quiz option[value='#{empty.id}']", empty.code)
       view |> form("#question-report-quiz-form", %{event_id: empty.id}) |> render_change()
       assert has_element?(view, "#question-report-empty")
+      refute has_element?(view, "#question-report-highlights")
     end
 
     test "aggregates answers across finished events", %{conn: conn} do

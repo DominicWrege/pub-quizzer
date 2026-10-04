@@ -118,7 +118,21 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
 
     socket
     |> assign(:rows_empty?, rows == [])
+    |> assign(:highlights, question_highlights(rows))
     |> stream(:rows, rows, reset: true)
+  end
+
+  defp question_highlights(rows) do
+    rated = Enum.filter(rows, &(&1.answers > 0))
+
+    %{
+      hardest: Enum.min_by(rated, &{&1.pct, &1.question.id}, &<=/2, fn -> nil end),
+      easiest: Enum.min_by(rated, &{-&1.pct, &1.question.id}, &<=/2, fn -> nil end),
+      trap:
+        rated
+        |> Enum.filter(&(&1.trap != nil))
+        |> Enum.min_by(&{-elem(&1.trap, 1), &1.question.id}, &<=/2, fn -> nil end)
+    }
   end
 
   defp sort_entries(entries, key, dir) do
@@ -215,6 +229,33 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
           </div>
         </div>
       </div>
+
+      <section
+        :if={!@rows_empty?}
+        id="question-report-highlights"
+        aria-label="Zusammenfassung"
+        class="grid gap-3 sm:grid-cols-3"
+      >
+        <.highlight_card
+          id="question-report-hardest"
+          label="Schwerste Frage"
+          entry={@highlights.hardest}
+          value={if @highlights.hardest, do: "#{@highlights.hardest.pct} % richtig"}
+        />
+        <.highlight_card
+          id="question-report-easiest"
+          label="Leichteste Frage"
+          entry={@highlights.easiest}
+          value={if @highlights.easiest, do: "#{@highlights.easiest.pct} % richtig"}
+        />
+        <.highlight_card
+          id="question-report-trap"
+          label="Beliebteste Falle"
+          entry={@highlights.trap}
+          value={trap_label(@highlights.trap)}
+          empty_label="Keine falschen Antworten"
+        />
+      </section>
 
       <p id="question-report-distribution-help" class="text-base text-base-content/80">
         A–D: Anzahl der Teams je Antwort. Grün = richtige Antwort.
@@ -456,6 +497,35 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
   end
 
   defp event_label(event), do: "#{event.name || "Quiz"} · #{event.code}"
+
+  attr :id, :string, required: true
+  attr :label, :string, required: true
+  attr :entry, :map, default: nil
+  attr :value, :string, default: nil
+  attr :empty_label, :string, default: "Keine Antworten"
+
+  defp highlight_card(assigns) do
+    ~H"""
+    <div id={@id} class="rounded-lg border border-base-300 bg-base-200 p-4 text-base-content">
+      <h2 class="text-sm font-medium text-base-content/80">{@label}</h2>
+      <%= if @entry do %>
+        <div data-test="highlight-question" class="mt-2 text-base font-semibold break-words">
+          {@entry.topic_name} · Frage {@entry.question.position + 1}
+        </div>
+        <div data-test="highlight-value" class="mt-1 text-xl font-semibold tabular-nums">
+          {@value}
+        </div>
+      <% else %>
+        <div class="mt-2 text-base-content/70">{@empty_label}</div>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp trap_label(nil), do: nil
+
+  defp trap_label(%{trap: {index, count}}),
+    do: "#{letter_for_index(index)} · #{count}× gewählt"
 
   attr :label, :string, required: true
   attr :key, :string, required: true

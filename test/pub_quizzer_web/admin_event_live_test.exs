@@ -9,6 +9,22 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
   end
 
   describe "index" do
+    test "finished quiz cards no longer link to a separate report", %{conn: conn} do
+      {:ok, event} = Quiz.create_event(%{team_count: 2})
+      {:ok, event} = Quiz.update_event(event, %{status: "finished"})
+      {:ok, view, _html} = conn |> auth_conn() |> live(~p"/admin/events")
+
+      assert has_element?(view, "a[href='/admin/events/#{event.id}/results']")
+      refute has_element?(view, "a[href='/admin/events/#{event.id}/report']")
+    end
+
+    test "the old per-quiz report route is removed", %{conn: conn} do
+      {:ok, event} = Quiz.create_event(%{team_count: 2})
+
+      conn = get(auth_conn(conn), "/admin/events/#{event.id}/report")
+      assert conn.status == 404
+    end
+
     test "lists events", %{conn: conn} do
       {:ok, event} = Quiz.create_event(%{team_count: 4})
 
