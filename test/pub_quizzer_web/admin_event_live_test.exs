@@ -72,6 +72,7 @@ defmodule PubQuizzerWeb.Admin.EventLiveTest do
         |> live(~p"/admin/events")
 
       refute has_element?(view, "#event-form")
+      assert has_element?(view, "#new-event-btn[aria-label='Neues Quiz'] svg")
 
       view |> element("#new-event-btn") |> render_click()
 

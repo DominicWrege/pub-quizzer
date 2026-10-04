@@ -117,6 +117,23 @@ defmodule PubQuizzer.Quiz.Engine do
     :exit, _ -> {:error, :not_found}
   end
 
+  @doc "Switches a team to paper for this round, or back to its phones. Host-only command."
+  def set_paper_mode(event_id, round_id, team_id, enabled) do
+    GenServer.call(via_tuple(event_id), {:set_paper_mode, round_id, team_id, enabled})
+  catch
+    :exit, _ -> {:error, :not_found}
+  end
+
+  @doc "Records a collected round sheet on behalf of an active moderator or administrator."
+  def submit_paper_answers(event_id, round_id, team_id, picks, user_id, opts \\ []) do
+    GenServer.call(
+      via_tuple(event_id),
+      {:submit_paper_answers, round_id, team_id, picks, user_id, opts}
+    )
+  catch
+    :exit, _ -> {:error, :not_found}
+  end
+
   @doc """
   Advance to the next question.
   """
@@ -214,6 +231,7 @@ defmodule PubQuizzer.Quiz.Engine do
     with {:ok, new_es} <- EngineState.remove_team(state.engine_state, team_id),
          {:ok, _event} <- PubQuizzer.Quiz.delete_team(PubQuizzer.Quiz.get_team!(team_id)) do
       Phoenix.PubSub.broadcast(@pubsub, topic(new_es.event_id), {:kick_team, team_id})
+      if new_es.current_round_id, do: persist_paper_round(new_es)
       broadcast(new_es)
       {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
     else
@@ -311,6 +329,34 @@ defmodule PubQuizzer.Quiz.Engine do
     end
   end
 
+  def handle_call({:set_paper_mode, round_id, team_id, enabled}, _from, state) do
+    {:ok, state} = ensure_loaded(state)
+
+    with :ok <- check_round(state.engine_state, round_id),
+         {:ok, new_es} <- EngineState.set_paper_mode(state.engine_state, team_id, enabled) do
+      persist_paper_round(new_es)
+      broadcast(new_es)
+      {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
+    else
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call({:submit_paper_answers, round_id, team_id, picks, user_id, opts}, _from, state) do
+    {:ok, state} = ensure_loaded(state)
+
+    with :ok <- authorize_paper_entry(user_id),
+         :ok <- check_round(state.engine_state, round_id),
+         {:ok, new_es} <-
+           EngineState.submit_paper_answers(state.engine_state, team_id, picks, opts),
+         {:ok, _} <- persist_paper_answers(state.engine_state, new_es, team_id, picks, user_id) do
+      broadcast(new_es)
+      {:reply, {:ok, new_es}, %{state | engine_state: new_es}}
+    else
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
   def handle_call(:reveal_round, _from, state) do
     {:ok, state} = ensure_loaded(state)
 
@@ -401,6 +447,51 @@ defmodule PubQuizzer.Quiz.Engine do
   end
 
   # --- Persistence helpers ---
+
+  defp check_round(%{current_round_id: round_id}, round_id) when not is_nil(round_id), do: :ok
+  defp check_round(_state, _round_id), do: {:error, :stale_round}
+
+  defp authorize_paper_entry(nil), do: {:error, :unauthorized}
+
+  defp authorize_paper_entry(user_id) do
+    case PubQuizzer.Accounts.get_user(user_id) do
+      %{active: true, role: role} when role in ["moderator", "superadmin"] -> :ok
+      _ -> {:error, :unauthorized}
+    end
+  end
+
+  defp persist_paper_round(state) do
+    Repo.get!(Round, state.current_round_id)
+    |> Ecto.Changeset.change(
+      paper_team_ids: state.paper_team_ids,
+      paper_submitted_team_ids: state.paper_submitted_team_ids
+    )
+    |> Repo.update!()
+  end
+
+  defp persist_paper_answers(old_state, new_state, team_id, picks, user_id) do
+    existing = EngineState.paper_answers(old_state, team_id)
+
+    Repo.transaction(fn ->
+      for question <- new_state.current_questions,
+          selected = picks[question.id],
+          selected != nil and selected != existing[question.id] do
+        %Answer{source: "paper", recorded_by_user_id: user_id}
+        |> Answer.changeset(%{
+          selected_index: selected,
+          question_id: question.id,
+          round_id: new_state.current_round_id,
+          team_id: team_id
+        })
+        |> Repo.insert!(
+          on_conflict: {:replace, [:selected_index, :source, :recorded_by_user_id, :updated_at]},
+          conflict_target: [:round_id, :question_id, :team_id]
+        )
+      end
+
+      persist_paper_round(new_state)
+    end)
+  end
 
   defp persist_reveal_flag(event_id, flag) do
     event = Repo.get!(PubQuizzer.Quiz.QuizEvent, event_id)
@@ -503,6 +594,8 @@ defmodule PubQuizzer.Quiz.Engine do
             current_questions: questions,
             current_chooser_team_id: round.chosen_by_team_id,
             current_round_id: round.id,
+            paper_team_ids: round.paper_team_ids,
+            paper_submitted_team_ids: round.paper_submitted_team_ids,
             answers: answers
         }
 
@@ -518,6 +611,8 @@ defmodule PubQuizzer.Quiz.Engine do
             current_chooser_team_id: round.chosen_by_team_id,
             current_winner_team_id: round.winner_team_id,
             current_round_id: round.id,
+            paper_team_ids: round.paper_team_ids,
+            paper_submitted_team_ids: round.paper_submitted_team_ids,
             answers: answers
         }
 
@@ -649,7 +744,7 @@ defmodule PubQuizzer.Quiz.Engine do
         team_id: team_id
       })
       |> Repo.insert(
-        on_conflict: {:replace, [:selected_index]},
+        on_conflict: {:replace, [:selected_index, :source, :recorded_by_user_id, :updated_at]},
         conflict_target: [:round_id, :question_id, :team_id]
       )
     end

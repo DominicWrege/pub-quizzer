@@ -142,10 +142,17 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
       {:ok, %{status: :question} = state} ->
         socket = apply_engine_state(socket, state)
 
-        if MapSet.size(EngineState.answered_teams(state)) == length(state.teams) do
-          {:noreply, advance_question(socket)}
-        else
-          {:noreply, assign(socket, :confirm_action, {:next_question, question_key(state)})}
+        cond do
+          state.question_index == length(state.current_questions) - 1 and
+              EngineState.pending_paper_teams(state) != [] ->
+            [team | _] = EngineState.pending_paper_teams(state)
+            {:noreply, open_paper_entry(socket, state, team.id)}
+
+          EngineState.pending_digital_teams(state) == [] ->
+            {:noreply, advance_question(socket)}
+
+          true ->
+            {:noreply, assign(socket, :confirm_action, {:next_question, question_key(state)})}
         end
 
       _ ->
@@ -166,6 +173,65 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
 
   def handle_event("toggle_pending_teams", _params, socket) do
     {:noreply, update(socket, :pending_teams_visible?, &(!&1))}
+  end
+
+  def handle_event(
+        "set_paper_mode",
+        %{"team_id" => team_id, "round_id" => round_id, "enabled" => enabled},
+        socket
+      ) do
+    with {team_id, ""} <- Integer.parse(team_id),
+         {round_id, ""} <- Integer.parse(round_id),
+         true <- enabled in ["true", "false"],
+         {:ok, state} <-
+           Engine.set_paper_mode(socket.assigns.event.id, round_id, team_id, enabled == "true") do
+      {:noreply, apply_engine_state(socket, state)}
+    else
+      _ ->
+        {:noreply,
+         put_flash(
+           socket,
+           :error,
+           "Papiermodus konnte nicht geändert werden. Bitte aktualisieren."
+         )}
+    end
+  end
+
+  def handle_event("open_paper_answers", %{"team_id" => team_id}, socket) do
+    with {team_id, ""} <- Integer.parse(team_id),
+         {:ok, state} <- Engine.get_state(socket.assigns.event.id) do
+      {:noreply, open_paper_entry(apply_engine_state(socket, state), state, team_id)}
+    else
+      _ -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("close_paper_answers", _params, socket) do
+    {:noreply, assign(socket, :paper_entry, nil)}
+  end
+
+  def handle_event("pick_paper_answer", %{"question_id" => id, "choice" => value}, socket) do
+    case socket.assigns.paper_entry do
+      %{picks: picks} = entry when is_map_key(picks, id) ->
+        {:noreply, put_paper_draft(socket, entry, Map.put(picks, id, value))}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("save_paper_answers", %{"paper" => picks}, socket) do
+    case socket.assigns.paper_entry do
+      nil -> {:noreply, socket}
+      entry -> {:noreply, socket |> put_paper_draft(entry, picks) |> save_paper_entry(false)}
+    end
+  end
+
+  def handle_event("confirm_paper_overwrite", _params, socket) do
+    case socket.assigns.paper_entry do
+      %{overwrite?: true} -> {:noreply, save_paper_entry(socket, true)}
+      _ -> {:noreply, socket}
+    end
   end
 
   def handle_event("reveal_final_results", _params, socket) do
@@ -190,9 +256,15 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
 
   defp apply_engine_state(socket, state) do
     socket
+    |> assign_new(:paper_entry, fn -> nil end)
+    |> sync_paper_entry(state)
     |> sync_question_controls(state)
     |> assign(:engine_state, state)
     |> assign(:answered_team_ids, EngineState.answered_teams(state))
+    |> assign(:pending_digital_teams, EngineState.pending_digital_teams(state))
+    |> assign(:digital_teams, Enum.reject(state.teams, &(&1.id in state.paper_team_ids)))
+    |> assign(:paper_teams, Enum.filter(state.teams, &(&1.id in state.paper_team_ids)))
+    |> assign(:pending_paper_teams, EngineState.pending_paper_teams(state))
     |> stream(:teams, state.teams, reset: true)
     |> assign_available_topics(state)
     |> assign(:standings, EngineState.standings_sorted(state))
@@ -201,6 +273,119 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
     |> assign(:round_distributions, round_distributions(state))
     |> assign(:standings_with_deltas, EngineState.standings_with_deltas(state))
   end
+
+  defp sync_paper_entry(socket, state) do
+    case socket.assigns.paper_entry do
+      %{round_id: round_id, team: team} ->
+        if state.status == :question and state.current_round_id == round_id and
+             team.id in state.paper_team_ids do
+          socket
+        else
+          assign(socket, :paper_entry, nil)
+        end
+
+      _ ->
+        socket
+    end
+  end
+
+  defp open_paper_entry(socket, state, team_id) do
+    team = Enum.find(state.teams, &(&1.id == team_id))
+
+    if team && state.status == :question && team_id in state.paper_team_ids &&
+         state.question_index == length(state.current_questions) - 1 do
+      original = EngineState.paper_answers(state, team_id)
+      blank = if team_id in state.paper_submitted_team_ids, do: "-", else: "unselected"
+
+      picks =
+        Map.new(original, fn {id, value} ->
+          {to_string(id), if(is_nil(value), do: blank, else: to_string(value))}
+        end)
+
+      sources =
+        state.current_round_id
+        |> Quiz.list_answers_for_round()
+        |> Enum.filter(&(&1.team_id == team_id))
+        |> Map.new(&{&1.question_id, &1.source})
+
+      entry = %{
+        round_id: state.current_round_id,
+        team: team,
+        original: original,
+        picks: picks,
+        sources: sources,
+        overwrite?: false,
+        error: nil
+      }
+
+      socket |> assign(:confirm_action, nil) |> put_paper_draft(entry, picks)
+    else
+      socket
+    end
+  end
+
+  defp put_paper_draft(socket, entry, picks) do
+    socket
+    |> assign(:paper_entry, %{entry | picks: picks, overwrite?: false, error: nil})
+    |> assign(:paper_form, to_form(picks, as: :paper))
+  end
+
+  defp save_paper_entry(socket, replace?) do
+    entry = socket.assigns.paper_entry
+
+    with {:ok, picks} <- parse_paper_picks(entry.picks),
+         {:ok, state} <-
+           Engine.submit_paper_answers(
+             socket.assigns.event.id,
+             entry.round_id,
+             entry.team.id,
+             picks,
+             socket.assigns.current_scope.user.id,
+             replace_existing?: replace?,
+             expected_answers: entry.original
+           ) do
+      socket
+      |> assign(:paper_entry, nil)
+      |> apply_engine_state(state)
+    else
+      {:error, :overwrite_required} ->
+        assign(socket, :paper_entry, %{entry | overwrite?: true})
+
+      {:error, reason} ->
+        assign(socket, :paper_entry, %{entry | error: paper_error(reason), overwrite?: false})
+    end
+  end
+
+  defp parse_paper_picks(picks) when is_map(picks) do
+    Enum.reduce_while(picks, {:ok, %{}}, fn {id, value}, {:ok, acc} ->
+      with true <- is_binary(id) and is_binary(value),
+           {id, ""} <- Integer.parse(id),
+           {:ok, selected} <- parse_paper_pick(value) do
+        {:cont, {:ok, Map.put(acc, id, selected)}}
+      else
+        _ -> {:halt, {:error, :invalid_submission}}
+      end
+    end)
+  end
+
+  defp parse_paper_picks(_), do: {:error, :invalid_submission}
+  defp parse_paper_pick("-"), do: {:ok, nil}
+
+  defp parse_paper_pick(value) do
+    case Integer.parse(value) do
+      {index, ""} when index in 0..3 -> {:ok, index}
+      _ -> {:error, :invalid_submission}
+    end
+  end
+
+  defp paper_error(:answers_changed),
+    do: "Die Antworten wurden inzwischen geändert. Bitte schließen und erneut öffnen."
+
+  defp paper_error(:invalid_submission),
+    do: "Bitte für jede Frage eine Antwort oder ‚Keine Antwort‘ auswählen."
+
+  defp paper_error(:unauthorized), do: "Keine Berechtigung. Bitte erneut anmelden."
+  defp paper_error(_), do: "Diese Runde kann nicht mehr bearbeitet werden. Bitte aktualisieren."
 
   defp advance_question(socket) do
     event_id = socket.assigns.event.id
@@ -211,8 +396,25 @@ defmodule PubQuizzerWeb.QuizLive.HostLobby do
 
       {:error, :end_of_round} ->
         case Engine.reveal_round(event_id) do
-          {:ok, state} -> apply_engine_state(socket, state)
-          {:error, reason} -> put_flash(socket, :error, "Fehler: #{reason}")
+          {:ok, state} ->
+            apply_engine_state(socket, state)
+
+          {:error, :paper_answers_pending} ->
+            case Engine.get_state(event_id) do
+              {:ok, state} ->
+                socket = apply_engine_state(socket, state)
+
+                case EngineState.pending_paper_teams(state) do
+                  [team | _] -> open_paper_entry(socket, state, team.id)
+                  [] -> socket
+                end
+
+              _ ->
+                put_flash(socket, :error, "Quiz-Engine nicht verfügbar.")
+            end
+
+          {:error, reason} ->
+            put_flash(socket, :error, "Fehler: #{reason}")
         end
 
       {:error, reason} ->

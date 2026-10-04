@@ -90,7 +90,19 @@
         </span>
       </div>
 
-      <div class="flex flex-col gap-2">
+      <div
+        :if={@team.id in @engine_state.paper_team_ids}
+        id="team-paper-mode"
+        class="rounded-xl border border-base-300 bg-base-200 p-5 text-center"
+      >
+        <.icon name="hero-pencil" class="size-8 mx-auto" />
+        <h2 class="text-lg font-bold mt-3">Diese Runde spielt ihr auf Papier.</h2>
+        <p class="text-base mt-2">
+          Tragt eure Antworten auf dem Bogen ein. Gebt ihn am Rundenende dem Moderator.
+        </p>
+        <p class="text-sm mt-3">In der nächsten Runde könnt ihr wieder am Handy mitspielen.</p>
+      </div>
+      <div :if={@team.id not in @engine_state.paper_team_ids} class="flex flex-col gap-2">
         <%= for {option, idx} <- Enum.with_index(question.options) do %>
           <% is_selected = our_answer == idx %>
           <button

@@ -25,6 +25,9 @@ defmodule PubQuizzer.Quiz.EngineState do
     final_results_revealed: false,
     # answers: %{question_index => %{team_id => selected_index}}
     answers: %{},
+    # Paper participation and collected sheets apply to the current round only.
+    paper_team_ids: [],
+    paper_submitted_team_ids: [],
     # standings: %{team_id => total_points}
     standings: %{},
     # completed rounds: list of %{round_number, topic_id, winner_team_id}
@@ -130,7 +133,9 @@ defmodule PubQuizzer.Quiz.EngineState do
               current_questions: questions,
               current_chooser_team_id: chooser_team_id,
               question_index: 0,
-              answers: %{}
+              answers: %{},
+              paper_team_ids: [],
+              paper_submitted_team_ids: []
           }
 
           {:ok, new_state}
@@ -143,18 +148,117 @@ defmodule PubQuizzer.Quiz.EngineState do
   Teams can change their answer until the host advances.
   """
   def submit_answer(%__MODULE__{status: :question} = state, team_id, selected_index) do
-    if valid_team?(state, team_id) and valid_option?(state, selected_index) do
-      question_answers = Map.get(state.answers, state.question_index, %{})
-      updated = Map.put(question_answers, team_id, selected_index)
+    cond do
+      team_id in state.paper_team_ids ->
+        {:error, :paper_mode}
 
-      {:ok, %{state | answers: Map.put(state.answers, state.question_index, updated)}}
-    else
-      {:error, :invalid_submission}
+      valid_team?(state, team_id) and valid_option?(state, selected_index) ->
+        question_answers = Map.get(state.answers, state.question_index, %{})
+        updated = Map.put(question_answers, team_id, selected_index)
+
+        {:ok, %{state | answers: Map.put(state.answers, state.question_index, updated)}}
+
+      true ->
+        {:error, :invalid_submission}
     end
   end
 
   def submit_answer(%__MODULE__{}, _team_id, _selected_index),
     do: {:error, :not_in_question_phase}
+
+  def set_paper_mode(%__MODULE__{status: :question} = state, team_id, enabled)
+      when is_boolean(enabled) do
+    if valid_team?(state, team_id) do
+      ids =
+        if enabled,
+          do: Enum.uniq(state.paper_team_ids ++ [team_id]),
+          else: List.delete(state.paper_team_ids, team_id)
+
+      submitted =
+        if enabled,
+          do: state.paper_submitted_team_ids,
+          else: List.delete(state.paper_submitted_team_ids, team_id)
+
+      {:ok, %{state | paper_team_ids: ids, paper_submitted_team_ids: submitted}}
+    else
+      {:error, :invalid_team}
+    end
+  end
+
+  def set_paper_mode(%__MODULE__{}, _team_id, _enabled), do: {:error, :not_in_question_phase}
+
+  @doc "Records a complete paper sheet at the end of the round; nil preserves existing answers."
+  def submit_paper_answers(state, team_id, picks, opts \\ [])
+
+  def submit_paper_answers(%__MODULE__{status: :question} = state, team_id, picks, opts) do
+    existing = paper_answers(state, team_id)
+
+    cond do
+      not valid_team?(state, team_id) ->
+        {:error, :invalid_team}
+
+      team_id not in state.paper_team_ids ->
+        {:error, :not_in_paper_mode}
+
+      state.question_index != length(state.current_questions) - 1 ->
+        {:error, :round_not_complete}
+
+      not valid_paper_picks?(state, picks) ->
+        {:error, :invalid_submission}
+
+      Keyword.has_key?(opts, :expected_answers) and opts[:expected_answers] != existing ->
+        {:error, :answers_changed}
+
+      not Keyword.get(opts, :replace_existing?, false) and
+          Enum.any?(picks, fn {id, pick} ->
+            pick != nil and existing[id] != nil and pick != existing[id]
+          end) ->
+        {:error, :overwrite_required}
+
+      true ->
+        answers =
+          Enum.reduce(state.current_questions, state.answers, fn question, answers ->
+            case picks[question.id] do
+              nil ->
+                answers
+
+              pick ->
+                Map.update(
+                  answers,
+                  question.position,
+                  %{team_id => pick},
+                  &Map.put(&1, team_id, pick)
+                )
+            end
+          end)
+
+        {:ok,
+         %{
+           state
+           | answers: answers,
+             paper_submitted_team_ids: Enum.uniq(state.paper_submitted_team_ids ++ [team_id])
+         }}
+    end
+  end
+
+  def submit_paper_answers(%__MODULE__{}, _team_id, _picks, _opts),
+    do: {:error, :not_in_question_phase}
+
+  def paper_answers(state, team_id) do
+    Map.new(state.current_questions, fn q ->
+      {q.id, Map.get(Map.get(state.answers, q.position, %{}), team_id)}
+    end)
+  end
+
+  defp valid_paper_picks?(state, picks) when is_map(picks) do
+    MapSet.new(Map.keys(picks)) == MapSet.new(state.current_questions, & &1.id) and
+      Enum.all?(state.current_questions, fn q ->
+        pick = picks[q.id]
+        is_nil(pick) or (is_integer(pick) and pick >= 0 and pick < length(q.options))
+      end)
+  end
+
+  defp valid_paper_picks?(_state, _picks), do: false
 
   @doc """
   Advance to the next question. Locks the current question (no more answer changes).
@@ -175,6 +279,16 @@ defmodule PubQuizzer.Quiz.EngineState do
   Computes scores, determines the winner.
   """
   def reveal_round(%__MODULE__{status: :question} = state) do
+    if pending_paper_teams(state) == [] do
+      score_round(state)
+    else
+      {:error, :paper_answers_pending}
+    end
+  end
+
+  def reveal_round(%__MODULE__{}), do: {:error, :not_in_question_phase}
+
+  defp score_round(state) do
     scores = compute_round_scores(state)
     winner_team_id = determine_winner(scores)
 
@@ -200,8 +314,6 @@ defmodule PubQuizzer.Quiz.EngineState do
 
     {:ok, new_state}
   end
-
-  def reveal_round(%__MODULE__{}), do: {:error, :not_in_question_phase}
 
   @doc """
   Reveal team standings to all devices.
@@ -243,7 +355,9 @@ defmodule PubQuizzer.Quiz.EngineState do
              current_questions: [],
              current_topic_id: nil,
              current_winner_team_id: nil,
-             current_round_id: nil
+             current_round_id: nil,
+             paper_team_ids: [],
+             paper_submitted_team_ids: []
          }}
 
       true ->
@@ -258,7 +372,9 @@ defmodule PubQuizzer.Quiz.EngineState do
              current_questions: [],
              current_topic_id: nil,
              current_winner_team_id: nil,
-             current_round_id: nil
+             current_round_id: nil,
+             paper_team_ids: [],
+             paper_submitted_team_ids: []
          }}
     end
   end
@@ -306,6 +422,18 @@ defmodule PubQuizzer.Quiz.EngineState do
   end
 
   def answered_teams(_), do: MapSet.new()
+
+  def pending_digital_teams(state) do
+    answered = answered_teams(state)
+    Enum.reject(state.teams, &(&1.id in state.paper_team_ids or MapSet.member?(answered, &1.id)))
+  end
+
+  def pending_paper_teams(state) do
+    Enum.filter(
+      state.teams,
+      &(&1.id in state.paper_team_ids and &1.id not in state.paper_submitted_team_ids)
+    )
+  end
 
   def standings_sorted(%__MODULE__{standings: standings, teams: teams}) do
     teams
@@ -428,6 +556,8 @@ defmodule PubQuizzer.Quiz.EngineState do
                  {index, Map.delete(answers, team_id)}
                end),
              standings: Map.delete(state.standings, team_id),
+             paper_team_ids: List.delete(state.paper_team_ids, team_id),
+             paper_submitted_team_ids: List.delete(state.paper_submitted_team_ids, team_id),
              current_chooser_team_id: clear_removed_team(state.current_chooser_team_id, team_id),
              current_winner_team_id: clear_removed_team(state.current_winner_team_id, team_id),
              completed_rounds:

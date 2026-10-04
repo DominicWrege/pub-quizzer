@@ -164,6 +164,16 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
                           class="size-5"
                         />
                       </span>
+                      <span
+                        :if={
+                          @results.answer_sources[{round_data.round.id, question.id, team.id}] ==
+                            "paper"
+                        }
+                        id={"result-paper-#{round_data.round.id}-#{question.id}-#{team.id}"}
+                        class="block mt-1 text-xs font-medium text-base-content"
+                      >
+                        Papier
+                      </span>
                     <% end %>
                   </td>
                 </tr>
@@ -185,7 +195,10 @@ defmodule PubQuizzerWeb.Admin.ResultLive do
             <%= if @results.timing.total_seconds do %>
               Dauer gesamt {format_duration(@results.timing.total_seconds)} ·
             <% end %>
-            Reine Antwortzeit {format_duration(@results.timing.answering_seconds)}
+            {if Enum.any?(@results.answer_sources, fn {_key, source} -> source == "paper" end),
+              do: "Digitale Antwortzeit",
+              else: "Reine Antwortzeit"}
+            {format_duration(@results.timing.answering_seconds)}
           </span>
         </div>
       <% end %>

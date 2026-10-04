@@ -6,6 +6,8 @@ defmodule PubQuizzer.Quiz.Round do
     field :round_number, :integer
     field :questions_snapshot, {:array, :map}, default: []
     field :abandoned, :boolean, default: false
+    field :paper_team_ids, {:array, :integer}, default: []
+    field :paper_submitted_team_ids, {:array, :integer}, default: []
 
     belongs_to :topic, PubQuizzer.Quiz.Topic
     belongs_to :quiz_event, PubQuizzer.Quiz.QuizEvent

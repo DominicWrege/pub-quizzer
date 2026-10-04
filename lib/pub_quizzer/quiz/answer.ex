@@ -4,6 +4,8 @@ defmodule PubQuizzer.Quiz.Answer do
 
   schema "answers" do
     field :selected_index, :integer
+    field :source, :string, default: "digital"
+    belongs_to :recorded_by_user, PubQuizzer.Accounts.User
 
     belongs_to :question, PubQuizzer.Quiz.Question
     belongs_to :round, PubQuizzer.Quiz.Round

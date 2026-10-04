@@ -853,6 +853,7 @@ defmodule PubQuizzer.Quiz do
       teams: teams,
       rounds_data: rounds_data,
       answer_lookup: answer_lookup,
+      answer_sources: Map.new(answers, &{{&1.round_id, &1.question_id, &1.team_id}, &1.source}),
       standings: standings,
       question_stats: question_stats,
       team_accuracy: team_accuracy,
@@ -1108,6 +1109,7 @@ defmodule PubQuizzer.Quiz do
 
     {answering_seconds, per_round} =
       answers
+      |> Enum.reject(&(&1.source == "paper"))
       |> Enum.group_by(& &1.round_id)
       |> Enum.reduce({0, %{}}, fn {round_id, round_answers}, {acc, per_round} ->
         case Map.get(rounds_by_id, round_id) do

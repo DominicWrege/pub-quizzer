@@ -3,16 +3,8 @@
   current_scope={@current_scope}
   current_path={@current_path}
   max_width="max-w-4xl"
+  main_class="px-4 pt-3 pb-20 sm:px-6 lg:px-8 lg:pt-2"
 >
-  <div
-    data-sticky-bar
-    class="sticky top-(--header-h) lg:top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-base-100 border-b border-transparent transition-[box-shadow,border-color] duration-200 pt-3 pb-3 lg:pt-2 flex items-center justify-end gap-2 mb-4"
-  >
-    <.button phx-click="start_new" id="new-event-btn">
-      <.icon name="hero-plus" class="size-4" /> Neues Quiz
-    </.button>
-  </div>
-
   <%= cond do %>
     <% @events == [] -> %>
       <div class="text-center py-12 text-base-content/70">
@@ -38,6 +30,19 @@
         </details>
       <% end %>
   <% end %>
+
+  <div class="fab bottom-[calc(env(safe-area-inset-bottom)+1rem)] end-[calc(env(safe-area-inset-right)+1rem)] z-30 print:hidden">
+    <button
+      id="new-event-btn"
+      type="button"
+      phx-click="start_new"
+      aria-label="Neues Quiz"
+      title="Neues Quiz"
+      class="btn btn-primary btn-circle size-12 shadow-sm"
+    >
+      <.icon name="hero-plus" class="size-6" />
+    </button>
+  </div>
 
   <.confirm_modal
     id="delete-event-index-modal"

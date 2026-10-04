@@ -57,7 +57,11 @@
       class="btn btn-sm btn-soft min-h-[44px] px-3 text-sm shrink-0 tabular-nums"
       data-test="answered-badge"
     >
-      {MapSet.size(@answered_team_ids)} / {length(@engine_state.teams)}
+      <%= if @digital_teams == [] do %>
+        Papier
+      <% else %>
+        {length(@digital_teams) - length(@pending_digital_teams)} / {length(@digital_teams)}
+      <% end %>
       <.icon
         name="hero-chevron-right"
         class={[
@@ -181,9 +185,7 @@
     <%!-- Question phase --%>
     <%= if @engine_state.status == :question do %>
       <% question = @engine_state.current_questions |> Enum.at(@engine_state.question_index) %>
-      <% answered = PubQuizzer.Quiz.EngineState.answered_teams(@engine_state) %>
-      <% total_teams = length(@engine_state.teams) %>
-      <% all_answered = MapSet.size(answered) == total_teams %>
+      <% all_answered = @pending_digital_teams == [] %>
       <% has_next =
         (@engine_state.question_index || 0) < length(@engine_state.current_questions) - 1 %>
 
@@ -197,9 +199,7 @@
             Alle Teams haben geantwortet.
           <% else %>
             <span class="font-semibold">Antwort fehlt:</span>
-            {@engine_state.teams
-            |> Enum.reject(&MapSet.member?(answered, &1.id))
-            |> Enum.map_join(", ", & &1.name)}
+            {Enum.map_join(@pending_digital_teams, ", ", & &1.name)}
           <% end %>
         </div>
 
@@ -227,6 +227,56 @@
           </div>
         </div>
 
+        <section
+          :if={@paper_teams != []}
+          id="host-paper-round"
+          class="rounded-xl border border-base-300 bg-base-200 overflow-hidden"
+          aria-labelledby="host-paper-title"
+        >
+          <div class="px-4 py-3">
+            <div class="flex-1 min-w-0">
+              <h3 id="host-paper-title" class="text-base font-bold">
+                Auf Papier · Runde {@engine_state.round_number + 1}
+              </h3>
+              <p class="text-sm mt-1">
+                {if has_next,
+                  do: "Bögen am Rundenende einsammeln. Die anderen Teams spielen digital weiter.",
+                  else: "Bögen einsammeln und Antworten vor der Auflösung erfassen."}
+              </p>
+            </div>
+          </div>
+          <ul class="divide-y divide-base-300 border-t border-base-300">
+            <li :for={team <- @paper_teams} class="flex flex-wrap items-center gap-3 px-4 py-3">
+              <span class="flex-1 min-w-0 text-base font-semibold break-words">{team.name}</span>
+              <span
+                id={"host-paper-status-#{team.id}"}
+                class={[
+                  "badge badge-soft shrink-0",
+                  if(team.id in @engine_state.paper_submitted_team_ids,
+                    do: "badge-success",
+                    else: "badge-neutral"
+                  )
+                ]}
+              >
+                {if team.id in @engine_state.paper_submitted_team_ids,
+                  do: "Erfasst",
+                  else: "Bogen ausstehend"}
+              </span>
+              <button
+                :if={!has_next}
+                id={"host-enter-paper-#{team.id}"}
+                phx-click="open_paper_answers"
+                phx-value-team_id={team.id}
+                class="btn btn-ghost btn-xs border-0 shadow-none shrink-0"
+              >
+                {if team.id in @engine_state.paper_submitted_team_ids,
+                  do: "Bearbeiten",
+                  else: "Antworten eintragen"}
+              </button>
+            </li>
+          </ul>
+        </section>
+
         <div class="sticky bottom-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 pt-2 bg-base-100/95 backdrop-blur border-t border-base-300">
           <div class="flex items-center gap-3">
             <span
@@ -247,10 +297,13 @@
               class="btn btn-primary btn-lg flex-1 text-base"
               data-test="advance-button"
             >
-              <%= if has_next do %>
-                <.icon name="hero-chevron-right" class="size-5" /> Nächste Frage
-              <% else %>
-                <.icon name="hero-eye" class="size-5" /> Runde auflösen
+              <%= cond do %>
+                <% has_next -> %>
+                  <.icon name="hero-chevron-right" class="size-5" /> Nächste Frage
+                <% @pending_paper_teams != [] -> %>
+                  Papierantworten erfassen
+                <% true -> %>
+                  <.icon name="hero-eye" class="size-5" /> Runde auflösen
               <% end %>
             </button>
           </div>
@@ -479,6 +532,20 @@
               Ein Team muss bleiben
             </span>
             <button
+              :if={@engine_state.status == :question}
+              id={"host-paper-team-#{team.id}"}
+              phx-click="set_paper_mode"
+              phx-value-team_id={team.id}
+              phx-value-round_id={@engine_state.current_round_id}
+              phx-value-enabled={to_string(team.id not in @engine_state.paper_team_ids)}
+              aria-pressed={to_string(team.id in @engine_state.paper_team_ids)}
+              class="btn btn-ghost btn-xs border-0 shadow-none shrink-0"
+            >
+              {if team.id in @engine_state.paper_team_ids,
+                do: "Zurück zum Handy",
+                else: "Auf Papier wechseln"}
+            </button>
+            <button
               :if={length(@engine_state.teams) > 1}
               id={"host-remove-team-#{team.id}"}
               phx-click="ask_remove_team"
@@ -511,9 +578,7 @@
   <%= case @confirm_action do %>
     <% {:next_question, _question_key} -> %>
       <% missing_names =
-        @engine_state.teams
-        |> Enum.reject(&MapSet.member?(@answered_team_ids, &1.id))
-        |> Enum.map_join(", ", & &1.name) %>
+        Enum.map_join(@pending_digital_teams, ", ", & &1.name) %>
       <.confirm_modal
         id="next-question-modal"
         show
@@ -539,6 +604,160 @@
       />
     <% _ -> %>
   <% end %>
+
+  <dialog
+    :if={@paper_entry}
+    id="paper-answers-dialog"
+    phx-hook="Dialog"
+    data-cancel-event="close_paper_answers"
+    aria-labelledby="paper-answers-title"
+    aria-describedby="paper-answers-description"
+    class="m-auto w-[calc(100%-2rem)] max-w-md max-h-[calc(100dvh-2rem)] rounded-xl border border-base-300 bg-base-100 text-base-content p-0 shadow-sm"
+  >
+    <div class="sticky top-0 z-10 border-b border-base-300 bg-base-100 px-4 py-3">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <h2 id="paper-answers-title" class="text-base font-bold break-words">
+            {@paper_entry.team.name}
+          </h2>
+          <p class="text-xs mt-1 break-words">
+            Papier · Runde {@engine_state.round_number + 1} · {@current_topic_name}
+          </p>
+        </div>
+        <button
+          id="paper-answers-close"
+          type="button"
+          phx-click="close_paper_answers"
+          class="btn btn-square btn-sm bg-base-300 hover:bg-base-content/15 border-transparent shrink-0"
+          aria-label="Schließen"
+        >
+          <.icon name="hero-x-mark" class="size-5" />
+        </button>
+      </div>
+    </div>
+    <.form for={@paper_form} id="paper-answers-form" phx-submit="save_paper_answers">
+      <div class="px-4 py-3 space-y-3">
+        <p id="paper-answers-description" class="text-xs leading-relaxed">
+          A–D vom Bogen übertragen. – = keine Antwort.
+          Vorhandene Antworten bleiben erhalten.
+        </p>
+        <div class="divide-y divide-base-300 rounded-lg border border-base-300 overflow-hidden">
+          <fieldset
+            :for={question <- @engine_state.current_questions}
+            class="grid grid-cols-[4rem_auto] items-center gap-2 px-3 py-2"
+          >
+            <% field = @paper_form[to_string(question.id)] %>
+            <% existing = @paper_entry.original[question.id] %>
+            <legend class="sr-only">Frage {question.position + 1}</legend>
+            <.input field={field} type="hidden" />
+            <div>
+              <span class="text-sm font-semibold">Frage {question.position + 1}</span>
+              <p :if={!is_nil(existing)} id={"paper-existing-#{question.id}"} class="text-xs">
+                {if @paper_entry.sources[question.id] == "paper", do: "Papier", else: "Digital"}:
+                <strong>{letter_for_index(existing)}</strong>
+              </p>
+            </div>
+            <div
+              class="join justify-self-end"
+              role="group"
+              aria-label={"Antwort für Frage #{question.position + 1}"}
+            >
+              <button
+                :for={idx <- 0..(length(question.options) - 1)}
+                id={"paper-choice-#{question.id}-#{idx}"}
+                type="button"
+                phx-click="pick_paper_answer"
+                phx-value-question_id={question.id}
+                phx-value-choice={idx}
+                aria-pressed={to_string(field.value == to_string(idx))}
+                class={[
+                  "btn btn-sm btn-square sm:size-10 sm:text-sm join-item font-bold font-mono border-transparent",
+                  if(field.value == to_string(idx),
+                    do: "btn-primary",
+                    else: "bg-base-300 hover:bg-base-content/15"
+                  )
+                ]}
+              >
+                {letter_for_index(idx)}
+              </button>
+              <button
+                id={"paper-blank-#{question.id}"}
+                type="button"
+                phx-click="pick_paper_answer"
+                phx-value-question_id={question.id}
+                phx-value-choice="-"
+                aria-pressed={to_string(field.value == "-")}
+                aria-label={
+                  if is_nil(existing), do: "Keine Antwort", else: "Gespeicherte Antwort behalten"
+                }
+                title={
+                  if is_nil(existing), do: "Keine Antwort", else: "Gespeicherte Antwort behalten"
+                }
+                class={[
+                  "btn btn-sm btn-square sm:size-10 sm:text-sm join-item border-transparent",
+                  if(field.value == "-",
+                    do: "btn-primary",
+                    else: "bg-base-300 hover:bg-base-content/15"
+                  )
+                ]}
+              >
+                –
+              </button>
+            </div>
+          </fieldset>
+        </div>
+        <div
+          :if={@paper_entry.error}
+          id="paper-entry-error"
+          class="alert alert-error text-sm"
+          role="alert"
+        >
+          <.icon name="hero-exclamation-triangle" class="size-5" />
+          <span>{@paper_entry.error}</span>
+        </div>
+        <div
+          :if={@paper_entry.overwrite?}
+          id="paper-overwrite-warning"
+          class="rounded-lg border border-warning bg-base-200 p-4"
+          role="alert"
+        >
+          <h3 class="font-bold">Gespeicherte Antworten ersetzen?</h3>
+          <ul class="mt-2 space-y-1 text-sm">
+            <%= for question <- @engine_state.current_questions,
+                    old = @paper_entry.original[question.id],
+                    new = @paper_entry.picks[to_string(question.id)],
+                    not is_nil(old) and new != "-" and new != to_string(old) do %>
+              <li>
+                Frage {question.position + 1}: <strong>{letter_for_index(old)}</strong>
+                → <strong>{letter_for_index(String.to_integer(new))}</strong>
+              </li>
+            <% end %>
+          </ul>
+          <button
+            id="paper-confirm-overwrite"
+            type="button"
+            phx-click="confirm_paper_overwrite"
+            class="btn btn-sm bg-base-300 hover:bg-base-content/15 border-transparent mt-3"
+          >Ersetzen und speichern</button>
+        </div>
+      </div>
+      <div class="sticky bottom-0 border-t border-base-300 bg-base-100 px-4 py-3 flex items-center justify-between gap-3">
+        <% entered = Enum.count(@paper_entry.picks, fn {_id, value} -> value != "unselected" end) %>
+        <div class="text-xs">
+          <span class="font-semibold">{entered} / {length(@engine_state.current_questions)} erfasst</span>
+          <span class="block">Noch nicht gespeichert</span>
+        </div>
+        <button
+          id="paper-save"
+          type="submit"
+          disabled={entered != length(@engine_state.current_questions) or @paper_entry.overwrite?}
+          class="btn btn-sm btn-primary shrink-0"
+        >
+          Bogen speichern
+        </button>
+      </div>
+    </.form>
+  </dialog>
 
   <script :type={Phoenix.LiveView.ColocatedHook} name=".HostQuestionTimer">
     export default {
