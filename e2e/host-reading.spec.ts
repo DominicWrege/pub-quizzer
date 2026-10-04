@@ -1,6 +1,6 @@
 import { test, expect, loginAsHost, setupQuiz, type BrowserContext } from "./fixtures"
 
-test("the host can read all A–D answers at 23px on an 11-inch portrait tablet", async ({ browser }) => {
+test("the host reading script keeps readable text and bounded line lengths on tablets and wider screens", async ({ browser }) => {
   const context = await browser.newContext({
     baseURL: "http://localhost:4001",
     viewport: { width: 834, height: 1194 },
@@ -26,8 +26,25 @@ test("the host can read all A–D answers at 23px on an 11-inch portrait tablet"
     await expect(host.locator("#host-question-card h2, #host-question-card h3, #host-question-card h4"))
       .toHaveCount(1)
 
-    for (const viewport of [{ width: 834, height: 1194 }, { width: 820, height: 1180 }]) {
+    for (const viewport of [
+      { width: 834, height: 1194 },
+      { width: 820, height: 1180 },
+      { width: 1194, height: 834 },
+      { width: 1440, height: 900 },
+    ]) {
       await host.setViewportSize(viewport)
+      const column = await host.locator("#host-question-card").evaluate(element => {
+        const bounds = element.getBoundingClientRect()
+        const parent = element.parentElement!.getBoundingClientRect()
+        return { width: bounds.width, center: bounds.left + bounds.width / 2, parentCenter: parent.left + parent.width / 2 }
+      })
+      expect(column.width).toBeLessThanOrEqual(760)
+      expect(column.center).toBeCloseTo(column.parentCenter, 0)
+      if (viewport.width >= 1024) {
+        expect(column.width).toBeCloseTo(760, 0)
+      } else {
+        expect(column.width).toBeGreaterThan(viewport.width - 80)
+      }
       await expect(question).toHaveCSS("font-size", "23px")
       expect(Number.parseFloat(await question.evaluate(element => getComputedStyle(element).lineHeight)))
         .toBeGreaterThanOrEqual(32)
