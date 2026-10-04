@@ -51,6 +51,25 @@ test("question analysis lives only in the shared report, with compact responsive
     ]) {
       await hostPage.setViewportSize(viewport)
       await expect(highlights).toBeVisible()
+      await expect(hostPage.locator("#question-report-toolbar h1")).toHaveCount(0)
+      await expect(hostPage.locator("#question-report-distribution-help")).toHaveCount(0)
+      const spacing = await hostPage.evaluate(() => {
+        const filters = document.querySelector("#question-report-filters")!.getBoundingClientRect()
+        const cards = document.querySelector("#question-report-highlights")!.getBoundingClientRect()
+        const table = document.querySelector("#question-report-table")!.getBoundingClientRect()
+        const selections = Array.from(document.querySelectorAll("#question-report-filters select"))
+          .filter(element => element.getBoundingClientRect().height > 0)
+        return {
+          filtersToCards: cards.top - filters.bottom,
+          cardsToTable: table.top - cards.bottom,
+          touchTargets: selections.map(element => element.getBoundingClientRect().height),
+        }
+      })
+      for (const gap of [spacing.filtersToCards, spacing.cardsToTable]) {
+        expect(gap).toBeGreaterThanOrEqual(6)
+        expect(gap).toBeLessThanOrEqual(16)
+      }
+      for (const height of spacing.touchTargets) expect(height).toBeGreaterThanOrEqual(44)
       expect(await hostPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
       await hostPage.screenshot({ path: testInfo.outputPath(`question-report-${viewport.width}.png`), animations: "disabled" })
     }

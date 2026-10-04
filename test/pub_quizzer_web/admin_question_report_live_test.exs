@@ -233,6 +233,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
       assert has_element?(report, "#question-report-mobile-nav[aria-current='page']")
       refute has_element?(report, "a[aria-label='Zurück']")
       refute has_element?(report, "main header p")
+      refute has_element?(report, "#question-report-toolbar h1")
     end
 
     test "switches quiz statistics immediately and can return to all quizzes", %{conn: conn} do
@@ -253,7 +254,7 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLiveTest do
       view |> form("#question-report-quiz-form", %{event_id: ""}) |> render_change()
       assert has_element?(view, "#question-report-#{q1.id}", "60 %")
       assert has_element?(view, "#question-report-#{q1.id}", "2×")
-      assert has_element?(view, "#question-report-distribution-help", "Anzahl der Teams")
+      refute has_element?(view, "#question-report-distribution-help")
     end
 
     test "selecting a topic defaults to question numbers and resets when changing topics", %{

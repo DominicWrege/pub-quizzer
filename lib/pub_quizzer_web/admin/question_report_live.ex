@@ -157,15 +157,12 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
       current_scope={@current_scope}
       current_path={@current_path}
       max_width="max-w-7xl"
+      content_class="space-y-2! sm:space-y-3!"
     >
-      <div id="question-report-toolbar" class="space-y-1">
-        <.header inline_actions>
-          Fragen-Bericht
-        </.header>
-
+      <div id="question-report-toolbar">
         <div
           id="question-report-filters"
-          class="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
+          class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center [&_.fieldset]:mb-0 [&_.fieldset]:py-0"
         >
           <.form
             for={@quiz_form}
@@ -257,12 +254,10 @@ defmodule PubQuizzerWeb.Admin.QuestionReportLive do
         />
       </section>
 
-      <p id="question-report-distribution-help" class="text-base text-base-content/80">
-        A–D: Anzahl der Teams je Antwort. Grün = richtige Antwort.
-        Bei mehreren Quiz werden die Antworten zusammengezählt.
-      </p>
-
-      <div class="w-full lg:overflow-x-auto lg:rounded-lg lg:border-2 lg:border-base-300">
+      <div
+        id="question-report-table"
+        class="w-full lg:overflow-x-auto lg:rounded-lg lg:border-2 lg:border-base-300"
+      >
         <table class="table block! w-full text-[0.95rem] lg:[display:table]! lg:table-fixed">
           <colgroup class="hidden lg:table-column-group">
             <col class="w-[14%] xl:w-[11%]" />
